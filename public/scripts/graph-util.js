@@ -101,7 +101,7 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil) {
     var renderer = new dagreD3.Renderer();
     var layout = renderer.layout().rankDir("LR");
     layout = renderer.layout(layout).run(graphData, theG);
-    // capture some state to maintain view during transformations/refreshes etc. 
+    // capture some state to maintain view during transformations/refreshes etc.
     height = layout.graph().height;
   }
 
@@ -118,7 +118,7 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil) {
         if (state.curid !== 0) {
           $("#step-image-" + state.curid).removeClass("hi-lite");
           $("#step-" + state.curid).focus().hide();
-        } 
+        }
         $("#no-step").hide();
 
         state.curid = step.stepnumber;

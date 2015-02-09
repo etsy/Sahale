@@ -36,7 +36,7 @@ var StackedBarUtil = (function($) {
   function setColorCycle(step) {
     var variant = (step.stepnumber % 3) + 1;
     var color = "grey";
-    
+
     switch(step.stepstatus) {
       case "RUNNING":
         color = "orange";
