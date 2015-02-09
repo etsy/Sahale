@@ -1,0 +1,251 @@
+.mapred {
+  margin-top: 2px;
+  border-bottom: 1px solid LightGrey;
+  padding-bottom: 2px;
+  font-size: 10px;
+  text-align: center;
+}
+
+.logbox {
+    text-align: center;
+    margin-bottom: 1em;
+}
+
+.tapline {
+  border-bottom: 1px solid LightGrey;
+  margin: 4px;
+}
+
+.push-it-down {
+  margin-top: 4px;
+}
+
+svg#flowgraph {
+  height: 366px;
+  width: 100%;
+}
+
+#flowdetails {
+  height: 400px;
+  overflow-y: auto;
+}
+
+div#areachart {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-left: 4px;
+}
+
+.subpanel {
+  height: 115px;
+  width: 100%;
+  border: 1px solid LightGrey;
+  border-radius: 4px;
+}
+
+g.node {
+  border-radius: 18px;
+  border: solid 2px black;
+  height: 64px;
+  width: 86px;
+}
+
+g .node rect {
+  height: 60px;
+  width: 80px;
+  stroke: #000;
+  stroke-width: 1.5px;
+  color: Black;
+}
+
+.hi-lite {
+  -webkit-animation: glowr 2s infinite;
+  -moz-animation: glowr 2s infinite;
+  animation: glowr 2s infinite;
+  border: 3px solid black
+}
+
+@-webkit-keyframes glowr {
+  100% { background-color: yellow }
+}
+
+@-moz-keyframes glowr {
+  100% { background-color: yellow }
+}
+
+
+@keyframes glowr {
+  100% { background-color: yellow }
+}
+
+.edgeLabel rect {
+  fill: #FFFFFF;
+}
+
+.mr-count-blue { color: rgb(49, 112, 143); }
+
+.mr-count-red { color: rgb(169, 68, 66); }
+
+.edgePath path {
+  fill: none;
+  stroke: #000000;
+  stroke-width: 1px;
+}
+
+div.chartbox svg {
+  height: 140px;
+}
+
+div.chartbox {
+  border: 2px inset lightgray;
+  overflow: auto !important;
+}
+
+.charbox:before, .chartbox:after {
+  content: "";
+  display: table;
+}
+
+.chartbox:after {
+  clear:both;
+}
+
+.rrbar {
+  fill: SteelBlue;
+}
+
+.rrbar:hover {
+  fill: Yellow;
+}
+
+.rraxis text {
+  font: 7px sans-serif;
+}
+
+.rraxis path, .rraxis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.x.rraxis path {
+  display: none;
+}
+
+
+.axis path, .axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
+
+.axis text {
+    font: 8px sans-serif;
+}
+
+.axis .grid-line{
+    stroke: black;
+    shape-rendering: crispEdges;
+    stroke-opacity: .2;
+}
+
+.mapLine{
+    fill: none;
+    stroke: darkred;
+    stroke-width: 1.5px;
+}
+
+.mapDot {
+  fill: #fff;
+  stroke: darkred;
+}
+
+.mapArea {
+    stroke: none;
+    fill: darkred;
+    fill-opacity: .2;
+}
+
+.reduceLine{
+    fill: none;
+    stroke: steelblue;
+    stroke-width: 1.5px;
+}
+
+.reduceDot {
+  fill: #fff;
+  stroke: steelblue;
+}
+
+.reduceArea {
+    stroke: none;
+    fill: steelblue;
+    fill-opacity: .2;
+}
+
+#timechart {
+  display:block;
+  padding: 0 auto;
+}
+
+.inner-stack-box {
+  width: 96%;
+  margin: 8% auto;
+  overflow-x: auto;
+  display: flex;
+  display: -webkit-flex;
+}
+
+span.time-block {
+    display: inline-block;
+    height: 36px;
+    border-radius: 18px;
+}
+
+.color-cycle-grey-1 {
+    background-color: #686868;
+}
+
+.color-cycle-grey-2 {
+    background-color: #c8c8c8;
+}
+
+.color-cycle-grey-3 {
+    background-color: #e8e8e8;
+}
+
+.color-cycle-red-1 {
+    background-color: darkred;
+}
+
+.color-cycle-red-2 {
+    background-color: firebrick;
+}
+
+.color-cycle-red-3 {
+    background-color: indianred;
+}
+
+.color-cycle-green-1 {
+    background-color: #006633;
+}
+
+.color-cycle-green-2 {
+    background-color: #33CC00;
+}
+
+.color-cycle-green-3 {
+    background-color: #66EE33;
+}
+
+.color-cycle-orange-1 {
+    background-color: #ffcc66;
+}
+
+.color-cycle-orange-2 {
+    background-color: #ff9900;
+}
+
+.color-cycle-orange-3 {
+    background-color: #ff5500;
+}

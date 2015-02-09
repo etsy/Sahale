@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+# Shortcut for running tracked jobs via 'hadoop jar' command.
+# Assumes some things:
+# (1) All of the initial setup and config from the project README are completed
+# (2) The Scala project is configured and built, Node server is up and running
+# (3) The job class named in this script run is a subclass of TrackedJob
+#
+# Usage: bin/runjob full.package.list.to.JobClass [-libjars ...] [arg1..argN]
+#
+
+# First arg should be job class
+JOBCLASS="$1"
+shift
+
+# Might be libjars after that
+LIBJARS=""
+if [[ "$1" == '-libjars' ]]; then
+  shift
+  LIBJARS="-libjars $1"
+  shift
+fi
+
+# Pick up the fatjar for classpath/jar decl
+FATJAR=`[ -e target ] && ls target/ | grep jar-with-dependencies`
+if [ -z "$FATJAR" ]; then
+  echo "[ERROR] target/ dir not found, please run 'mvn install' (assumes Maven3 and JDK are installed)"
+  exit 1
+else
+  FATJAR="target/$FATJAR"
+fi
+
+# Pass the remaining args on to the job run, run the command
+HADOOP_CLASSPATH=$HADOOP_CLASSPATH:$FATJAR hadoop jar $FATJAR com.twitter.scalding.Tool "$JOBCLASS" "$LIBJARS" --hdfs --track-job "$@"

@@ -1,0 +1,14 @@
+extends index-layout
+
+block content
+
+  div.container
+
+    div.panel.panel-default
+      div.panel-heading(style='text-align:center')
+        h3 Jobs matching '#{search_term}'
+      div.panel-body
+        table.table.table-hover.table-striped.table-condensed#matched
+
+  script(src='/scripts/search-client.js')
+

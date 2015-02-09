@@ -1,0 +1,35 @@
+extends flowgraph-layout
+
+block content
+
+  div.container
+    // Elephant images courtesy of Ted Mitchner, Qing Li, and spotted paint
+    div.panel.panel-default
+      div.panel-body
+        div.row.row-centered
+          div.col-md-12.col-centered
+            table.table.table-hover.table-striped.table-condensed#running
+          div.col-md-6.col-centered
+            div.panel.panel-default
+              div.panel-heading#actitle Mapper & Reducer Counts Per Step
+                span(id="actoggle",style="float:right",class="glyphicon glyphicon-stats")
+              div.panel-body
+                div.subpanel#areachart(overflow-x='auto')
+          div.col-md-6.col-centered
+            div.panel.panel-default
+              div.panel-heading Running Time Per Step
+              div.panel-body
+                div.subpanel#timechart
+    div.row.row-centered
+      div.col-md-8.col-centered
+        div.panel.panel-default
+          div.panel-heading Graph View
+          div.panel-body
+            svg#flowgraph
+              g
+      div.col-md-4.col-centered
+        div.panel.panel-default
+          div.panel-heading(id='mrdetail-title') MapReduce Details
+          div.panel-body#flowdetails
+
+  script(src='/scripts/flowgraph-client.js')

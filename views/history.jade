@@ -1,0 +1,29 @@
+extends history-layout
+
+block content
+
+  div.container
+
+    div
+      div.well(style='text-align:center')
+        h3 Job History: #{flow_name}
+      div.panel-body#charts
+        h4 Running Times
+        div.chartbox#runningtimes
+          svg.rrchart
+        h4 Cluster Slots Used
+        div.chartbox#slotcounts
+          svg.rrchart
+        h4 HDFS Space Used
+        div.chartbox#hdfswrites
+          svg.rrchart
+        h4 Cluster Disk Used
+        div.chartbox#diskwrites
+          svg.rrchart
+      div.panel.panel-default
+      div.panel-heading(style='text-align:center')
+        h3 Completed Jobs
+      div.panel-body
+        table.table.table-hover.table-striped.table-condensed#completed
+
+  script(src='/scripts/history-client.js')

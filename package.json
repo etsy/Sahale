@@ -1,0 +1,25 @@
+{
+  "name": "Sahale",
+  "version": "0.5.0",
+  "email": "ereisman@etsy.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.etsycorp.com/Engineering/Sahale.git"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "express": "*",
+    "jade": "*",
+    "stylus": "*",
+    "serve-favicon": "*",
+    "morgan": "*",
+    "body-parser": "*",
+    "method-override": "*",
+    "mysql": "*",
+    "node-mysql": "*"
+  },
+  "engines": {
+    "node": "0.10.30",
+    "npm": "1.4.x"
+  }
+}

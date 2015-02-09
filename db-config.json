@@ -1,0 +1,7 @@
+{
+  "host":       "database.server.example.com",
+  "port":       3306,
+  "database":   "database.name.where.tables.were.created",
+  "user":       "db_username_to_run_queries_as",
+  "password":   "db_password"
+}

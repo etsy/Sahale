@@ -1,0 +1,230 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.etsy.sahale</groupId>
+  <artifactId>flowtracker</artifactId>
+  <version>0.5.4-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <name>flowtracker</name>
+  <url>http://maven.apache.org</url>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.basedir>.</project.basedir>
+    <!-- Users should adjust to match their own distribution and build -->
+    <scala.version>2.9.3</scala.version>
+    <!-- Users should adjust to match their own distribution and build -->
+    <hadoop.version>2.5.0-cdh5.3.0</hadoop.version>
+    <!-- Users should adjust to match their own distribution and build -->
+    <cascading.version>2.6.1</cascading.version>
+  </properties>
+
+  <repositories>
+    <repository>
+      <id>sonatype-oss</id>
+      <url>http://oss.sonatype.org/content/repositories/releases/</url>
+    </repository>
+
+    <repository>
+      <id>conjars.org</id>
+      <url>http://conjars.org/repo</url>
+    </repository>
+
+    <repository>
+      <id>cloudera</id>
+      <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+    </repository>
+  </repositories>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>sonatype-oss</id>
+      <url>http://oss.sonatype.org/content/repositories/releases/</url>
+    </pluginRepository>
+  </pluginRepositories>
+
+  <distributionManagement>
+    <snapshotRepository>
+      <id>snapshots</id>
+      <name>Archiva Internal Snapshot Repository</name>
+      <url>http://ivy.etsycorp.com/repository/snapshots/</url>
+    </snapshotRepository>
+  </distributionManagement>
+
+  <build>
+    <resources>
+      <resource>
+        <directory>${project.basedir}/src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+    <testResources>
+      <testResource>
+        <directory>${project.basedir}/src/test/resources</directory>
+      </testResource>
+    </testResources>
+
+      <plugins>
+        <!-- Raise the default heap and thread stack sizes because scalac is a piece of crap -->
+        <plugin>
+          <groupId>org.scala-tools</groupId>
+          <artifactId>maven-scala-plugin</artifactId>
+          <version>2.9.1</version>
+          <executions>
+            <execution>
+              <goals>
+                <goal>compile</goal>
+                <goal>testCompile</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+          </configuration>
+        </plugin>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <version>2.4</version>
+            <configuration>
+              <tarLongFileMode>gnu</tarLongFileMode>
+            </configuration>
+            <executions>
+              <execution>
+                <id>assemble-fatjar</id>
+                <configuration>
+                  <descriptorRefs>
+                    <descriptorRef>jar-with-dependencies</descriptorRef>
+                  </descriptorRefs>
+                </configuration>
+                <phase>package</phase>
+                <goals>
+                  <goal>single</goal>
+                </goals>
+              </execution>
+            </executions>
+        </plugin>
+
+        <!-- disable surefire -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>2.7</version>
+          <configuration>
+            <skipTests>true</skipTests>
+          </configuration>
+        </plugin>
+        <!-- enable scalatest -->
+        <plugin>
+          <groupId>org.scalatest</groupId>
+          <artifactId>scalatest-maven-plugin</artifactId>
+          <version>1.0-RC2</version>
+          <configuration>
+            <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+            <junitxml>.</junitxml>
+            <filereports>WDF TestSuite.txt</filereports>
+          </configuration>
+          <executions>
+            <execution>
+              <id>test</id>
+              <goals>
+                <goal>test</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+  </build>
+
+  <dependencies>
+    <!-- hadoop-client is a nice single-import for CDH distributions.
+         If you use vanilla Apache Hadoop distribution on your cluster,
+         you might need to add additional dependency tags for packages like
+         hadoop-common, hadoop-hdfs, and hadoop-mapreduce. See your individual
+         Hadoop distro documentation for details.
+      -->
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-client</artifactId>
+      <version>${hadoop.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-library</artifactId>
+      <version>${scala.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.esotericsoftware.kryo</groupId>
+      <artifactId>kryo</artifactId>
+      <version>2.21</version>
+    </dependency>
+
+    <dependency>
+      <groupId>cascading.kryo</groupId>
+      <artifactId>cascading.kryo</artifactId>
+      <version>0.4.7</version>
+    </dependency>
+
+   <dependency>
+      <groupId>io.backchat.jerkson</groupId>
+      <artifactId>jerkson_2.9.2</artifactId>
+      <version>0.7.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>cascading</groupId>
+      <artifactId>cascading-core</artifactId>
+      <version>${cascading.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>cascading</groupId>
+      <artifactId>cascading-platform</artifactId>
+      <version>${cascading.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>cascading</groupId>
+      <artifactId>cascading-hadoop</artifactId>
+      <version>${cascading.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <version>4.1.1</version>
+    </dependency>
+
+    <dependency>
+      <groupId>commons-httpclient</groupId>
+      <artifactId>commons-httpclient</artifactId>
+      <version>3.0.1</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.twitter</groupId>
+      <artifactId>scalding-core_2.9.2</artifactId>
+      <version>0.8.5</version>
+    </dependency>
+
+    <!-- Test dependencies. subject to change/still under construction -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.10</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.scalatest</groupId>
+      <artifactId>scalatest_2.9.3</artifactId>
+      <version>2.0.M5b</version>
+      <scope>test</scope>
+    </dependency>
+
+  </dependencies>
+
+</project>

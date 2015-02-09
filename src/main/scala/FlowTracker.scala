@@ -1,0 +1,234 @@
+package com.etsy.sahale
+
+import org.apache.commons.httpclient.{HttpClient, MultiThreadedHttpConnectionManager, Header}
+import org.apache.commons.httpclient.cookie.CookiePolicy
+import org.apache.commons.httpclient.methods.PostMethod
+import org.apache.hadoop.mapred.{JobConf, JobClient}
+import org.apache.http.client.params.ClientPNames
+import org.apache.log4j.Logger
+
+import cascading.flow.{Flow, FlowStep}
+import cascading.stats.{CascadingStats, FlowStepStats}
+import cascading.stats.hadoop.HadoopStepStats
+import cascading.tuple.Fields
+
+import java.io.IOException
+import java.net.SocketException
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.Properties
+
+import com.codahale.jerkson.Json._
+
+import scala.collection.mutable
+import scala.collection.JavaConversions._
+
+
+object FlowTracker {
+  val PROPSFILE = "flow-tracker.properties"
+  val NOT_YARN_JOB = "false"
+  val INITIAL_FLOW_STATE = "NOT_LAUNCHED"
+  val props = getTrackerProperties
+  val BASE_API_URL = props("host").trim + ":" + props("port").trim + "/"
+  val UPDATE_FLOW_API_URL = BASE_API_URL + "flow/update"
+  val UPDATE_STEPS_API_URL = BASE_API_URL + "steps/update"
+  val CREATE_EDGES_API_URL = BASE_API_URL + "edges/update"
+  val REFRESH_INTERVAL_MS = 8 * 1000
+  val UNKNOWN = "UNKNOWN"
+  val CheckIsCascadingFlowId = """([A-Fa-f0-9]+)""".r
+
+  val LOG: Logger = Logger.getLogger(classOf[FlowTracker])
+
+  val client = {
+    val c = new HttpClient(new MultiThreadedHttpConnectionManager)
+    c.getParams().setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.BROWSER_COMPATIBILITY);
+    c
+  }
+
+  def getTrackerProperties: Properties = {
+    val props = new Properties();
+    props.load(Thread.currentThread.getContextClassLoader.getResourceAsStream(PROPSFILE))
+    props
+  }
+
+  def logMap(map: Map[String, String], response: PostMethod): Unit = {
+    LOG.info("PUSHED MAP:\n" + map.mkString("\n"))
+    LOG.info("WITH RESPONSE STATUS CODE: " + response.getStatusCode)
+    LOG.info("WITH RESPONSE x-error-detail: " + response.getResponseHeader("x-error-detail"))
+    LOG.info("WITH RESPONSE STATUS LINE: " + response.getStatusLine)
+    LOG.info("WITH RESPONSE STATUS TEXT: " + response.getStatusText)
+  }
+
+  def pushReport(flowId: String, uri: String, map: Map[String, String]): Int = {
+    flowId match {
+      case CheckIsCascadingFlowId(id) => {
+        val url = uri + "/" + flowId + "?method=POST"
+        // LOG.info("REQUEST URL TO API:" + url)
+        val request = new PostMethod(url)
+        try {
+          request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded")
+          map.map { entry => request.addParameter(new Header(entry._1, entry._2)) }
+          val statusCode = client.executeMethod(request)
+          request.getResponseBodyAsStream.close
+          //logMap(map, request); // For DEBUGGING
+          statusCode
+        } finally {
+          if (null != request) {
+            request.releaseConnection
+          }
+        }
+      }
+      case _ => {
+        LOG.warn("Unable to locate flow_id for this job report. Request URI: " + uri)
+        -1 // error
+      }
+    }
+  }
+
+  def pushFlowReport(flow: Flow[_], flowStatus: String, map: Map[String, String]): Int = {
+    val sendMap: Map[String, String] = Map(
+      "flowname" -> flow.getName,
+      "flowstatus" -> flowStatus,
+      "json" -> java.net.URLEncoder.encode(generate(map).toString, "UTF-8")
+    )
+    pushReport(flow.getID, UPDATE_FLOW_API_URL, sendMap)
+  }
+
+  def pushStepReport(flowId: String, steps: mutable.Map[String, StepStatus]): Int = {
+    val sendMap: Map[String, String] = steps.map {
+      step => step._1 -> java.net.URLEncoder.encode(generate(step._2.toMap).toString, "UTF-8")
+    }.toMap
+    pushReport(flowId, UPDATE_STEPS_API_URL, sendMap)
+  }
+}
+
+/**
+ * Poll running Cascading Flow for in flight run stats and push to internal API endpoint.
+ */
+class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean) extends java.lang.Runnable {
+  import com.etsy.sahale.FlowTracker._
+
+  // mutable because we have to build this mapping as we go after run() is called
+  val stepStatusMap = mutable.Map[String, StepStatus]()
+  // manages global job state for this run
+  val flowStatus = new FlowStatus(flow)
+
+  /**
+   * Runs after the Flow is connected and complete() is called on it.
+   */
+  override def run(): Unit = {
+    try {
+      initializeTrackedJobState
+      println(Console.REVERSED + "Follow your running job's progress from your browser: " + BASE_API_URL + Console.RESET)
+
+      // loop and report progress until job is marked completed by caller
+      while (!runCompleted.get) {
+        val nextReport = flow.getFlowStats.getFlowStepStats.toList.foldLeft(mutable.Map[String, StepStatus]()) {
+          (next: mutable.Map[String, StepStatus], fss: FlowStepStats) =>
+            fss match {
+              case hss: HadoopStepStats => updateStepMap(hss, next); next
+              case _ => next
+            }
+        }
+        // just ship the reports if any stage state changed in this iteration
+        if (nextReport.size > 0) {
+          pushStepReport(flow.getID, nextReport)
+          updateAndPushFlowReport(true)
+        }
+        try { Thread.sleep(REFRESH_INTERVAL_MS) } catch { case _: Exception => }
+      }
+    } catch {
+      case t: Throwable => {
+        LOG.warn("FlowTracker for this run has thrown an exception. " +
+          "The run will complete as normal, but the remainder will not be tracked.", t)
+        runCompleted.set(true);
+      }
+    } finally {
+      pushFinalReport
+    }
+  }
+
+  /**
+   * Init our flow, edge, and stage maps since we can't until run() is called.
+   */
+  def initializeTrackedJobState: Unit = {
+    // push initial flow status report to server
+    pushFlowReport(flow, INITIAL_FLOW_STATE, FlowStatus.initial)
+    val edgeMap = (new FlowGraphBuilder(flow, stepStatusMap)).composeDag
+    pushReport(flow.getID, CREATE_EDGES_API_URL, edgeMap)
+    pushStepReport(flow.getID, stepStatusMap)
+  }
+
+  def updateStepMap(flowStepStats: FlowStepStats, report: mutable.Map[String, StepStatus]): Unit = {
+    flowStepStats match {
+      case hadoopStepStats: HadoopStepStats => {
+        val id = hadoopStepStats.getID
+        val oldStep = stepStatusMap(id).toMap
+        stepStatusMap(id).update(flow, hadoopStepStats)
+        if (null != report && oldStep != stepStatusMap(id).toMap) {
+          report(id) = stepStatusMap(id)
+        }
+      }
+      case _ => // do nothing if not a Hadoop step
+    }
+  }
+
+  def updateAndPushFlowReport(shouldLogToConsole: Boolean): Unit = {
+    val makeAverage: Double = 2.0 * flow.getFlowStats.getStepsCount.toDouble
+    val progressTotal = "%3.2f" format ((sumMapProgress + sumReduceProgress) / makeAverage)
+    flowStatus.flowProgress = progressTotal
+    flowStatus.flowHdfsBytesWritten = sumHdfsBytesWritten.toString
+    if (shouldLogToConsole) { logFlowStatus }
+    pushFlowReport(flow, flow.getFlowStats.getStatus.toString, flowStatus.toMap)
+  }
+
+  def pushFinalReport: Unit = {
+    try {
+      flow.getFlowStats.getFlowStepStats.toList.foreach {
+        fss: FlowStepStats =>
+          fss match {
+            case hss: HadoopStepStats => updateStepMap(hss, null)
+            case _ =>
+          }
+      }
+      pushStepReport(flow.getID, stepStatusMap)
+      updateAndPushFlowReport(false)
+    } finally {
+      if (null != client) {
+        client.getHttpConnectionManager.asInstanceOf[MultiThreadedHttpConnectionManager].shutdown
+      }
+    }
+  }
+
+  /**
+   * Console log for easy job progress measurement w/o UI
+   */
+  def logFlowStatus: Unit = {
+    val arrows = (20 * (flowStatus.flowProgress.toDouble / 100.0)).toInt
+    val progressBar = Console.WHITE + "[" + Console.YELLOW + (">" * arrows) + Console.WHITE + (" " * (20 - arrows)) + "]"
+    print("\u000D" + (" " * 60));
+    print("\u000D" + Console.WHITE + "Job Status: " + getColoredFlowStatus + "\tProgress: " + flowStatus.flowProgress + "% " +
+      progressBar + "\t Running " + (flowStatus.updateFlowDuration.toLong / 1000) + "secs" + Console.RESET + (" " * 10));
+  }
+
+  def getColoredFlowStatus: String = {
+    val statusColor = flowStatus.getFlowStatus match {
+      case "SUCCESSFUL" | "RUNNING" => Console.GREEN
+      case "FAILED" => Console.RED
+      case _ => Console.WHITE
+    }
+    statusColor + flowStatus.getFlowStatus + Console.WHITE
+  }
+
+  /* Methods below are rollups for the Flow, but are most cheaply done here using the StepMap */
+  def sumHdfsBytesWritten: Long = {
+    stepStatusMap.keys.foldLeft(0L) { (sum: Long, stageId: String) => sum + stepStatusMap(stageId).hdfsBytesWritten.toLong }
+  }
+
+  def sumMapProgress: Double = {
+    stepStatusMap.keys.foldLeft(0.0) { (sum: Double, stageId: String) => sum + stepStatusMap(stageId).mapProgress.toDouble }
+  }
+
+  def sumReduceProgress: Double = {
+    stepStatusMap.keys.foldLeft(0.0) { (sum: Double, stageId: String) => sum + stepStatusMap(stageId).reduceProgress.toDouble }
+  }
+}

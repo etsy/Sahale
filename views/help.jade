@@ -1,0 +1,48 @@
+extends index-layout
+
+block content
+
+  div.container
+
+    div.panel.panel-default
+      div.panel-heading(style='text-align:center')
+        h3 Sahale
+      div.panel-body
+        p Sahale is named for <a href="http://en.wikipedia.org/wiki/Sahale_Mountain">Sahale Mountain</a>, which is a wonderful vantage point from which to view the Cascades :)
+
+    div.panel.panel-default
+      div.panel-heading(style='text-align:center')
+        h3 Overview Page
+      div.panel-body
+        img(height="500px",width="760px",src="/images/gojobs-overview-1.png",style="display:block;")
+        p This view exposes aggregated metrics for all running and recently completed jobs. Each job name is linked to it's own Flow Details page described below. Queries in the search box (upper right in nav bar) will pull the recent history for any matching workflows by name.
+
+    div.panel.panel-default
+      div.panel-heading(style='text-align:center')
+        h3 Flow Details Page
+      div.panel-body
+        img(height="500px",width="760px",src="/images/gojobs-detail-1.png",style="display:block;")
+        p This view exposes many in-depth details from a single workflow execution. The components include:
+        p
+          ul
+            li Nav bar links back to the Overview page, the Flow History page for the job, and this Help page
+            li A table-style entry of aggregate metrics for this job run, similar to those on the Overview page
+            li An area chart displaying many per-step metrics across all steps of a workflow. A button in on the right of the title bar will toggle through various metrics to display. Hover on any data point for a detailed tooltip. These charts scroll horizontally when the number of job stages exceeds the panel size.
+            li A chart of running times broken down by job step to help identify the longest-running stages of the job. This scrolls horizontally when the number of job stages exceeds the panel size.
+            li A Graph View that exposes the data dependencies among the job steps (MapReduce jobs) for this run. Job status and HDFS temp output per-step are also displayed here in real time as the job progresses. GRAY nodes are tasks that are stopped or have not been run yet. RED tasks are failed. GREEN tasks have completed successfully. ORANGE tasks are currently running.
+            li A Detail view of per-step MapReduce and Cascading stats including I/O and locality metrics, in-flight Map and Reduce task progress, Hadoop log links, and Cascading source and sink Field names for the current job step.
+            li Mouse hovering above any node in the Graph View, Area Chart, or Running Times display will toggle that job step's Detail view. A selected job step will be highlighted in the Graph View display.
+        br
+        img(height="500px",width="760px",src="/images/gojobs-detail-2.png",style="display:block;margin-top:10px;")
+        br
+        p
+          b Debugging failed Cascading jobs:
+        p Hover over any red (failed) node in the Graph View. Click the Source/Sinks tab in the Detail view. This should help you narrow down exactly which part of your workflow's source code maps to this failure. Next, click the View Hadoop Logs link at the top of the Detail view for this job step, and check the log for tasks in the "Failed" section of the task chart if no direct link is displayed.
+
+    div.panel.panel-default
+      div.panel-heading(style='text-align:center')
+        h3 Flow History Page
+      div.panel-body
+        img(height="500px",width="760px",src="/images/gojobs-history-1.png",style="display:block;")
+        p The Flow History view exposes various aggregate metrics for previous runs of a single job (by any/all users) in the recent past. The charts scroll horizontally when the count of previous runs exceeds the size of the chart display. Each bar in the chart will expose a tooltip with detailed data upon hovering. Clicking any bar in a chart will redirect to the Flow Details page associate with that run.
+        p At the bottom of the page is a table view of all the runs aggregated in the charts above, similar to those on the Overview page.
