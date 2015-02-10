@@ -16,7 +16,11 @@ import cascading.util.Util
 import scala.collection.mutable
 import scala.collection.JavaConversions._
 
-
+/**
+ * Parses Cascading workflow plan
+ *
+ * @author Eli Reisman
+ */
 class FlowGraphBuilder(val flow: Flow[_], val stepStatusMap: mutable.Map[String, StepStatus]) {
   val ExtractVertexLabel = """\s+(\d+)\s+\[label\s+=\s+\"(\d+_[A-Fa-f0-9]+)\"\];""".r
   val ExtractVertexEdgeMapping = """\s+(\d+)\s+->\s+([0-9 \t]+);""".r
@@ -24,10 +28,7 @@ class FlowGraphBuilder(val flow: Flow[_], val stepStatusMap: mutable.Map[String,
   val edgeMap = mutable.Map[String, Set[String]]()
 
   /**
-   * Composes the data structures that manage the job DAG for this Flow
-   * The edge mapping must be built in two stages to capture all useful
-   * links between DAG nodes. This is the only time the edge mapping is
-   * pushed to the server.
+   * Populates the data structures that manage the job DAG for this Flow.
    */
   def composeDag: Map[String, String] = {
     extractStepGraphFromFlow
@@ -112,7 +113,7 @@ class FlowGraphBuilder(val flow: Flow[_], val stepStatusMap: mutable.Map[String,
           sourceId
         }.mkString(",")
 
-      // these are updated only once per StepStatus, right here before the job runs
+      // these are updated only once per workflow step, here before the job runs
       stepStatusMap(fs.getID).setSourcesAndSink(sources, sourcesFields, sink, sinkFields)
     }
 
@@ -135,6 +136,7 @@ class FlowGraphBuilder(val flow: Flow[_], val stepStatusMap: mutable.Map[String,
   }
 
   def sanitizePathName(path: String): String = {
+    // TODO: handle "cascading.tmp.dir" also, Hadoop tmp can be overriden
     val hadoopTmpDir = flow.asInstanceOf[HadoopFlow].getConfig.get("hadoop.tmp.dir", "/tmp/cache");
     val PipePath = ("(" + hadoopTmpDir + """[A-Za-z0-9._/-]+)_[A-Fa-f0-9]+""").r
     path match {

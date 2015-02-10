@@ -15,6 +15,11 @@ import com.codahale.jerkson.Json._
 import scala.collection.mutable
 import scala.collection.JavaConversions._
 
+/**
+ * Value class to store tracked per-step workflow data.
+ *
+ * @author Eli Reisman
+ */
 class StepStatus(val stepNumber: String, val stepId: String) {
   var sources = FlowTracker.UNKNOWN
   var sink = FlowTracker.UNKNOWN

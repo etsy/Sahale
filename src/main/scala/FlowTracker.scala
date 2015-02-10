@@ -101,8 +101,12 @@ object FlowTracker {
   }
 }
 
+
 /**
- * Poll running Cascading Flow for in flight run stats and push to internal API endpoint.
+ * Poll running Cascading Flow for metrics and push to Sahale server configued in
+ * <code>src/main/resources/flow-tracker.properties</code>
+ *
+ * @author Eli Reisman
  */
 class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean) extends java.lang.Runnable {
   import com.etsy.sahale.FlowTracker._

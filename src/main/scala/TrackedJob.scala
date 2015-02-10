@@ -11,6 +11,8 @@ import com.twitter.scalding._
 
 /**
  * Your jobs should inherit from this class to inject job tracking functionality.
+ *
+ * @author Eli Reisman
  */
 class TrackedJob(args: Args) extends com.twitter.scalding.Job(args) {
   @transient private val done = new AtomicBoolean(false)

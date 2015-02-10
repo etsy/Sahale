@@ -28,9 +28,9 @@ object FlowStatus {
 }
 
 /**
- * Fields used in SQL queries are not stored here, this will be a lump of JSON
- * that is extracted and used to compose views on the server side. This also makes
- * it fairly transparent to change/expand the data model in the future.
+ * Stores Flow-level metrics during a tracked job run.
+ *
+ * @author Eli Reisman
  */
 class FlowStatus(val flow: Flow[_]) {
   // these are updated in the FlowTracker using StepStatus rollups
@@ -41,10 +41,10 @@ class FlowStatus(val flow: Flow[_]) {
    * Populates a map of up-to-date Flow properties to push to server.
    */
   def toMap: Map[String, String] = Map(
-    "jt_url" -> getJobTrackerFromFlowProps, // JT URL if applicable, for job logs
+    "jt_url" -> getJobTrackerFromFlowProps,
     "user_name" -> System.getProperty("user.name"),
-    "flow_status" -> getFlowStatus, // status of entire job
-    "total_stages" -> getTotalStepCount, // total stages in this job
+    "flow_status" -> getFlowStatus,
+    "total_stages" -> getTotalStepCount,
     "flow_progress" -> flowProgress,
     "flow_duration" -> updateFlowDuration, // milliseconds
     "flow_hdfs_bytes_written" -> flowHdfsBytesWritten,
