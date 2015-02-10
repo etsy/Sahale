@@ -18,7 +18,9 @@ User Workflow
 ===
 For a quick test, see `bin/runjob` to run the example job(s). You will need to supply some text file(s) on HDFS to run it against.
 
-Users can run their own Scalding jobs in two ways. The easiest is to add user source code to `src/main/scala/examples`, build the Sahale fatjar with `mvn install`, and execute using `bin/runjob`, just as one would for the included example job. You can add any job dependencies to the fatjar via the `pom.xml`.
+Users can run their own tracked Scalding jobs in two ways. Both start by making the Scalding job(s) in question a subclass of `com.etsy.sahale.TrackedJob.`
+
+The easiest way is to add user source code to `src/main/scala/examples`, build the Sahale fatjar with `mvn install`, and execute using `bin/runjob`, just as one would for the included example job. You can add any job dependencies to the fatjar via the `pom.xml`.
 
 The other method is to include the Sahale JAR in your own project build as a dependency, then include it in job runs using `hadoop jar`'s `-libjars` argument. This approach can integrate easily into your existing workflow.
 
@@ -26,5 +28,5 @@ Only jobs submitted to a Hadoop cluster are tracked. No local mode runs are trac
 
 The Name
 ===
-Sahale was handmade at Etsy and is named for [Sahale Mountain](http://en.wikipedia.org/wiki/Sahale_Mountain), which is a wonderful vantage point from which to "view the Cascades."
+Sahale was handmade at [Etsy.com](http://www.etsy.com) and is named for [Sahale Mountain](http://en.wikipedia.org/wiki/Sahale_Mountain), which is a wonderful vantage point from which to view the Cascades ;)
 
