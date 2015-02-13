@@ -52,6 +52,7 @@ app.post('/flow/update/:flow_id', routes.insert_or_update_flow);
 app.post('/steps/update/:flow_id', routes.insert_or_update_steps);
 app.post('/edges/update/:flow_id', routes.insert_or_update_edge);
 
+process.title = "sahale" // for output in "ps"
 http.createServer(app).listen(app.get('port'), function() {
   console.log("Cascading Job Visualizer has started successfully.");
   console.log("Express server listening on port " + app.get('port'));
