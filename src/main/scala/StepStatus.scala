@@ -125,7 +125,8 @@ class StepStatus(val stepNumber: String, val stepId: String) {
   // Just be sure final update of run picks up accurate stats for this.
   def getStepRunningTime(hss: HadoopStepStats): String = {
     val forceUpdate: Boolean = (stepStatus == "RUNNING" && hss.getStatus.toString != "RUNNING")
-    val diff = forceUpdate match {
+
+    val diff: Long = forceUpdate match {
       case true => {
         try {
           hss.captureDetail // ain't cheap, keep an eye on it
@@ -137,21 +138,18 @@ class StepStatus(val stepNumber: String, val stepId: String) {
             val end: Long = entry._2.getFinishTime
             if (end > maxEnd) maxEnd = end
           }
-          if (maxEnd - minStart < 1) hss.getCurrentDuration else maxEnd - minStart
+          if (maxEnd - minStart < 1L) 0L else (maxEnd - minStart) / 1000L
         } catch {
-          case _ => hss.getCurrentDuration
+          case _ => 0L
         }
       }
 
       case _ => {
-        if (hss.getStatus.toString != "RUNNING")
-          stepRunningTime.toLong * 1000L
-        else
-          hss.getCurrentDuration
+        stepRunningTime.toLong
       }
     }
 
-    (diff / 1000L).toString
+    diff.toString
   }
 
   def getReduceProgress(hss: HadoopStepStats): String = {
