@@ -27,13 +27,13 @@ object FlowTracker {
   val PROPSFILE = "flow-tracker.properties"
   val NOT_YARN_JOB = "false"
   val INITIAL_FLOW_STATE = "NOT_LAUNCHED"
+  val UNKNOWN = "UNKNOWN"
   val props = getTrackerProperties
   val BASE_API_URL = props("host").trim + ":" + props("port").trim + "/"
   val UPDATE_FLOW_API_URL = BASE_API_URL + "flow/update"
   val UPDATE_STEPS_API_URL = BASE_API_URL + "steps/update"
   val CREATE_EDGES_API_URL = BASE_API_URL + "edges/update"
   val REFRESH_INTERVAL_MS = 8 * 1000
-  val UNKNOWN = "UNKNOWN"
   val CheckIsCascadingFlowId = """([A-Fa-f0-9]+)""".r
 
   val LOG: Logger = Logger.getLogger(classOf[FlowTracker])
@@ -113,6 +113,7 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean) extends ja
 
   // mutable because we have to build this mapping as we go after run() is called
   val stepStatusMap = mutable.Map[String, StepStatus]()
+
   // manages global job state for this run
   val flowStatus = new FlowStatus(flow)
 
@@ -167,7 +168,7 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean) extends ja
       case hadoopStepStats: HadoopStepStats => {
         val id = hadoopStepStats.getID
         val oldStep = stepStatusMap(id).toMap
-        stepStatusMap(id).update(flow, hadoopStepStats)
+        stepStatusMap(id).update(hadoopStepStats)
         if (null != report && oldStep != stepStatusMap(id).toMap) {
           report(id) = stepStatusMap(id)
         }
@@ -180,7 +181,7 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean) extends ja
     val makeAverage: Double = 2.0 * flow.getFlowStats.getStepsCount.toDouble
     val progressTotal = "%3.2f" format ((sumMapProgress + sumReduceProgress) / makeAverage)
     flowStatus.flowProgress = progressTotal
-    flowStatus.flowHdfsBytesWritten = sumHdfsBytesWritten.toString
+    flowStatus.flowHdfsBytesWritten = sumHdfsBytesWritten
     if (shouldLogToConsole) { logFlowStatus }
     pushFlowReport(flow, flow.getFlowStats.getStatus.toString, flowStatus.toMap)
   }
@@ -223,16 +224,21 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean) extends ja
     statusColor + flowStatus.getFlowStatus + Console.WHITE
   }
 
-  /* Methods below are rollups for the Flow, but are most cheaply done here using the StepMap */
-  def sumHdfsBytesWritten: Long = {
-    stepStatusMap.keys.foldLeft(0L) { (sum: Long, stageId: String) => sum + stepStatusMap(stageId).hdfsBytesWritten.toLong }
+  def sumHdfsBytesWritten: String = {
+    stepStatusMap.keys.foldLeft(0L) { (sum: Long, stageId: String) =>
+      sum + stepStatusMap(stageId).hdfsBytesWritten
+    }.toString
   }
 
   def sumMapProgress: Double = {
-    stepStatusMap.keys.foldLeft(0.0) { (sum: Double, stageId: String) => sum + stepStatusMap(stageId).mapProgress.toDouble }
+    stepStatusMap.keys.foldLeft(0.0) { (sum: Double, stageId: String) =>
+      sum + stepStatusMap(stageId).mapProgress.toDouble
+    }
   }
 
   def sumReduceProgress: Double = {
-    stepStatusMap.keys.foldLeft(0.0) { (sum: Double, stageId: String) => sum + stepStatusMap(stageId).reduceProgress.toDouble }
+    stepStatusMap.keys.foldLeft(0.0) { (sum: Double, stageId: String) =>
+      sum + stepStatusMap(stageId).reduceProgress.toDouble
+    }
   }
 }

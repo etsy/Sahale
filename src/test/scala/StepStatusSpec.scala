@@ -8,7 +8,7 @@ import org.scalatest.junit.JUnitRunner
 @RunWith(classOf[JUnitRunner])
 class StepStatusSpec extends FlatSpec with ShouldMatchers {
 
-  val expected = Map[String, String](
+  val expected = Map[String, Any](
     "stepnumber" -> "foo",
     "sources" -> FlowTracker.UNKNOWN,
     "sink" -> FlowTracker.UNKNOWN,
@@ -20,6 +20,8 @@ class StepStatusSpec extends FlatSpec with ShouldMatchers {
     "reduceprogress" -> "0.00",
     "stepstatus" -> "NOT_LAUNCHED",
     "steprunningtime" -> "0",
+    "counters" -> Map[String, Any]()
+/*
     "maptasks" -> "0",
     "reducetasks" -> "0",
     "hdfsbytesread" -> "0",
@@ -36,7 +38,8 @@ class StepStatusSpec extends FlatSpec with ShouldMatchers {
     "ioreadmillis" -> "0",
     "iowritemillis" -> "0",
     "failedmaptasks" -> "0",
-    "failedreducetasks" -> "0"
+    "failedreducetasks" -> "0",
+*/
   )
 
   "A StepStatus" should "return a valid initial map given fixed input arguments" in {

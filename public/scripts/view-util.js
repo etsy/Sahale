@@ -39,6 +39,9 @@ var ViewUtil = (function($) {
       html += renderTapsAndFields("danger", "Sources and Fields", step.sources, step.sourcesfields);
       html += renderTapsAndFields("info", "Sink and Fields", step.sink, step.sinkfields);
       html += '</div>';
+      html += '<div id="hadoopcounters-' + step.stepnumber + '" class="tab-pane">';
+      html += renderHadoopCounters(step);
+      html += '</div>';
       html += '</div>';
       html += '</div>';
     }
@@ -109,8 +112,9 @@ var ViewUtil = (function($) {
 
   function renderTabHeader(idnum) {
     var html = '<ul id="tabs-step-' + idnum + '" class="nav nav-tabs" data-tabs="tabs">';
-    html += '<li class="active"><a href="#jobstats-' + idnum + '" data-toggle="tab">Step Stats</a></li>';
-    html += '<li><a href="#sourcessinks-' + idnum + '" data-toggle="tab">Sources/Sink</a></li>';
+    html += '<li class="active"><a href="#jobstats-' + idnum + '" data-toggle="tab">Stats</a></li>';
+    html += '<li><a href="#sourcessinks-' + idnum + '" data-toggle="tab">Taps</a></li>';
+    html += '<li><a href="#hadoopcounters-' + idnum + '" data-toggle="tab">Counters</a></li>';
     html += '</ul>';
     return html;
   }
@@ -283,5 +287,24 @@ var ViewUtil = (function($) {
     return html;
   }
 
+  function renderHadoopCounters(step) {
+    var html = '';
+    var groups = step['counters'];
+    for (var groupKey in groups) {
+      html += '<div class="panel panel-info" style="font-size:10px">';
+      html +=  '<div class="panel-heading" style="text-align:center">' + groupKey + '</div>';
+      html +=  '<div class="panel-body">';
+      var group = groups[groupKey];
+      for (var counterKey in group) {
+        var value = group[counterKey];
+        html += '<div style="overflow-x:auto;margin-left:4px">' + counterKey + ": " + value + '</div>';
+        html += '<div class="tapline" />';
+      }
+      html += '</div></div>';
+    }
+    return html;
+  }
+
   return view;
+
 }(jQuery));

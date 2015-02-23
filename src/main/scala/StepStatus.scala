@@ -1,6 +1,5 @@
 package com.etsy.sahale
 
-import org.apache.log4j.Logger
 
 import cascading.flow.Flow
 import cascading.flow.hadoop.HadoopFlowStep
@@ -14,6 +13,7 @@ import com.codahale.jerkson.Json._
 
 import scala.collection.mutable
 import scala.collection.JavaConversions._
+
 
 /**
  * Value class to store tracked per-step workflow data.
@@ -30,6 +30,10 @@ class StepStatus(val stepNumber: String, val stepId: String) {
   var reduceProgress = "0.00"
   var stepStatus = "NOT_LAUNCHED"
   var stepRunningTime = "0"
+  var counters = Map[String, Any]()
+  var hdfsBytesWritten = 0L
+
+/*
   var mapTasks = "0"
   var reduceTasks = "0"
   var hdfsBytesRead = "0"
@@ -47,13 +51,13 @@ class StepStatus(val stepNumber: String, val stepId: String) {
   var ioWriteMillis = "0"
   var failedMapTasks = "0"
   var failedReduceTasks = "0"
-  // CONSTRUCTOR ENDS HERE
+*/
 
   override def toString: String = {
     toMap.toString
   }
 
-  def toMap: Map[String, String] = {
+  def toMap: Map[String, Any] = {
     Map(
       "stepnumber" -> stepNumber,
       "sources" -> sources,
@@ -66,6 +70,8 @@ class StepStatus(val stepNumber: String, val stepId: String) {
       "reduceprogress" -> reduceProgress,
       "stepstatus" -> stepStatus,
       "steprunningtime" -> stepRunningTime,
+      "counters" -> counters
+/*
       "maptasks" -> mapTasks,
       "reducetasks" -> reduceTasks,
       "hdfsbytesread" -> hdfsBytesRead,
@@ -82,7 +88,8 @@ class StepStatus(val stepNumber: String, val stepId: String) {
       "ioreadmillis" -> ioReadMillis,
       "iowritemillis" -> ioWriteMillis,
       "failedmaptasks" -> failedMapTasks,
-      "failedreducetasks" -> failedReduceTasks
+      "failedreducetasks" -> failedReduceTasks,
+*/
     )
   }
 
@@ -96,36 +103,19 @@ class StepStatus(val stepNumber: String, val stepId: String) {
   /**
    * Updates the non-static step properties.
    */
-  def update(flow: Flow[_], hadoopStepStats: HadoopStepStats): Unit = {
+  def update(hadoopStepStats: HadoopStepStats): Unit = {
     jobId = hadoopStepStats.getJobID
-    mapProgress = "%3.2f" format (hadoopStepStats.getMapProgress * 100.0)
+    mapProgress = getMapProgress(hadoopStepStats)
     reduceProgress = getReduceProgress(hadoopStepStats)
     stepRunningTime = getStepRunningTime(hadoopStepStats) // checks old stepStatus value - MUST be updated first!
-    stepStatus = hadoopStepStats.getStatus.toString
-    mapTasks = getMapperCount(hadoopStepStats)
-    reduceTasks = getReducerCount(hadoopStepStats)
-    hdfsBytesRead = getHdfsBytesRead(hadoopStepStats)
-    hdfsBytesWritten = getHdfsBytesWritten(hadoopStepStats)
-    fileBytesRead = getFileBytesRead(hadoopStepStats)
-    fileBytesWritten = getFileBytesWritten(hadoopStepStats)
-    tuplesRead = getTuplesRead(hadoopStepStats)
-    tuplesWritten = getTuplesWritten(hadoopStepStats)
-    dataLocalMapTasks = getLocalMapperCount(hadoopStepStats)
-    rackLocalMapTasks = getRackMapperCount(hadoopStepStats)
-    committedHeapBytes = getCommittedHeapBytes(hadoopStepStats)
-    gcMillis = getGcTimeMillis(hadoopStepStats)
-    cpuMillis = getCpuTimeMillis(hadoopStepStats)
-    ioReadMillis = getIoReadTimeMillis(hadoopStepStats)
-    ioWriteMillis = getIoWriteTimeMillis(hadoopStepStats)
-    failedMapTasks = getFailedMapperCount(hadoopStepStats)
-    failedReduceTasks = getFailedReducerCount(hadoopStepStats)
+    stepStatus = hadoopStepStats.getStatus.toString 
+    updateStepCounters(hadoopStepStats)
   }
 
   // Calling captureDetail every update just for this is not worth it.
   // Just be sure final update of run picks up accurate stats for this.
   def getStepRunningTime(hss: HadoopStepStats): String = {
     val forceUpdate: Boolean = (stepStatus == "RUNNING" && hss.getStatus.toString != "RUNNING")
-
     val diff: Long = forceUpdate match {
       case true => {
         try {
@@ -143,87 +133,51 @@ class StepStatus(val stepNumber: String, val stepId: String) {
           case _ => 0L
         }
       }
-
       case _ => {
         stepRunningTime.toLong
       }
     }
-
     diff.toString
+  }
+
+  def updateStepCounters(hss: HadoopStepStats): Unit = {
+    counters = dumpCounters(hss).foldLeft(mutable.Map[String, Map[String, Long]]()) {
+      (acc, next) => acc.getOrElse(next._1, None) match {
+        case None => acc(next._1) = Map(next._2 -> next._3) ; acc
+        case _    => acc(next._1) = Map(next._2 -> next._3) ++ acc(next._1) ; acc
+      }
+    }.toMap
+  }
+
+  def dumpCounters(hss: HadoopStepStats): Iterable[(String, String, Long)] = {
+    for (g <- hss.getCounterGroups ; c <- hss.getCountersFor(g)) yield {
+      (cleanGroupName(g), c, hss.getCounterValue(g, c))
+    }
+  }
+
+  def cleanGroupName(name: String): String = {
+    name match {
+      case oah: String if (oah.startsWith("org.apache.hadoop.")) => cleanGroupName(oah.substring(18))
+      case ic: String if (ic.indexOf("""$""") >= 0) => cleanGroupName(ic.substring(0, ic.indexOf("""$""")))
+      case _ => name
+    }
+  }
+
+  def getMapProgress(hss: HadoopStepStats): String = {
+    hss.getMapProgress.isNaN match {
+      case true => "0.00"
+      case _    => "%3.2f" format (hss.getMapProgress * 100.0)
+    }
   }
 
   def getReduceProgress(hss: HadoopStepStats): String = {
     hss.getReduceProgress.isNaN match {
-      case true => "100.0"
+      case true => "0.00"
       case _    => "%3.2f" format (hss.getReduceProgress * 100.0)
     }
   }
 
-  def getTuplesRead(hss: HadoopStepStats): String = {
-    hss.getCounterValue(cascading.flow.StepCounters.Tuples_Read).toString
-  }
-
-  def getTuplesWritten(hss: HadoopStepStats): String = {
-    hss.getCounterValue(cascading.flow.StepCounters.Tuples_Written).toString
-  }
-
-  def getFileBytesRead(hss: HadoopStepStats): String = {
-    hss.getCounterValue("org.apache.hadoop.mapreduce.FileSystemCounter", "FILE_BYTES_READ").toString
-  }
-
-  def getFileBytesWritten(hss: HadoopStepStats): String = {
-    hss.getCounterValue("org.apache.hadoop.mapreduce.FileSystemCounter", "FILE_BYTES_WRITTEN").toString
-  }
-
-  def getHdfsBytesRead(hss: HadoopStepStats): String = {
-    hss.getCounterValue("org.apache.hadoop.mapreduce.FileSystemCounter", "HDFS_BYTES_READ").toString
-  }
-
-  def getHdfsBytesWritten(hss: HadoopStepStats): String = {
-    hss.getCounterValue("org.apache.hadoop.mapreduce.FileSystemCounter", "HDFS_BYTES_WRITTEN").toString
-  }
-
-  def getMapperCount(hss: HadoopStepStats): String = {
-    hss.getCounterValue(org.apache.hadoop.mapreduce.JobCounter.TOTAL_LAUNCHED_MAPS).toString
-  }
-
-  def getReducerCount(hss: HadoopStepStats): String = {
-    hss.getCounterValue(org.apache.hadoop.mapreduce.JobCounter.TOTAL_LAUNCHED_REDUCES).toString
-  }
-
-  def getLocalMapperCount(hss: HadoopStepStats): String = {
-    hss.getCounterValue(org.apache.hadoop.mapreduce.JobCounter.DATA_LOCAL_MAPS).toString
-  }
-
-  def getRackMapperCount(hss: HadoopStepStats): String = {
-    hss.getCounterValue(org.apache.hadoop.mapreduce.JobCounter.RACK_LOCAL_MAPS).toString
-  }
-
-  def getCommittedHeapBytes(hss: HadoopStepStats): String = {
-    hss.getCounterValue(org.apache.hadoop.mapreduce.TaskCounter.COMMITTED_HEAP_BYTES).toString
-  }
-
-  def getGcTimeMillis(hss: HadoopStepStats): String = {
-    hss.getCounterValue(org.apache.hadoop.mapreduce.TaskCounter.GC_TIME_MILLIS).toString
-  }
-
-  def getCpuTimeMillis(hss: HadoopStepStats): String = {
-    hss.getCounterValue(org.apache.hadoop.mapreduce.TaskCounter.CPU_MILLISECONDS).toString
-  }
-
-  def getIoReadTimeMillis(hss: HadoopStepStats): String = {
-    hss.getCounterValue(cascading.flow.SliceCounters.Read_Duration).toString
-  }
-
-  def getIoWriteTimeMillis(hss: HadoopStepStats): String = {
-    hss.getCounterValue(cascading.flow.SliceCounters.Write_Duration).toString
-  }
-
-  def getFailedMapperCount(hss: HadoopStepStats): String = {
-    hss.getCounterValue(org.apache.hadoop.mapreduce.JobCounter.NUM_FAILED_MAPS).toString
-  }
-
-  def getFailedReducerCount(hss: HadoopStepStats): String = {
-    hss.getCounterValue(org.apache.hadoop.mapreduce.JobCounter.NUM_FAILED_REDUCES).toString
+  def getHdfsBytesWritten(hss: HadoopStepStats): Long = {
+    hss.getCounterValue("org.apache.hadoop.mapreduce.FileSystemCounter", "HDFS_BYTES_WRITTEN")
   }
 }
