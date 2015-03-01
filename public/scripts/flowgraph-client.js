@@ -22,7 +22,7 @@ $(document).ready(function() {
     $.get('/steps/' + theFlow.flow_id, function(stepData) {
 
       // build the state needed and add vertices to the graph visualization
-      stepMap = GraphUtil.buildStepNumberToStepMap(stepData);
+      stepMap = DataUtil.buildStepNumberToStepMap(stepData);
 
       // API call to get edge mapping between vertices in the graph, by Flow ID
       $.get('/edges/' + theFlow.flow_id, function(edgeData) {

@@ -19,15 +19,6 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil) {
     flowId = fl.flow_id;
   }
 
-  graph.buildStepNumberToStepMap = function(rows) {
-    var map = {};
-    rows.forEach(function(item, ndx, arr) {
-      var step = JSON.parse(item.step_json);
-      map[step.stepnumber] = step;
-    });
-    return map;
-  }
-
   graph.setNavigationLinks = function(theFlow) {
     $('#jobname').text(theFlow.flow_name.replace('com.etsy.scalding.jobs.',''));
     $('li.flowname a').attr('href', '/history/' + theFlow.flow_name);

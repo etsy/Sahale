@@ -82,9 +82,8 @@ var ChartUtil = (function($, d3, ViewUtil) {
   }
 
   chartutil.aggregateStepData = function(agg, steps) {
-    steps.forEach(function(item, ndx, arr) {
-      var step = JSON.parse(item['step_json']);
-      var flow = agg[item['flow_id']];
+    steps.forEach(function(step, ndx, arr) {
+      var flow = agg[step['flow_id']];
       flow.maptasks = parseInt(step.maptasks, 10) + parseInt(flow.maptasks, 10);
       flow.reducetasks = parseInt(step.reducetasks, 10) + parseInt(flow.reducetasks, 10);
       flow.hdfswrites = parseInt(step.hdfsbyteswritten, 10) + parseInt(flow.hdfswrites, 10);

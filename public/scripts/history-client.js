@@ -21,7 +21,7 @@ $(document).ready(function() {
 
     // get the (flow => steps) rollup data we need to aggregate for these charts
     $.post('/step_group', data, function(theSteps, code, xhr) {
-      ChartUtil.aggregateStepData(flowAgg, theSteps);
+      ChartUtil.aggregateStepData(flowAgg, DataUtil.unpackSteps(theSteps));
       ChartUtil.renderBarChart("#runningtimes", ChartUtil.getRunningTimeData(unpacked), "Minutes");
       ChartUtil.renderBarChart("#slotcounts", ChartUtil.getMapReduceSlotData(unpacked, flowAgg), "Slots");
       ChartUtil.renderBarChart("#hdfswrites", ChartUtil.getHdfsWriteData(unpacked, flowAgg), "Gigabytes");
