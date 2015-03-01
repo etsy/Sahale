@@ -86,7 +86,7 @@ var DataUtil = (function() {
       return defaultValue;
     }
     if (step['counters'][group] === undefined) {
-      console.log("step['counters'][group] is undefined where group is " + group);
+      //console.log("step['counters'][group] is undefined where group is " + group);
       return defaultValue;
     }
     return step['counters'][group][counter] || defaultValue;

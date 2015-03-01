@@ -1,7 +1,5 @@
 /////////////////////////////// For DagreD3 Graph View ////////////////////////////////////
-var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil) {
-  // module 'constant'
-  var FLOWGRAPH_INIT_STATE = { tx: 40, ty: 40, scale: 1, curid: 0, curcolor: "NONE" };
+var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
 
   // Global module state
   var graph = {},
@@ -9,7 +7,7 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil) {
     scaleRegex =     /scale\(\s*([0-9.-]+)\s*\)/,
     flowId =         "",
     height =         0,
-    state =          FLOWGRAPH_INIT_STATE,
+    //state =          FLOWGRAPH_INIT_STATE, // TODO: FIX USES OF graph.state
     theG =           null
   ;
 
@@ -23,7 +21,7 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil) {
     $('#jobname').text(theFlow.flow_name.replace('com.etsy.scalding.jobs.',''));
     $('li.flowname a').attr('href', '/history/' + theFlow.flow_name);
     $('li.clearstate a').click(function() {
-      sessionStorage.removeItem('flowid-' + theFlow.flow_id);
+      StateUtil.clearFlowState(theFlow.flow_id);
       $(window).off('unload');
       location.reload();
     });
@@ -65,7 +63,12 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil) {
     d3.select("#flowgraph").call(d3.behavior.zoom().on("zoom", zoomFunction));
   }
 
+
   /////////////////// private utility methods //////////////////////
+  function getAdjustedYPanelHeight() {
+    return 183.0 - (parseInt(height) / 2.0);
+  }
+
   function addElephant(item) {
     return '<img width="40px" height="40px" ' +
       'title="MapReduce Job (Step ' + item.stepnumber + ' of Flow)" ' +
@@ -94,11 +97,12 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil) {
     layout = renderer.layout(layout).run(graphData, theG);
     // capture some state to maintain view during transformations/refreshes etc.
     height = layout.graph().height;
+    StateUtil.captureGraphViewYOffset(getAdjustedYPanelHeight());
   }
 
   // load graph view state or set init values, call zoom event to exec
   function updateViewState(stepMap) {
-    state = getViewState();
+    state = StateUtil.getFlowState(flowId);
     checkPreviouslySelectedVertex(stepMap);
     theG.attr("transform", stringifyTransform(state));
   }
@@ -106,21 +110,22 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil) {
   function registerHover(step) {
     $("#step-image-" + step.stepnumber).hover(
       function(e) {
+        var state = StateUtil.getFlowState(flowId);
         if (state.curid !== 0) {
           $("#step-image-" + state.curid).removeClass("hi-lite");
           $("#step-" + state.curid).focus().hide();
         }
         $("#no-step").hide();
 
-        state.curid = step.stepnumber;
+        StateUtil.updateCurrentId(step.stepnumber);
         var vertex = $(this);
-        state.curcolor = vertex.addClass("hi-lite");
+        StateUtil.updateCurrentColor(vertex.addClass("hi-lite"));
         vertex.focus();
 
         var mrTitle = $("#mrdetail-title");
         mrTitle.html(ViewUtil.renderStepStatus(step)).show().focus();
 
-        $("#step-" + state.curid).fadeIn(200);
+        $("#step-" + StateUtil.getFlowState(flowId).curid).fadeIn(200);
       },
       function(e) {
         e.stopPropagation();
@@ -131,7 +136,7 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil) {
 
   function zoomFunction() {
       var result = "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")";
-      if (state === null) { state = getViewState(); }
+      var state = StateUtil.getFlowState(flowId);
       var adjscale = Math.max(.0001, parseFloat(state.scale) * parseFloat(d3.event.scale));
       var match = /([0-9.-]+)\s*,\s*([0-9.-]+)/.exec(d3.event.translate);
       var dx = parseFloat(match[1]);
@@ -146,17 +151,9 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil) {
   function updateUnloadHandler() {
     $(window).on("unload", function() {
       if (flowId && flowId !== "")  {
-        setViewState();
+        setViewState(flowId);
       }
     });
-  }
-
-  // takes JSON string and converts to js Object literal
-  // or supplies default data struct if this is first visit of session
-  function getViewState() {
-    var newStateStr = sessionStorage.getItem("flowid-" + flowId);
-    return newStateStr === null ?
-      updateWithGraphRenderInfo(FLOWGRAPH_INIT_STATE) : JSON.parse(newStateStr);
   }
 
   // converts string 'transform' attribute -> JSON string using
@@ -168,26 +165,19 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil) {
     var transx = tMatch[1];
     var transy = tMatch[2];
     var scalexy = sMatch[1];
-    // 'curcolor' should be set by getter code as it can change during a page refresh
-    var result =  JSON.stringify(
-     { tx: transx, ty: transy, scale: scalexy, curid: state.curid, curcolor: "ERROR_BAD_PARAM" }
-    );
-    sessionStorage.setItem("flowid-" + flowId, result);
-  }
-
-  function updateWithGraphRenderInfo(template) {
-    template.ty = 183.0 - (parseInt(height) / 2.0);
-    return template;
+    StateUtil.updateViewState(transx, transy, scalexy);
+    StateUtil.setFlowState(flowId);
   }
 
   // if there was a previous selected state, restore it - but store the
   // color of the current selected job stage from using fresh page data
   // as it could have been updated during page refresh.
   function checkPreviouslySelectedVertex(stepMap) {
+    var state = StateUtil.getFlowState(flowId);
     if (state.curid !== 0) {
       $("#no-step").remove();
       var curImg = $("#step-image-" + state.curid);
-      state.curcolor = curImg.removeClass("hi-lite");
+      StateUtil.updateCurrentColor(curImg.removeClass("hi-lite"));
       $("#mrdetails-title").html(ViewUtil.renderStepStatus(stepMap[state.curid])).show();
       $("#step-" + state.curid).show();
       curImg.trigger('mouseover');
@@ -199,4 +189,5 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil) {
   }
 
   return graph;
-}(jQuery, d3, dagreD3, ViewUtil, ChartUtil));
+
+}(jQuery, d3, dagreD3, ViewUtil, ChartUtil, StateUtil));
