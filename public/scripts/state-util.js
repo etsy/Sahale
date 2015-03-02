@@ -6,16 +6,14 @@ var StateUtil = (function() {
     ty: 40,
     scale: 1,
     curid: 0,
-    curcolor: "NONE",
     tabs_state: {},
     chart_state: 0
   };
-  var sahale_state = SAHALE_INIT_STATE;
+  var sahale_state = null;
 
   state.captureGraphViewYOffset = function(offset) {
     SAHALE_INIT_STATE.ty = offset;
-    console.log("[Set SAHALE_INIT_STATE]:"); // DEBUG
-    console.debug(SAHALE_INIT_STATE); // DEBUG
+    console.log("[Set SAHALE_INIT_STATE]: " + JSON.stringify(SAHALE_INIT_STATE)); // DEBUG
   }
 
   state.clearFlowState = function(flow_id) {
@@ -24,12 +22,11 @@ var StateUtil = (function() {
   }
 
   state.getFlowState = function(flow_id) {
-    var newStateStr = sessionStorage.getItem("flowid-" + flow_id);
-    console.log("[getFlowState] Hydrate newStateStr:"); // DEBUG
-    console.debug(newStateStr); // DEBUG
-    sahale_state = newStateStr === null ? SAHALE_INIT_STATE : JSON.parse(newStateStr);
-    console.log("[getFlowState] sahale_state returned:"); // DEBUG
-    console.debug(sahale_state); // DEBUG
+    if (sahale_state === null) {
+      var new_state = sessionStorage.getItem("flowid-" + flow_id);
+      sahale_state = new_state === null ? SAHALE_INIT_STATE : JSON.parse(new_state);
+    }
+    console.log("[getFlowState] sahale_state returned: " + JSON.stringify(sahale_state)); // DEBUG
     return sahale_state;
   }
 
@@ -48,10 +45,6 @@ var StateUtil = (function() {
 
   state.updateCurrentId = function(val) {
     sahale_state.curid = val;
-  }
-
-  state.updateCurrentColor = function(val) {
-    sahale_state.curcolor = val;
   }
 
   state.updateTranslateScale = function(val) {
@@ -73,10 +66,7 @@ var StateUtil = (function() {
     state.updateTranslateY(transy);
     state.updateTranslateScale(sc);
     // 'curid' stays the same
-    // 'curcolor' should be set by getter code as it can change during a page refresh
-    state.updateCurrentColor("ERROR_BAD_PARAM");
-    console.log("[updateViewState] sahale_state updated to:"); // DEBUG
-    console.debug(sahale_state); // DEBUG
+    console.log("[updateViewState] sahale_state updated to: " + JSON.stringify(sahale_state)); // DEBUG
   }
 
   return state;

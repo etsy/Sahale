@@ -7,7 +7,6 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
     scaleRegex =     /scale\(\s*([0-9.-]+)\s*\)/,
     flowId =         "",
     height =         0,
-    //state =          FLOWGRAPH_INIT_STATE, // TODO: FIX USES OF graph.state
     theG =           null
   ;
 
@@ -118,10 +117,7 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
         $("#no-step").hide();
 
         StateUtil.updateCurrentId(step.stepnumber);
-        var vertex = $(this);
-        StateUtil.updateCurrentColor(vertex.addClass("hi-lite"));
-        vertex.focus();
-
+        $(this).addClass("hi-lite").focus(); // DEBUG
         var mrTitle = $("#mrdetail-title");
         mrTitle.html(ViewUtil.renderStepStatus(step)).show().focus();
 
@@ -177,7 +173,7 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
     if (state.curid !== 0) {
       $("#no-step").remove();
       var curImg = $("#step-image-" + state.curid);
-      StateUtil.updateCurrentColor(curImg.removeClass("hi-lite"));
+      curImg.removeClass("hi-lite");
       $("#mrdetails-title").html(ViewUtil.renderStepStatus(stepMap[state.curid])).show();
       $("#step-" + state.curid).show();
       curImg.trigger('mouseover');
