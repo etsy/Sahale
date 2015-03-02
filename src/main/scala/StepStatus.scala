@@ -130,7 +130,7 @@ class StepStatus(val stepNumber: String, val stepId: String) {
           }
           if (maxEnd - minStart < 1L) 0L else (maxEnd - minStart) / 1000L
         } catch {
-          case _ => 0L
+          case _: Exception => 0L
         }
       }
       case _ => {

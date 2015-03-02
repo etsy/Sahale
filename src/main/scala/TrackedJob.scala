@@ -20,8 +20,12 @@ class TrackedJob(args: Args) extends com.twitter.scalding.Job(args) {
   /**
    * Override run() to control the lifecycle of the tracker threads using try/finally.
    * This will be run on the management process, your own Job code will run on the cluster.
+   *
+   * ***WARNING***
+   * Scalding 0.12.0 breaks compatibiilty here: for Scalding 0.8.5, this signature must be:
+   * "override def run(implicit mode: Mode) = { ..."
    */
-  override def run(implicit mode: Mode) = {
+  override def run: Boolean = {
     mode match {
       // only track Hadoop cluster jobs marked "--track-job"
       case Hdfs(_, _) => if (args.boolean("track-job")) runTrackedJob else super.run

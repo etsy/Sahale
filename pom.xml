@@ -4,7 +4,7 @@
 
   <groupId>com.etsy.sahale</groupId>
   <artifactId>flowtracker</artifactId>
-  <version>0.5.5-SNAPSHOT</version>
+  <version>0.6.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>flowtracker</name>
@@ -14,7 +14,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.basedir>.</project.basedir>
     <!-- Users should adjust to match their own distribution and build -->
-    <scala.version>2.9.3</scala.version>
+    <scala.version>2.10.4</scala.version>
     <!-- Users should adjust to match their own distribution and build -->
     <hadoop.version>2.5.0-cdh5.3.0</hadoop.version>
     <!-- Users should adjust to match their own distribution and build -->
@@ -168,10 +168,12 @@
       <version>0.4.7</version>
     </dependency>
 
+   <!-- Updated to support Scala 2.10.x ; use old dep if still on Scala 2.9.x:
+        "io.backchat.jerkson" % "jerkson_2.9.2" % "0.7.0" -->
    <dependency>
-      <groupId>io.backchat.jerkson</groupId>
-      <artifactId>jerkson_2.9.2</artifactId>
-      <version>0.7.0</version>
+      <groupId>com.cloudphysics</groupId>
+      <artifactId>jerkson_2.10</artifactId>
+      <version>0.6.3</version>
     </dependency>
 
     <dependency>
@@ -203,11 +205,13 @@
       <artifactId>commons-httpclient</artifactId>
       <version>3.0.1</version>
     </dependency>
-
+ 
+    <!-- Updated to support Scala 2.10.x ; use old dep if still on Scala 2.9.x:
+        "com.twitter" % "scalding-core_2.9.2" % "0.8.5" -->
     <dependency>
       <groupId>com.twitter</groupId>
-      <artifactId>scalding-core_2.9.2</artifactId>
-      <version>0.8.5</version>
+      <artifactId>scalding-core_2.10</artifactId>
+      <version>0.12.0</version>
     </dependency>
 
     <!-- Test dependencies. subject to change/still under construction -->
@@ -218,10 +222,12 @@
       <scope>test</scope>
     </dependency>
 
+    <!-- Updated for Scala 2.10 ; use old dependency if still on Scala 2.9.x
+         "org.scalatest" % "scalatest_2.9.3" % "2.0.M5b" -->
     <dependency>
       <groupId>org.scalatest</groupId>
-      <artifactId>scalatest_2.9.3</artifactId>
-      <version>2.0.M5b</version>
+      <artifactId>scalatest_2.10</artifactId>
+      <version>2.2.4</version>
       <scope>test</scope>
     </dependency>
 
