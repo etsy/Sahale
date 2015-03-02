@@ -47,8 +47,10 @@ $(document).ready(function() {
         // get event handling wired up
         GraphUtil.setEventHandlers(stepMap);
 
-        // set refresh interval
-        setTimeout( function() { location.reload(); }, 35 * 1000 );
+        // set refresh interval only if the Flow isn't finished running
+        if (["FAILED", "STOPPED", "SUCCESSFUL"].indexOf(theFlow.flow_status) < 0) {
+          setTimeout( function() { location.reload(); }, 30 * 1000 );
+        }
       });
     });
   });
