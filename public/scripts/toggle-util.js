@@ -1,7 +1,6 @@
-var ToggleUtil = (function($, ViewUtil) {
+var ToggleUtil = (function($, ViewUtil, StateUtil) {
   var stepMap = {};
   var toggle = {};
-  var clicks = 0;
   var GIGABYTES = parseInt(1024 * 1024 * 1024);
 
   toggle.mapData     = [];
@@ -42,13 +41,13 @@ var ToggleUtil = (function($, ViewUtil) {
   }
 
   toggle.renderAndRegisterEvent = function() {
-    var ndx = parseInt(clicks % toggle.mapData.length);
+    var ndx = parseInt(StateUtil.getChartState() % toggle.mapData.length);
     var actitle = $("#actitle");
     actitle.text(toggle.titles[ndx]);
     actitle.append('<button class="glyphicon glyphicon-stats" style="float:right" id="actoggle"></button>');
 
     $("#actoggle").on("click", function(evt) {
-      clicks += 1;
+      StateUtil.incrementChartState();
       toggle.renderAndRegisterEvent();
     });
 
@@ -265,4 +264,4 @@ var ToggleUtil = (function($, ViewUtil) {
 
   return toggle;
 
-})(jQuery, ViewUtil);
+})(jQuery, ViewUtil, StateUtil);

@@ -117,7 +117,7 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
         $("#no-step").hide();
 
         StateUtil.updateCurrentId(step.stepnumber);
-        $(this).addClass("hi-lite").focus(); // DEBUG
+        $(this).addClass("hi-lite").focus();
         var mrTitle = $("#mrdetail-title");
         mrTitle.html(ViewUtil.renderStepStatus(step)).show().focus();
 

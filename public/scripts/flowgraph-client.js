@@ -34,6 +34,9 @@ $(document).ready(function() {
         // render this thing
         GraphUtil.renderFlowGraph(graphData);
 
+        // pull any existing browser state if this is a page refresh only
+        StateUtil.getFlowState(theFlow.flow_id);
+
         // render metrics views
         ViewUtil.renderMapReducePanels(stepMap, theFlow);
 

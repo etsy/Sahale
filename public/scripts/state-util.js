@@ -51,13 +51,22 @@ var StateUtil = (function() {
     sahale_state.scale = val;
   }
 
-  state.setChartState = function(index) {
-    sahale_state.tabs_state = index;
+  state.getTabState = function(stepnum) {
+    return sahale_state.tabs_state[stepnum];
   }
 
-  // step is 1-indexed, tab is 0-indexed
-  state.setTabState = function(stepnum, tabnum) {
-    sahale_state.chart_state[stepnum] = tabnum;
+  // tabs should be tracked by CSS classname to set "active", indexed per step number
+  state.updateTabState = function(stepnum, klazz) {
+    sahale_state.tabs_state[stepnum] = klazz;
+  }
+
+  // just track clicks for use in toggle-utils
+  state.incrementChartState = function() {
+    sahale_state.chart_state += 1;
+  }
+
+  state.getChartState = function() {
+    return sahale_state.chart_state;
   }
 
   // called from graph-util just before setFlowState is called on page refresh
