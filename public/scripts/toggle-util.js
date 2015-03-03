@@ -9,7 +9,12 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
   toggle.maxValues   = [];
   toggle.titles      = [];
 
-  toggle.buildDatasets = function(sm) {
+  toggle.renderCharts = function(step_map) {
+    buildDatasets(step_map);
+    renderAndRegisterEvent();
+  }
+
+  function buildDatasets(sm) {
     stepMap = sm;
 
     assignData(
@@ -40,7 +45,7 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     ]);
   }
 
-  toggle.renderAndRegisterEvent = function() {
+  function renderAndRegisterEvent() {
     var ndx = parseInt(StateUtil.getChartState() % toggle.mapData.length);
     var actitle = $("#actitle");
     actitle.text(toggle.titles[ndx]);
@@ -48,7 +53,7 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
 
     $("#actoggle").on("click", function(evt) {
       StateUtil.incrementChartState();
-      toggle.renderAndRegisterEvent();
+      renderAndRegisterEvent();
     });
 
     AreaChart.renderAreaChart(

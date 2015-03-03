@@ -62,6 +62,8 @@ var DataUtil = (function() {
     step.filebyteswritten = checkedStepUnpack(step, 'mapreduce.FileSystemCounter', 'FILE_BYTES_WRITTEN', 0);
     step.tuplesread = checkedStepUnpack(step, 'cascading.flow.StepCounters', 'Tuples_Read', 0);
     step.tupleswritten = checkedStepUnpack(step, 'cascading.flow.StepCounters', 'Tuples_Written', 0);
+    step.ioreadmillis = checkedStepUnpack(step, 'cascading.flow.SliceCounters', 'Read_Duration', 0);
+    step.iowritemillis = checkedStepUnpack(step, 'cascading.flow.SliceCounters', 'Write_Duration', 0);
 
     return step;
 
@@ -69,8 +71,6 @@ var DataUtil = (function() {
     //step.committedheapbytes = step['counter']['mapreduce.TaskCounter']['COMMITTED_HEAP_BYTES'] || 0;
     //step.gcmillis = step['counter']['mapreduce.TaskCounter']['GC_TIME_MILLIS'] || 0;
     //step.cpumillis = step['counter']['mapreduce.TaskCounter']['CPU_MILLISECONDS'] || 0;
-    //step.ioreadmillis = step['counter']['cascading.flow.SliceCounters']['Read_Duration'] || 0;
-    //step.iowritemillis = step['counter']['cascading.flow.SliceCounters']['Write_Duration'] || 0;
   }
 
   function checkedStepUnpack(step, group, counter, defaultValue) {

@@ -5,7 +5,7 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
   var graph = {},
     translateRegex = /translate\(\s*([0-9.-]+)\s*,\s*([0-9.-]+)\)/,
     scaleRegex =     /scale\(\s*([0-9.-]+)\s*\)/,
-    flowId =         "",
+    flow_id =         "",
     height =         0,
     theG =           null
   ;
@@ -13,31 +13,39 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
 
   //////////////////////// GraphUtil public functions //////////////////////
   graph.captureFlowId = function(fl) {
-    flowId = fl.flow_id;
+    flow_id = fl.flow_id;
   }
 
-  graph.setNavigationLinks = function(theFlow) {
-    $('#jobname').text(theFlow.flow_name.replace('com.etsy.scalding.jobs.',''));
-    $('li.flowname a').attr('href', '/history/' + theFlow.flow_name);
+  graph.setNavigationLinks = function(flow) {
+    $('#jobname').text(flow.flow_name.replace('com.etsy.scalding.jobs.',''));
+    $('li.flowname a').attr('href', '/history/' + flow.flow_name);
     $('li.clearstate a').click(function() {
-      StateUtil.clearFlowState(theFlow.flow_id);
+      StateUtil.clearFlowState(flow.flow_id);
       $(window).off('unload');
       location.reload();
     });
   }
 
-  graph.setEventHandlers = function(stepMap) {
-    for (var key in stepMap) {
-      registerHover(stepMap[key]);
+  graph.setEventHandlers = function(step_map) {
+    for (var key in step_map) {
+      registerHover(step_map[key]);
     }
     updateUnloadHandler();
-    updateViewState(stepMap);
+    updateViewState(step_map);
   }
 
-  graph.addAllEdges = function(graphData, stepMap, rows) {
+  graph.renderFlowGraph = function(graph_data, step_map, edges) {
+    addAllVertices(graph_data, step_map);
+    addAllEdges(graph_data, step_map, edges);
+    renderD3Graph(graph_data);
+  }
+
+
+  /////////////////// private utility methods //////////////////////
+  function addAllEdges(graph_data, step_map, rows) {
     rows.forEach(function(item, ndx, arr) {
-      var step = stepMap[item.src_stage];
-      graphData.addEdge(
+      var step = step_map[item.src_stage];
+      graph_data.addEdge(
         null,
         item.src_stage.toString(),
         item.dest_stage.toString(),
@@ -49,21 +57,19 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
     });
   }
 
-  graph.addAllVertices = function(graphData, stepMap) {
-    for (var key in stepMap) {
-      var step = stepMap[key];
-      graphData.addNode(key, { label: addElephant(step) });
+  function addAllVertices(graph_data, step_map) {
+    for (var key in step_map) {
+      var step = step_map[key];
+      graph_data.addNode(key, { label: addElephant(step) });
     }
   }
 
-  graph.renderFlowGraph = function(graphData) {
+  function renderD3Graph(graph_data) {
     theG = d3.select("#flowgraph > g");
-    renderViewLayout(graphData);
+    renderViewLayout(graph_data);
     d3.select("#flowgraph").call(d3.behavior.zoom().on("zoom", zoomFunction));
   }
 
-
-  /////////////////// private utility methods //////////////////////
   function getAdjustedYPanelHeight() {
     return 183.0 - (parseInt(height) / 2.0);
   }
@@ -89,27 +95,27 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
     }
   }
 
-  function renderViewLayout(graphData) {
+  function renderViewLayout(graph_data) {
     // draw the flow graph
     var renderer = new dagreD3.Renderer();
     var layout = renderer.layout().rankDir("LR");
-    layout = renderer.layout(layout).run(graphData, theG);
+    layout = renderer.layout(layout).run(graph_data, theG);
     // capture some state to maintain view during transformations/refreshes etc.
     height = layout.graph().height;
     StateUtil.captureGraphViewYOffset(getAdjustedYPanelHeight());
   }
 
   // load graph view state or set init values, call zoom event to exec
-  function updateViewState(stepMap) {
-    state = StateUtil.getFlowState(flowId);
-    checkPreviouslySelectedVertex(stepMap);
+  function updateViewState(step_map) {
+    state = StateUtil.getFlowState(flow_id);
+    checkPreviouslySelectedVertex(step_map);
     theG.attr("transform", stringifyTransform(state));
   }
 
   function registerHover(step) {
     $("#step-image-" + step.stepnumber).hover(
       function(e) {
-        var state = StateUtil.getFlowState(flowId);
+        var state = StateUtil.getFlowState(flow_id);
         if (state.curid !== 0) {
           $("#step-image-" + state.curid).removeClass("hi-lite");
           $("#step-" + state.curid).focus().hide();
@@ -121,7 +127,7 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
         var mrTitle = $("#mrdetail-title");
         mrTitle.html(ViewUtil.renderStepStatus(step)).show().focus();
 
-        $("#step-" + StateUtil.getFlowState(flowId).curid).fadeIn(200);
+        $("#step-" + StateUtil.getFlowState(flow_id).curid).fadeIn(200);
       },
       function(e) {
         e.stopPropagation();
@@ -132,7 +138,7 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
 
   function zoomFunction() {
       var result = "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")";
-      var state = StateUtil.getFlowState(flowId);
+      var state = StateUtil.getFlowState(flow_id);
       var adjscale = Math.max(.0001, parseFloat(state.scale) * parseFloat(d3.event.scale));
       var match = /([0-9.-]+)\s*,\s*([0-9.-]+)/.exec(d3.event.translate);
       var dx = parseFloat(match[1]);
@@ -146,14 +152,14 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
   // set the handler that will save graph view state on page reload
   function updateUnloadHandler() {
     $(window).on("unload", function() {
-      if (flowId && flowId !== "")  {
-        setViewState(flowId);
+      if (flow_id && flow_id !== "")  {
+        setViewState(flow_id);
       }
     });
   }
 
   // converts string 'transform' attribute -> JSON string using
-  // sessionStorage (with flowId as key) to retain after page refresh
+  // sessionStorage (with flow_id as key) to retain after page refresh
   function setViewState() {
     var raw = d3.select("#flowgraph > g").attr("transform");
     var tMatch = translateRegex.exec(raw);
@@ -162,19 +168,19 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
     var transy = tMatch[2];
     var scalexy = sMatch[1];
     StateUtil.updateViewState(transx, transy, scalexy);
-    StateUtil.setFlowState(flowId);
+    StateUtil.setFlowState(flow_id);
   }
 
   // if there was a previous selected state, restore it - but store the
   // color of the current selected job stage from using fresh page data
   // as it could have been updated during page refresh.
-  function checkPreviouslySelectedVertex(stepMap) {
-    var state = StateUtil.getFlowState(flowId);
+  function checkPreviouslySelectedVertex(step_map) {
+    var state = StateUtil.getFlowState(flow_id);
     if (state.curid !== 0) {
       $("#no-step").remove();
       var curImg = $("#step-image-" + state.curid);
       curImg.removeClass("hi-lite");
-      $("#mrdetails-title").html(ViewUtil.renderStepStatus(stepMap[state.curid])).show();
+      $("#mrdetails-title").html(ViewUtil.renderStepStatus(step_map[state.curid])).show();
       $("#step-" + state.curid).show();
       curImg.trigger('mouseover');
     }

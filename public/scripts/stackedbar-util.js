@@ -2,22 +2,22 @@
 var StackedBarUtil = (function($) {
   var sbutil = {};
 
-  sbutil.renderRunningTimes = function(stepMap, flow) {
-    var widthMap = generateWidthMap(stepMap);
+  sbutil.renderRunningTimes = function(step_map, flow) {
+    var width_map = generateWidthMap(step_map);
 
     var html = '<div class="inner-stack-box">';
-    html += buildStackChart(widthMap, stepMap);
+    html += buildStackChart(width_map, step_map);
     html += "</div>";
 
     $("#timechart").html(html);
   };
 
-  function buildStackChart(widthMap, stepMap) {
+  function buildStackChart(width_map, step_map) {
     var html = "";
 
-    for (key in stepMap) {
-      var step = stepMap[key];
-      var barWidth = widthMap[key + "-scaled"];
+    for (key in step_map) {
+      var step = step_map[key];
+      var barWidth = width_map[key + "-scaled"];
       var tip = formatTipMessage(step);
       var color = setColorCycle(step);
       html += '<span id="stack-step-' + step.stepnumber + '" class="time-block ' +

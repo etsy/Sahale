@@ -14,94 +14,94 @@ fs.readFile('db-config.json', 'UTF-8', function(err, data) {
 
 // The time windows (secs back from 'now') for
 // running and recently completed Flows to query
-var smallTimeOffset = 30;
-var bigTimeOffset = 21600;
-var oneWeekOffset = 86400 * 7; // for DEBUG purposes only
+var small_time_offset = 30;
+var big_time_offset = 21600;
+var one_week_offset = 86400 * 7; // for DEBUG purposes only
 
 
 ////////////////// Exported public functions ////////////////////
-exports.getRunningFlows = function(callBack) {
+exports.getRunningFlows = function(call_back) {
   var now       = getNowEpoch();
-  var recent    = now - smallTimeOffset;
+  var recent    = now - small_time_offset;
   executeQuery(
     'SELECT * FROM cascading_job_flows WHERE update_date > ? ORDER BY create_date DESC ',
     [recent],
-    callBack
+    call_back
   );
 }
 
-exports.getCompletedFlows = function(callBack) {
+exports.getCompletedFlows = function(call_back) {
   var now       = getNowEpoch();
-  var completed = now - bigTimeOffset;
+  var completed = now - big_time_offset;
   executeQuery(
     'SELECT * FROM cascading_job_flows ' +
     "WHERE update_date > ? AND flow_status IN ('STOPPED', 'FAILED', 'SUCCESSFUL', 'SKIPPED') " +
     'ORDER BY create_date DESC ',
     [completed],
-    callBack
+    call_back
   );
 }
 
-exports.getMatchingFlows = function(searchTerm, callBack) {
-  var like = '%' + decodeURIComponent(searchTerm).replace('+', ' ').trim().replace(/\s+/g, "%") + '%';
+exports.getMatchingFlows = function(search_term, call_back) {
+  var like = '%' + decodeURIComponent(search_term).replace('+', ' ').trim().replace(/\s+/g, "%") + '%';
   executeQuery(
     'SELECT * FROM cascading_job_flows ' +
     "WHERE flow_name LIKE ?" +
     'ORDER BY create_date DESC LIMIT 40',
     [like],
-    callBack
+    call_back
   );
 }
 
-exports.getFlowsByJobName = function(jobName, callBack) {
+exports.getFlowsByJobName = function(jobName, call_back) {
   executeQuery(
     'SELECT * FROM cascading_job_flows ' +
     "WHERE flow_name = ? AND flow_status IN ('STOPPED', 'FAILED', 'SUCCESSFUL')" +
     'ORDER BY create_date DESC LIMIT 40',
     [jobName],
-    callBack
+    call_back
   );
 }
 
-exports.getStepsByManyFlowIds = function(str, callBack) {
-  var flowIds = str.split("~");
+exports.getStepsByManyFlowIds = function(str, call_back) {
+  var flow_ids = str.split("~");
   var args = '';
-  flowIds.forEach(function(item, ndx, arr) {
+  flow_ids.forEach(function(item, ndx, arr) {
     args += "'" + item + "'";
-    if (ndx < (flowIds.length - 1)) { args += ", " }
+    if (ndx < (flow_ids.length - 1)) { args += ", " }
   });
 
   executeQuery(
     'SELECT * from cascading_job_steps WHERE flow_id IN (' + args + ') ',
-    flowIds,
-    callBack
+    flow_ids,
+    call_back
   );
 }
 
-exports.getFlowByFlowId = function(flowId, callBack) {
-  executeQuery('SELECT * from cascading_job_flows WHERE flow_id = ?', [flowId], callBack);
+exports.getFlowByFlowId = function(flow_id, call_back) {
+  executeQuery('SELECT * from cascading_job_flows WHERE flow_id = ?', [flow_id], call_back);
 }
 
-exports.getStepsByFlowId = function(flowId, callBack) {
-  executeQuery('SELECT * FROM cascading_job_steps WHERE flow_id = ?', [flowId], callBack);
+exports.getStepsByFlowId = function(flow_id, call_back) {
+  executeQuery('SELECT * FROM cascading_job_steps WHERE flow_id = ?', [flow_id], call_back);
 }
 
-exports.getEdgesByFlowId = function(flowId, callBack) {
-  executeQuery('SELECT * from cascading_job_edges WHERE flow_id = ?', [flowId], callBack);
+exports.getEdgesByFlowId = function(flow_id, call_back) {
+  executeQuery('SELECT * from cascading_job_edges WHERE flow_id = ?', [flow_id], call_back);
 }
 
 
 ///////////// REST API to update db via POST requests from running Cascading jobs //////////////
 var emptyCallback = function(x) { };
 
-exports.upsertFlow = function(flowId, data) {
+exports.upsertFlow = function(flow_id, data) {
   var epoch_now = getNowEpoch();
-  var flowName = data['flowname'];
-  var flowStatus = data['flowstatus'];
+  var flow_name = data['flowname'];
+  var flow_status = data['flowstatus'];
   var json = decodeURIComponent(data['json']);
   var argz = [
-    flowId, flowName, flowStatus, json, epoch_now, epoch_now, // for insert
-    flowId, flowName, flowStatus, json, epoch_now             // for update
+    flow_id, flow_name, flow_status, json, epoch_now, epoch_now, // for insert
+    flow_id, flow_name, flow_status, json, epoch_now             // for update
   ];
   executeQuery('INSERT INTO cascading_job_flows ' +
     '(flow_id, flow_name, flow_status, flow_json, update_date, create_date) ' +
@@ -112,13 +112,13 @@ exports.upsertFlow = function(flowId, data) {
   );
 }
 
-exports.upsertSteps = function(flowId, data) {
+exports.upsertSteps = function(flow_id, data) {
   var epoch_now = getNowEpoch();
-  for (stepId in data) {
-    var json = decodeURIComponent(data[stepId]);
+  for (step_id in data) {
+    var json = decodeURIComponent(data[step_id]);
     var argz = [
-      stepId, flowId, json, epoch_now, epoch_now, // for insert
-      stepId, flowId, json, epoch_now             // for update
+      step_id, flow_id, json, epoch_now, epoch_now, // for insert
+      step_id, flow_id, json, epoch_now             // for update
     ];
     executeQuery('INSERT INTO cascading_job_steps ' +
       '(step_id, flow_id, step_json, update_date, create_date) ' +
@@ -130,7 +130,7 @@ exports.upsertSteps = function(flowId, data) {
   }
 }
 
-exports.upsertEdges = function(flowId, data) {
+exports.upsertEdges = function(flow_id, data) {
   var epoch_now = getNowEpoch();
   for (k in data) {
     var v_list = data[k].split('|'); // produces array of values per key
@@ -138,7 +138,7 @@ exports.upsertEdges = function(flowId, data) {
       executeQuery('INSERT INTO cascading_job_edges ' +
         '(flow_id, src_stage, dest_stage, update_date, create_date) ' +
         'VALUES(?, ?, ?, ?, ?)',
-        [ flowId, k, v_list[v_ndx], epoch_now, epoch_now ],
+        [ flow_id, k, v_list[v_ndx], epoch_now, epoch_now ],
         emptyCallback
       );
     }
@@ -147,16 +147,16 @@ exports.upsertEdges = function(flowId, data) {
 
 
 /////////////////// Utility functions ///////////////////////////
-function executeQuery(query, paramArray, callBack) {
+function executeQuery(query, param_array, call_back) {
   try {
     var conn = mysql.createConnection(dsn);
-    conn.query(query, paramArray, function(err, rows) {
+    conn.query(query, param_array, function(err, rows) {
       if (err) {
         console.log("Error during query in sql-utils. Stack trace: " + err.stack);
         // Ignore from here, we don't want the server to crash, just let this get messy and move on!
       }
       //console.log(rows); // DEBUG
-      callBack(rows);
+      call_back(rows);
     });
   } catch(err) {
     console.log("Connection error in sql-utils. Stack trace: " + err.stack);

@@ -13,12 +13,10 @@ var StateUtil = (function() {
 
   state.captureGraphViewYOffset = function(offset) {
     SAHALE_INIT_STATE.ty = offset;
-    console.log("[Set SAHALE_INIT_STATE]: " + JSON.stringify(SAHALE_INIT_STATE)); // DEBUG
   }
 
   state.clearFlowState = function(flow_id) {
     sessionStorage.removeItem('flowid-' + flow_id);
-    console.log("[clearFlowState] for Flow ID: " + flow_id); // DEBUG
   }
 
   state.getFlowState = function(flow_id) {
@@ -26,13 +24,13 @@ var StateUtil = (function() {
       var new_state = sessionStorage.getItem("flowid-" + flow_id);
       sahale_state = new_state === null ? SAHALE_INIT_STATE : JSON.parse(new_state);
     }
-    console.log("[getFlowState] sahale_state returned: " + JSON.stringify(sahale_state)); // DEBUG
+    //console.log("[getFlowState] sahale_state returned: " + JSON.stringify(sahale_state)); // DEBUG
     return sahale_state;
   }
 
   state.setFlowState = function(flow_id) {
     sessionStorage.setItem("flowid-" + flow_id, JSON.stringify(sahale_state));
-    console.log("[setFlowState] dehydrated sahale_state for browser storage: " + JSON.stringify(sahale_state)); // DEBUG
+    //console.log("[setFlowState] dehydrated sahale_state for browser storage: " + JSON.stringify(sahale_state)); // DEBUG
   }
 
   state.updateTranslateY = function(val) {
@@ -75,7 +73,6 @@ var StateUtil = (function() {
     state.updateTranslateY(transy);
     state.updateTranslateScale(sc);
     // 'curid' stays the same
-    console.log("[updateViewState] sahale_state updated to: " + JSON.stringify(sahale_state)); // DEBUG
   }
 
   return state;

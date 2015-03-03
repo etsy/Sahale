@@ -9,26 +9,26 @@ var ChartUtil = (function($, d3, ViewUtil) {
   ;
 
   //////////////// D3 chart rendering ///////////////////////////////////
-  chartutil.renderBarChart = function(elementId, data, yAxisLabel, barcolor) {
+  chartutil.renderBarChart = function(element_id, data, y_axis_label, barcolor) {
     var margin = { top: 10, right: 10, bottom: 0, left: 55 };
     var width = Math.max(300, (80 * data.length)),
       height = 120,
       innerWidth = width - margin.left - margin.right,
-      innerHeight = height - margin.top - margin.bottom;
-    var dataDomain = [];
-    data.map(function(elem, i, data) { dataDomain.push(elem.name); });
+      inner_height = height - margin.top - margin.bottom;
+    var data_domain = [];
+    data.map(function(elem, i, data) { data_domain.push(elem.name); });
 
     var x = d3.scale.ordinal()
-        .domain(dataDomain)
+        .domain(data_domain)
         .rangeRoundBands([0, innerWidth], .1);
 
     var y = d3.scale.linear()
-        .range([innerHeight, 0]);
+        .range([inner_height, 0]);
 
     x.domain(data.map(function(d) { return d.name; }));
     y.domain([0, d3.max(data, function(d) { return d.value; })]);
 
-    var chart = d3.select(elementId + " .rrchart")
+    var chart = d3.select(element_id + " .rrchart")
         .attr("width", width)
         .attr("height", height + 20)
         .append("g")
@@ -44,7 +44,7 @@ var ChartUtil = (function($, d3, ViewUtil) {
 
     chart.append("g")
       .attr("class", "x rraxis")
-      .attr("transform", "translate(0," + innerHeight + ")")
+      .attr("transform", "translate(0," + inner_height + ")")
       .attr("height", height)
       .call(xAxis);
 
@@ -57,7 +57,7 @@ var ChartUtil = (function($, d3, ViewUtil) {
         .attr("y", -10)
         .attr("dy", ".71em")
         .style("text-anchor", "end")
-        .text(yAxisLabel);
+        .text(y_axis_label);
 
     chart.selectAll(".rrbar")
       .data(data)
@@ -66,7 +66,7 @@ var ChartUtil = (function($, d3, ViewUtil) {
         .attr("x", function(d) { return x(d.name); })
         .attr("width", x.rangeBand())
         .attr("y", function(d) { return y(d.value); })
-        .attr("height", function(d) { return innerHeight - y(d.value); })
+        .attr("height", function(d) { return inner_height - y(d.value); })
         .style("fill", function(d) { return d.barcolor; })
         .on("click", function(d) {
             window.location.href = "/flowgraph/" + d.flowid;
@@ -97,11 +97,11 @@ var ChartUtil = (function($, d3, ViewUtil) {
     for (key in flows) {
       var flow = flows[key];
       var color = getFlowStatusColorForTooltip(flow['flow_status']);
-      var createDate = flow['create_date'] * 1000;
+      var create_date = flow['create_date'] * 1000;
       var val = Math.round((flow['flow_duration'] / 1000) / 60);
       if (val < 1) { val = 1; }
       list.push({
-        name: formatEpochMs(createDate),
+        name: formatEpochMs(create_date),
         value: val,
         tip: '<h5 style="text-align:center;color:' + color + '">' +
           flow['flow_status'] + '</h5>Running Time: ' + ViewUtil.prettyFlowTimeFromMillis(flow['flow_duration']),
@@ -174,13 +174,13 @@ var ChartUtil = (function($, d3, ViewUtil) {
 
 
   //////////////// private utility functions for bar charts ///////////////////////
-  function getFlowStatusColorForTooltip(flowStatus) {
-    var color = ViewUtil.getFlowStatusColor(flowStatus);
+  function getFlowStatusColorForTooltip(flow_status) {
+    var color = ViewUtil.getFlowStatusColor(flow_status);
     return color === 'black' ? 'white' : color;
   }
 
-  function formatEpochMs(epochMs) {
-    var date = new Date(epochMs);
+  function formatEpochMs(epoch_ms) {
+    var date = new Date(epoch_ms);
     return months[date.getUTCMonth()] + " " +
       date.getUTCDate() + ", " +
       date.getUTCFullYear() + " " +

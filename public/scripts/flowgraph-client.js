@@ -1,57 +1,51 @@
 $(document).ready(function() {
 
   // extract the Flow ID (for db query) from this page's URL path
-  var flowId = document.URL.substring(document.URL.lastIndexOf('/') + 1);
-  var graphData = new dagreD3.Digraph();
-  var stepMap = null;
+  var flow_id = document.URL.substring(document.URL.lastIndexOf('/') + 1);
+  var graph_data = new dagreD3.Digraph();
+  var step_map = null;
 
   // API call to get the Cascading Flow metrics for this Flow ID
-  $.get('/flow/' + flowId, function(flowData) {
+  $.get('/flow/' + flow_id, function(flow_data) {
 
     // should only be one row returned
-    var theFlow = DataUtil.unpackFlow(flowData[0]);
-    GraphUtil.captureFlowId(theFlow);
+    var flow = DataUtil.unpackFlow(flow_data[0]);
+    GraphUtil.captureFlowId(flow);
 
     // set up nav bar button links, job name, etc.
-    GraphUtil.setNavigationLinks(theFlow);
+    GraphUtil.setNavigationLinks(flow);
 
     // render the table of aggregated Flow metrics at top of page
-    ViewUtil.renderRunningJobs([theFlow]);
+    ViewUtil.renderRunningJobs([flow]);
 
     // API call to get individual MapReduce jobs associated with one Flow ID
-    $.get('/steps/' + theFlow.flow_id, function(stepData) {
+    $.get('/steps/' + flow.flow_id, function(step_data) {
 
       // build the state needed and add vertices to the graph visualization
-      stepMap = DataUtil.buildStepNumberToStepMap(stepData);
+      step_map = DataUtil.buildStepNumberToStepMap(step_data);
 
       // API call to get edge mapping between vertices in the graph, by Flow ID
-      $.get('/edges/' + theFlow.flow_id, function(edgeData) {
+      $.get('/edges/' + flow.flow_id, function(edge_data) {
 
-        // populate Dagre D3 graph data structure
-        GraphUtil.addAllVertices(graphData, stepMap);
-        GraphUtil.addAllEdges(graphData, stepMap, edgeData);
+        GraphUtil.renderFlowGraph(graph_data, step_map, edge_data);
 
-        // render this thing
-        GraphUtil.renderFlowGraph(graphData);
-
-        // pull any existing browser state if this is a page refresh only
-        StateUtil.getFlowState(theFlow.flow_id);
+        // extract browser state if there is any
+        StateUtil.getFlowState(flow.flow_id);
 
         // render metrics views
-        ViewUtil.renderMapReducePanels(stepMap, theFlow);
+        ViewUtil.renderMapReducePanels(step_map, flow);
 
         // render toggle-able area charts
-        ToggleUtil.buildDatasets(stepMap);
-        ToggleUtil.renderAndRegisterEvent();
+        ToggleUtil.renderCharts(step_map);
 
         // render the running times chart
-        StackedBarUtil.renderRunningTimes(stepMap, theFlow);
+        StackedBarUtil.renderRunningTimes(step_map, flow);
 
         // get event handling wired up
-        GraphUtil.setEventHandlers(stepMap);
+        GraphUtil.setEventHandlers(step_map);
 
         // set refresh interval only if the Flow isn't finished running
-        if (["FAILED", "STOPPED", "SUCCESSFUL"].indexOf(theFlow.flow_status) < 0) {
+        if (["FAILED", "STOPPED", "SUCCESSFUL"].indexOf(flow.flow_status) < 0) {
           setTimeout( function() { location.reload(); }, 30 * 1000 );
         }
       });
