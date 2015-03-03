@@ -1,5 +1,5 @@
 var ToggleUtil = (function($, ViewUtil, StateUtil) {
-  var stepMap = {};
+  var step_map = {};
   var toggle = {};
   var GIGABYTES = parseInt(1024 * 1024 * 1024);
 
@@ -15,25 +15,25 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
   }
 
   function buildDatasets(sm) {
-    stepMap = sm;
+    step_map = sm;
 
     assignData(
-      [numTasksMapFunc, hdfsReadsMapFunc, clusterReadsMapFunc, localityMapFunc],
+      [numTasksMapFunc, hdfsReadsMapFunc, clusterReadsMapFunc, localityMapFunc, ioSecsMapFunc],
       "mapData"
     );
 
     assignData(
-      [numTasksReduceFunc, hdfsWritesReduceFunc, clusterWritesReduceFunc, localityReduceFunc],
+      [numTasksReduceFunc, hdfsWritesReduceFunc, clusterWritesReduceFunc, localityReduceFunc, ioSecsReduceFunc],
       "reduceData"
     );
 
     assignData(
-      [numTasksTipFunc, hdfsTipFunc, clusterTipFunc, localityTipFunc],
+      [numTasksTipFunc, hdfsTipFunc, clusterTipFunc, localityTipFunc, ioSecsTipFunc],
       "tipData"
     );
 
     assignData(
-      [numTasksMaxValueFunc, hdfsMaxValueFunc, clusterMaxValueFunc, localityMaxValueFunc],
+      [numTasksMaxValueFunc, hdfsMaxValueFunc, clusterMaxValueFunc, localityMaxValueFunc, ioSecsMaxValueFunc],
       "maxValues"
     );
 
@@ -41,7 +41,8 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
       "Map and Reduce tasks per Step",
       "GB Read/Written (HDFS) per Step",
       "GB Read/Written (Cluster Disk) per Step",
-      "% of Node and Rack Locality per Step"
+      "% of Node and Rack Locality per Step",
+      "Cascading Read/Write Times per Step"
     ]);
   }
 
@@ -66,7 +67,7 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
 
   function assignData(funcs, attrib) {
     for (ndx in funcs) {
-      var data = funcs[ndx](stepMap);
+      var data = funcs[ndx](step_map);
       if (data !== undefined) {
         toggle[attrib].push(data);
       }
@@ -81,10 +82,10 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
 
 
 //////// numTasks functions ////////
-  function numTasksMapFunc(stepMap) {
+  function numTasksMapFunc(step_map) {
     var arr = [];
-    for (key in stepMap) {
-      var step = stepMap[key];
+    for (key in step_map) {
+      var step = step_map[key];
       arr.push({
         x: key,
         y: step.maptasks
@@ -93,10 +94,10 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     return arr;
   }
 
-  function numTasksReduceFunc(stepMap) {
+  function numTasksReduceFunc(step_map) {
     var arr = [];
-    for (key in stepMap) {
-      var step = stepMap[key];
+    for (key in step_map) {
+      var step = step_map[key];
       arr.push({
         x: key,
         y: step.reducetasks
@@ -105,10 +106,10 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     return arr;
   }
 
-  function numTasksTipFunc(stepMap) {
+  function numTasksTipFunc(step_map) {
     var arr = [];
-    for (key in stepMap) {
-      var step = stepMap[key];
+    for (key in step_map) {
+      var step = step_map[key];
       arr.push('<span style="color:Pink">' + step.maptasks + '</span> Map Tasks<br>' +
         '<span style="color:LightBlue">' + step.reducetasks + '</span> Reduce Tasks<p>' +
         ' used in Job Step ' + key
@@ -117,10 +118,10 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     return arr;
   }
 
-  function numTasksMaxValueFunc(stepMap) {
+  function numTasksMaxValueFunc(step_map) {
     var max = 0;
-    for (key in stepMap) {
-      var step = stepMap[key];
+    for (key in step_map) {
+      var step = step_map[key];
       if (parseInt(step.maptasks) > parseInt(max)) { max = step.maptasks; }
       if (parseInt(step.reducetasks) > parseInt(max)) { max = step.reducetasks; }
     }
@@ -128,10 +129,10 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
   }
 
   //////// hdfs* functions  ////////
-  function hdfsReadsMapFunc(stepMap) {
+  function hdfsReadsMapFunc(step_map) {
     var arr = [];
-    for (key in stepMap) {
-      var step = stepMap[key];
+    for (key in step_map) {
+      var step = step_map[key];
       arr.push({
         x: key,
         y: Math.round(step.hdfsbytesread / GIGABYTES)
@@ -140,10 +141,10 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     return arr;
   }
 
-  function hdfsWritesReduceFunc(stepMap) {
+  function hdfsWritesReduceFunc(step_map) {
     var arr = [];
-    for (key in stepMap) {
-      var step = stepMap[key];
+    for (key in step_map) {
+      var step = step_map[key];
       arr.push({
         x: key,
         y: Math.round(step.hdfsbyteswritten / GIGABYTES)
@@ -152,10 +153,10 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     return arr;
   }
 
-  function hdfsTipFunc(stepMap) {
+  function hdfsTipFunc(step_map) {
     var arr = [];
-    for (key in stepMap) {
-      var step = stepMap[key];
+    for (key in step_map) {
+      var step = step_map[key];
       arr.push('<span style="color:Pink">' + ViewUtil.prettyPrintBytes(step.hdfsbytesread) + '</span> Read<br>' +
         '<span style="color:LightBlue">' + ViewUtil.prettyPrintBytes(step.hdfsbyteswritten) + '</span> Written<p>' +
         ' in Job Step ' + key
@@ -164,10 +165,10 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     return arr;
   }
 
-  function hdfsMaxValueFunc(stepMap) {
-    var max = 0.0;
-    for (key in stepMap) {
-      var step = stepMap[key];
+  function hdfsMaxValueFunc(step_map) {
+    var max = 0;
+    for (key in step_map) {
+      var step = step_map[key];
       if (parseInt(step.hdfsbytesread) > parseInt(max)) { max = step.hdfsbytesread; }
       if (parseInt(step.hdfsbyteswritten) > parseInt(max)) { max = step.hdfsbyteswritten; }
     }
@@ -175,10 +176,10 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
   }
 
   //////// cluster* functions  ////////
-  function clusterReadsMapFunc(stepMap) {
+  function clusterReadsMapFunc(step_map) {
     var arr = [];
-    for (key in stepMap) {
-      var step = stepMap[key];
+    for (key in step_map) {
+      var step = step_map[key];
       arr.push({
         x: key,
         y: Math.round(step.filebytesread / GIGABYTES)
@@ -187,10 +188,10 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     return arr;
   }
 
-  function clusterWritesReduceFunc(stepMap) {
+  function clusterWritesReduceFunc(step_map) {
     var arr = [];
-    for (key in stepMap) {
-      var step = stepMap[key];
+    for (key in step_map) {
+      var step = step_map[key];
       arr.push({
         x: key,
         y: Math.round(step.filebyteswritten / GIGABYTES)
@@ -199,10 +200,10 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     return arr;
   }
 
-  function clusterTipFunc(stepMap) {
+  function clusterTipFunc(step_map) {
     var arr = [];
-    for (key in stepMap) {
-      var step = stepMap[key];
+    for (key in step_map) {
+      var step = step_map[key];
       arr.push('<span style="color:Pink">' + ViewUtil.prettyPrintBytes(step.filebytesread) + '</span> Read<br>' +
         '<span style="color:LightBlue">' + ViewUtil.prettyPrintBytes(step.filebyteswritten) + '</span> Written<p>' +
         ' in Job Step ' + key
@@ -211,10 +212,10 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     return arr;
   }
 
-  function clusterMaxValueFunc(stepMap) {
-    var max = 0.0;
-    for (key in stepMap) {
-      var step = stepMap[key];
+  function clusterMaxValueFunc(step_map) {
+    var max = 0;
+    for (key in step_map) {
+      var step = step_map[key];
       if (parseInt(step.filebytesread) > parseInt(max)) { max = step.filebytesread; }
       if (parseInt(step.filebyteswritten) > parseInt(max)) { max = step.filebyteswritten; }
     }
@@ -222,10 +223,10 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
   }
 
   //////// locality* functions  ////////
-  function localityMapFunc(stepMap) {
+  function localityMapFunc(step_map) {
     var arr = [];
-    for (key in stepMap) {
-      var step = stepMap[key];
+    for (key in step_map) {
+      var step = step_map[key];
       var value = step.maptasks > 0 ? Math.round(100 * (step.datalocalmaptasks / step.maptasks), 4) : 0;
       arr.push({
         x: key,
@@ -235,10 +236,10 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     return arr;
   }
 
-  function localityReduceFunc(stepMap) {
+  function localityReduceFunc(step_map) {
     var arr = [];
-    for (key in stepMap) {
-      var step = stepMap[key];
+    for (key in step_map) {
+      var step = step_map[key];
       var value = step.maptasks > 0 ? Math.round(100 * (step.racklocalmaptasks / step.maptasks), 4) : 0;
       arr.push({
         x: key,
@@ -248,10 +249,10 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     return arr;
   }
 
-  function localityTipFunc(stepMap) {
+  function localityTipFunc(step_map) {
     var arr = [];
-    for (key in stepMap) {
-      var step = stepMap[key];
+    for (key in step_map) {
+      var step = step_map[key];
       var local = step.maptasks > 0 ? Math.round(100 * (step.datalocalmaptasks / step.maptasks), 4) : "?";
       var rack = step.maptasks > 0 ? Math.round(100 * (step.racklocalmaptasks / step.maptasks), 4) : "?";
       arr.push('<span style="color:Pink">' + local + '%</span> Node Local Mappers<br>' +
@@ -262,8 +263,59 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     return arr;
   }
 
-  function localityMaxValueFunc(stepMap) {
+  function localityMaxValueFunc(step_map) {
     return 100;
+  }
+
+  //////// ioSecs* functions  ////////
+  function ioSecsMapFunc(step_map) {
+    var arr = [];
+    for (key in step_map) {
+      var step = step_map[key];
+      var value = step.ioreadmillis > 0 ? Math.round(step.ioreadmillis / 1000) : 0;
+      arr.push({
+        x: key,
+        y: value
+      });
+    }
+    return arr;
+  }
+
+  function ioSecsReduceFunc(step_map) {
+    var arr = [];
+    for (key in step_map) {
+      var step = step_map[key];
+      var value = step.iowritemillis > 0 ? Math.round(step.iowritemillis / 1000) : 0;
+      arr.push({
+        x: key,
+        y: value
+      });
+    }
+    return arr;
+  }
+
+  function ioSecsTipFunc(step_map) {
+    var arr = [];
+    for (key in step_map) {
+      var step  = step_map[key];
+      var read  = step.ioreadmillis > 0 ? Math.round(step.ioreadmillis / 1000) : 0.0;
+      var write = step.iowritemillis > 0 ? Math.round(step.iowritemillis / 1000) : 0.0;
+      arr.push('<span style="color:Pink">' + read + ' secs</span> IO Read Duration<br>' +
+        '<span style="color:LightBlue">' + write + ' secs</span> IO Write Duration<p>' +
+        ' in Job Step ' + key
+      );
+    }
+    return arr;
+  }
+
+  function ioSecsMaxValueFunc(step_map) {
+    var max = 0;
+    for (key in step_map) {
+      var step = step_map[key];
+      if (parseInt(step.ioreadmillis) > parseInt(max)) { max = step.ioreadmillis; }
+      if (parseInt(step.iowritemillis) > parseInt(max)) { max = step.iowritemillis; }
+    }
+    return Math.round(max / 1000);
   }
 
 
