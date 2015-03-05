@@ -67,10 +67,10 @@ var DataUtil = (function() {
 
     return step;
 
-    // TODO: these are not exposed in Sahale yet, but should be
-    //step.committedheapbytes = step['counter']['mapreduce.TaskCounter']['COMMITTED_HEAP_BYTES'] || 0;
-    //step.gcmillis = step['counter']['mapreduce.TaskCounter']['GC_TIME_MILLIS'] || 0;
-    //step.cpumillis = step['counter']['mapreduce.TaskCounter']['CPU_MILLISECONDS'] || 0;
+    // TODO: these are not exposed in Sahale yet, add them
+    //step.committedheapbytes = checkedStepUnpack(step, 'mapreduce.TaskCounter', 'COMMITTED_HEAP_BYTES', 0);
+    //step.gcmillis = checkedStepUnpack(step, 'mapreduce.TaskCounter', 'GC_TIME_MILLIS', 0);
+    //step.cpumillis = checkedStepUnpack(step, 'mapreduce.TaskCounter', 'CPU_MILLISECONDS', 0);
   }
 
   function checkedStepUnpack(step, group, counter, defaultValue) {
