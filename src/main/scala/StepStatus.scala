@@ -33,26 +33,6 @@ class StepStatus(val stepNumber: String, val stepId: String) {
   var counters = Map[String, Any]()
   var hdfsBytesWritten = 0L
 
-/*
-  var mapTasks = "0"
-  var reduceTasks = "0"
-  var hdfsBytesRead = "0"
-  var hdfsBytesWritten = "0"
-  var fileBytesRead = "0"
-  var fileBytesWritten = "0"
-  var tuplesRead = "0"
-  var tuplesWritten = "0"
-  var dataLocalMapTasks = "0"
-  var rackLocalMapTasks = "0"
-  var committedHeapBytes = "0"
-  var gcMillis = "0"
-  var cpuMillis = "0"
-  var ioReadMillis = "0"
-  var ioWriteMillis = "0"
-  var failedMapTasks = "0"
-  var failedReduceTasks = "0"
-*/
-
   override def toString: String = {
     toMap.toString
   }
@@ -71,25 +51,6 @@ class StepStatus(val stepNumber: String, val stepId: String) {
       "stepstatus" -> stepStatus,
       "steprunningtime" -> stepRunningTime,
       "counters" -> counters
-/*
-      "maptasks" -> mapTasks,
-      "reducetasks" -> reduceTasks,
-      "hdfsbytesread" -> hdfsBytesRead,
-      "hdfsbyteswritten" -> hdfsBytesWritten,
-      "filebytesread" -> fileBytesRead,
-      "filebyteswritten" -> fileBytesWritten,
-      "tuplesread" -> tuplesRead,
-      "tupleswritten" -> tuplesWritten,
-      "datalocalmaptasks" -> dataLocalMapTasks,
-      "racklocalmaptasks" -> rackLocalMapTasks,
-      "committedheapbytes" -> committedHeapBytes,
-      "gcmillis" -> gcMillis,
-      "cpumillis" -> cpuMillis,
-      "ioreadmillis" -> ioReadMillis,
-      "iowritemillis" -> ioWriteMillis,
-      "failedmaptasks" -> failedMapTasks,
-      "failedreducetasks" -> failedReduceTasks,
-*/
     )
   }
 
