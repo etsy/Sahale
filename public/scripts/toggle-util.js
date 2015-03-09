@@ -42,7 +42,7 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
       "GB Read/Written (HDFS) per Step",
       "GB Read/Written (Cluster Disk) per Step",
       "% of Node and Rack Locality per Step",
-      "Cascading Read/Write Times per Step"
+      "Cascading Total R/W Durations (all Tasks) per Step"
     ]);
   }
 
