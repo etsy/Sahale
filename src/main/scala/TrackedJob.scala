@@ -48,5 +48,8 @@ class TrackedJob(args: Args) extends com.twitter.scalding.Job(args) {
     }
   }
 
-  private def trackThisFlow(f: Flow[_]): Unit = { (new Thread(new FlowTracker(f, done))).start }
+  private def trackThisFlow(f: Flow[_]): Unit = {
+    val serverHostPort: Option[String] = args.optional("server")
+    (new Thread(new FlowTracker(f, done, serverHostPort))).start
+  }
 }
