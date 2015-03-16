@@ -62,6 +62,8 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
   extends java.lang.Runnable {
   import com.etsy.sahale.FlowTracker._
 
+  def this(flow: Flow[_], runCompleted: AtomicBoolean) = this(flow, runCompleted, None)
+
   val client = getHttpClient
 
   // mutable because we have to build this mapping as we go after run() is called
