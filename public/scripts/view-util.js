@@ -98,13 +98,14 @@ var ViewUtil = (function($) {
 
     for (var i = 0; i < flows.length; ++i) {
       var f = flows[i]
+      var fp = function(f) { if (f.flow_status === "SUCCESSFUL") return "100.00"; else return f.flow_progress; }(f);
       rows += '<tr>' +
         '<td>' + prettyLinkedJobName(f.flow_name, f.flow_id) + '</td>' +
         '<td>' + f.user_name + '</td>' + // removed link to Staff page for OSS version
         '<td>' + prettyFlowStatus(f.flow_status) + '</td>' +
         '<td>' + f.total_stages + '</td>' +
         '<td>' + view.prettyFlowTimeFromMillis(f.flow_duration) + '</td>' +
-        '<td>' + prettyProgress(f.flow_progress, barStylez) + '</td>' +
+        '<td>' + prettyProgress(fp, barStylez) + '</td>' +
         '</tr>';
     }
     return rows;
