@@ -1,4 +1,4 @@
-Sahale
+Sahale [![Build Status](https://travis-ci.org/etsy/Sahale.svg)](https://travis-ci.org/etsy/Sahale)
 ===
 A tool to record and visualize metrics captured from Cascading (Scalding) workflows at runtime.
 
