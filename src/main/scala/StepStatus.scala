@@ -7,6 +7,7 @@ import cascading.stats.{CascadingStats, FlowStepStats}
 import cascading.stats.hadoop.{HadoopStepStats, HadoopSliceStats}
 import cascading.tap.Tap
 import cascading.util.Util
+import org.apache.hadoop.mapred.JobConf
 
 //import org.json.JSONObject
 import com.codahale.jerkson.Json._
@@ -21,6 +22,8 @@ import scala.collection.JavaConversions._
  * @author Eli Reisman
  */
 class StepStatus(val stepNumber: String, val stepId: String) {
+  val propertiesToExtract = Seq("sahale.additional.links")
+
   var sources = FlowTracker.UNKNOWN
   var sink = FlowTracker.UNKNOWN
   var sourcesFields = FlowTracker.UNKNOWN
@@ -32,6 +35,7 @@ class StepStatus(val stepNumber: String, val stepId: String) {
   var stepRunningTime = "0"
   var counters = Map[String, Any]()
   var hdfsBytesWritten = 0L
+  var configurationProperties = Map[String, String]()
 
   override def toString: String = {
     toMap.toString
@@ -50,8 +54,15 @@ class StepStatus(val stepNumber: String, val stepId: String) {
       "reduceprogress" -> reduceProgress,
       "stepstatus" -> stepStatus,
       "steprunningtime" -> stepRunningTime,
-      "counters" -> counters
+      "counters" -> counters,
+      "configuration_properties" -> configurationProperties
     )
+  }
+
+  def setConfigurationProperties(conf: JobConf): Unit = {
+    this.configurationProperties = (propertiesToExtract map { prop: String =>
+      prop -> conf.get(prop, "")
+    }).toMap
   }
 
   def setSourcesAndSink(sources: String, sourcesFields: String, sink: String, sinkFields: String): Unit = {

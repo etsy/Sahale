@@ -1,6 +1,7 @@
 package com.etsy.sahale
 
 
+import org.apache.hadoop.mapred.JobConf
 import org.apache.log4j.Logger
 
 import org.jgrapht.ext.{IntegerNameProvider, VertexNameProvider}
@@ -114,6 +115,8 @@ class FlowGraphBuilder(val flow: Flow[_], val stepStatusMap: mutable.Map[String,
         }.mkString(",")
 
       // these are updated only once per workflow step, here before the job runs
+      val conf = fs.getConfig.asInstanceOf[JobConf]
+      stepStatusMap(fs.getID).setConfigurationProperties(conf)
       stepStatusMap(fs.getID).setSourcesAndSink(sources, sourcesFields, sink, sinkFields)
     }
 

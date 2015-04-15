@@ -64,6 +64,7 @@ var DataUtil = (function() {
     step.tupleswritten = checkedStepUnpack(step, 'cascading.flow.StepCounters', 'Tuples_Written', 0);
     step.ioreadmillis = checkedStepUnpack(step, 'cascading.flow.SliceCounters', 'Read_Duration', 0);
     step.iowritemillis = checkedStepUnpack(step, 'cascading.flow.SliceCounters', 'Write_Duration', 0);
+    step.configuration_properties = extractConfigurationProperties(step);
 
     return step;
 
@@ -91,6 +92,14 @@ var DataUtil = (function() {
     }
     return step['counters'][group][counter] || defaultValue;
   }
+
+    function extractConfigurationProperties(step) {
+	if (step['configuration_properties'] === undefined) {
+	    return {};
+	}
+
+	return step['configuration_properties'];
+    }
 
   return data;
 }());
