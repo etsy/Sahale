@@ -42,6 +42,9 @@ var ViewUtil = (function($) {
       html += '<div id="hadoopcounters-' + step.stepnumber + '" class="tab-pane">';
       html += renderHadoopCounters(step);
       html += '</div>';
+      html += '<div id="links-' + step.stepnumber + '" class="tab-pane">';
+      html += renderLinks(step, flow);
+      html += '</div>';
       html += '</div>';
       html += '</div>';
     }
@@ -116,6 +119,7 @@ var ViewUtil = (function($) {
     html += '<li class="active"><a href="#jobstats-' + idnum + '" data-toggle="tab">Stats</a></li>';
     html += '<li><a href="#sourcessinks-' + idnum + '" data-toggle="tab">Taps</a></li>';
     html += '<li><a href="#hadoopcounters-' + idnum + '" data-toggle="tab">Counters</a></li>';
+    html += '<li><a href="#links-' + idnum + '" data-toggle="tab">Links</a></li>';
     html += '</ul>';
     return html;
   }
@@ -305,6 +309,19 @@ var ViewUtil = (function($) {
     }
     return html;
   }
+
+    function renderLinks(step, flow) {
+	var html = '<div style="font-size:10px">';
+	if (step.jobid !== null && step.jobid !== 'NO_JOB_ID') {
+	    if (flow.yarn_job_history !== "false") {
+		var amUrl = flow.jt_url + '/cluster/app/' + step.jobid.replace('job_', 'application_');
+		html += '<div class=steplink><a href=//' + amUrl + '>Application Master</a></div>';
+	    }
+	}
+
+	html += '</div>';
+	return html;
+    }
 
   return view;
 
