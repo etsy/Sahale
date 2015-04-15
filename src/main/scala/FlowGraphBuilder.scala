@@ -83,16 +83,6 @@ class FlowGraphBuilder(val flow: Flow[_], val stepStatusMap: mutable.Map[String,
   }
 
   /**
-   * Store certain configuration properties for every step in the step graph
-   */
-  def addConfigurationPropertiesToStepGraph: Unit = {
-    flow.getFlowSteps.toList.foreach { fs: FlowStep[_] =>
-
-
-    }
-  }
-
-  /**
    * Add sources and a sink to each FlowStep (job stage) we track.
    * Sinks, Sources, and Fields are tracked in StepStatus objects per
    * job stage, but are most easily extracted here in the FlowTracker.
