@@ -54,6 +54,8 @@ var DataUtil = (function() {
     // if not, we need to set "shortcut" fields from the counters map
     step.maptasks = checkedStepUnpack(step, 'mapreduce.JobCounter', 'TOTAL_LAUNCHED_MAPS', 0);
     step.reducetasks = checkedStepUnpack(step, 'mapreduce.JobCounter', 'TOTAL_LAUNCHED_REDUCES', 0);
+    step.failedmaptasks = checkedStepUnpack(step, 'mapreduce.JobCounter', 'NUM_FAILED_MAPS', 0);
+    step.failedreducetasks = checkedStepUnpack(step, 'mapreduce.JobCounter', 'NUM_FAILED_REDUCES', 0);
     step.datalocalmaptasks = checkedStepUnpack(step, 'mapreduce.JobCounter', 'DATA_LOCAL_MAPS', 0);
     step.racklocalmaptasks = checkedStepUnpack(step, 'mapreduce.JobCounter', 'RACK_LOCAL_MAPS', 0);
     step.hdfsbytesread = checkedStepUnpack(step, 'mapreduce.FileSystemCounter', 'HDFS_BYTES_READ', 0);

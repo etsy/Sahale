@@ -27,7 +27,7 @@ var ViewUtil = (function($) {
     for (key in stepMap) {
       var step = stepMap[key];
       html += '<div id="step-' + step.stepnumber + '">';
-      html += renderHadoopLogLinks(step, flow);
+      html += '<div class="logbox"><a id=activatelinks href=# onclick=jumpToLinks(' + step.stepnumber + ')><b>Hadoop Log Links</b></a></div>';
       html += renderMapReduceProgress(step);
       html += renderTabHeader(step.stepnumber);
       html += '<div id="the-content-' + step.stepnumber + '" class="tab-content push-it-down">';
@@ -197,33 +197,6 @@ var ViewUtil = (function($) {
       '</div>';
   }
 
-  function renderHadoopLogLinks(step, flow) {
-    var link = '#';
-    if (step.jobid !== null && step.jobid !== 'NO_JOB_ID') {
-      // Hack to point log links at JT for MRv1, YARN History Server for MRv2
-      if (flow.yarn_job_history !== "false") {
-        link = makeYarnUrl(flow, step);
-      } else {
-        link = 'http://' + flow.jt_url + ':50030/jobdetails.jsp?jobid=' + step.jobid + '&refresh=0';
-      }
-    }
-    var text = '<div class="logbox"><a href="' + link + '"><b>View Hadoop Logs</b></a>';
-    if (step.stepstatus == 'FAILED' && flow.yarn_job_history !== "false") {
-      // We know this is a History Server link at this point, so this replacement should be valid
-      var failedMapTasks = link.replace("/job/", "/attempts/") + "/m/FAILED"
-      var failedReduceTasks = link.replace("/job/", "/attempts/") + "/r/FAILED"
-      if (step.failedmaptasks > 0) {
-          text += '<br/><a href="' + failedMapTasks + '"><b>Failed Map Tasks</b></a>'
-      }
-      if (step.failedreducetasks > 0) {
-          text += '<br/><a href="' + failedReduceTasks + '"><b>Failed Reduce Tasks</b></a>'
-      }
-    }
-    text += '</div>';
-
-    return text;
-  }
-
   function makeYarnUrl(flow, step) {
     var yarn_id = step.jobid.slice(4, step.jobid.length);
     switch(step.stepstatus) {
@@ -232,11 +205,11 @@ var ViewUtil = (function($) {
     case "SKIPPED":
     case "STOPPED":
       var yarn_history = makeHistoryUrl(flow, '19888');
-      var link = 'http://' + yarn_history + '/jobhistory/job/job_' + yarn_id;
+      var link = yarn_history + '/jobhistory/job/job_' + yarn_id;
       break;
     default:
       var yarn_history = makeHistoryUrl(flow, '8088');
-      var link = 'http://' + yarn_history + '/proxy/application_' + yarn_id;
+      var link = yarn_history + '/proxy/application_' + yarn_id;
       break;
     }
     return link;
@@ -319,12 +292,33 @@ var ViewUtil = (function($) {
 	  stage: step.stepnumber
 	};
 	var additionalLinks = step.configuration_properties['sahale.additional.links'];
+	var logLinks = [];
 	if (step.jobid !== null && step.jobid !== 'NO_JOB_ID') {
 	    if (flow.yarn_job_history !== "false") {
-		var amUrl = flow.jt_url + '/cluster/app/' + step.jobid.replace('job_', 'application_');
-		html += '<div class=steplink><a href=//' + amUrl + '>Application Master</a></div>';
+		var jobLink = makeYarnUrl(flow, step);
+		logLinks.push({name: 'View Hadoop Logs', url: jobLink});
+		if (step.stepstatus == 'FAILED') {
+		    // We know this is a History Server link at this point, so this replacement should be valid
+		    var failedMapTasks = jobLink.replace("/job/", "/attempts/") + "/m/FAILED"
+		    var failedReduceTasks = jobLink.replace("/job/", "/attempts/") + "/r/FAILED"
+		    if (step.failedmaptasks > 0) {
+			logLinks.push({name: 'Failed Map Tasks', url: failedMapTasks});
+		    }
+		    if (step.failedreducetasks > 0) {
+			logLinks.push({name: 'Failed Reduce Tasks', url: failedReduceTasks});
+		    }
+		}
+		logLinks.push({name: 'ApplicationMaster', url: flow.jt_url + '/cluster/app/' + step.jobid.replace('job_', 'application_')});
+	    } else {
+		logLinks.push({name: 'View Hadoop Logs', url: 'http://' + flow.jt_url + ':50030/jobdetails.jsp?jobid=' + step.jobid + '&refresh=0'});
 	    }
+	    
 	}
+	for(i = 0; i < logLinks.length; ++i) {
+	    var link = logLinks[i];
+	    html += '<div class="steplink"><a href="//' + link.url + '"><b>'+ link.name +'</b></a>';
+	}
+	
 	if (additionalLinks !== undefined) {
 	    var links = additionalLinks.split(';');
 	    for (i = 0; i < links.length; ++i) {
