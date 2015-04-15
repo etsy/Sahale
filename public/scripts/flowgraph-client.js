@@ -1,5 +1,9 @@
 $(document).ready(function() {
 
+    jumpToLinks = function(stepNum) {
+	$('.nav-tabs a[href="#links-' + stepNum + '"]').tab('show');
+    }
+
   // extract the Flow ID (for db query) from this page's URL path
   var flow_id = document.URL.substring(document.URL.lastIndexOf('/') + 1);
   var graph_data = new dagreD3.Digraph();
