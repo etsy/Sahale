@@ -20,7 +20,8 @@ class StepStatusSpec extends FlatSpec with ShouldMatchers {
     "reduceprogress" -> "0.00",
     "stepstatus" -> "NOT_LAUNCHED",
     "steprunningtime" -> "0",
-    "counters" -> Map[String, Any]()
+    "counters" -> Map[String, Any](),
+    "configuration_properties" -> Map[String, String]()
 /*
     "maptasks" -> "0",
     "reducetasks" -> "0",

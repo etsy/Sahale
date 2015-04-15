@@ -312,10 +312,29 @@ var ViewUtil = (function($) {
 
     function renderLinks(step, flow) {
 	var html = '<div style="font-size:10px">';
+	var interpolationData = {
+	  user: flow.user_name,
+	  job_name: flow.flow_name.replace('com.etsy.scalding.jobs.', '').replace('.', '-'),
+	  flow_id: flow.flow_id,
+	  stage: step.stepnumber
+	};
+	var additionalLinks = step.configuration_properties['sahale.additional.links'];
 	if (step.jobid !== null && step.jobid !== 'NO_JOB_ID') {
 	    if (flow.yarn_job_history !== "false") {
 		var amUrl = flow.jt_url + '/cluster/app/' + step.jobid.replace('job_', 'application_');
 		html += '<div class=steplink><a href=//' + amUrl + '>Application Master</a></div>';
+	    }
+	}
+	if (additionalLinks !== undefined) {
+	    var links = additionalLinks.split(';');
+	    for (i = 0; i < links.length; ++i) {
+	    	var link = links[i];
+	    	var tokens = link.split('|');
+	    	if (tokens.length == 2) {
+	    	    var name = tokens[0].replace(/\+/g, ' ');
+		    var url = Kiwi.compose(tokens[1], interpolationData);
+		    html += '<div class=steplink><a href=//' + url + '>' + name + '</a></div>';
+	    	}
 	    }
 	}
 

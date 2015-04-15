@@ -1,6 +1,7 @@
 package com.etsy.sahale
 
 
+import org.apache.hadoop.mapred.JobConf
 import org.apache.log4j.Logger
 
 import org.jgrapht.ext.{IntegerNameProvider, VertexNameProvider}
@@ -82,6 +83,16 @@ class FlowGraphBuilder(val flow: Flow[_], val stepStatusMap: mutable.Map[String,
   }
 
   /**
+   * Store certain configuration properties for every step in the step graph
+   */
+  def addConfigurationPropertiesToStepGraph: Unit = {
+    flow.getFlowSteps.toList.foreach { fs: FlowStep[_] =>
+
+
+    }
+  }
+
+  /**
    * Add sources and a sink to each FlowStep (job stage) we track.
    * Sinks, Sources, and Fields are tracked in StepStatus objects per
    * job stage, but are most easily extracted here in the FlowTracker.
@@ -114,6 +125,8 @@ class FlowGraphBuilder(val flow: Flow[_], val stepStatusMap: mutable.Map[String,
         }.mkString(",")
 
       // these are updated only once per workflow step, here before the job runs
+      val conf = fs.getConfig.asInstanceOf[JobConf]
+      stepStatusMap(fs.getID).setConfigurationProperties(conf)
       stepStatusMap(fs.getID).setSourcesAndSink(sources, sourcesFields, sink, sinkFields)
     }
 
