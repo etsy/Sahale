@@ -336,22 +336,6 @@ var ViewUtil = (function($) {
 	return html;
     }
 
-      // function renderHadoopLogLinks(step, flow) {
-  //   var link = '#';
-  //   if (step.jobid !== null && step.jobid !== 'NO_JOB_ID') {
-  //     // Hack to point log links at JT for MRv1, YARN History Server for MRv2
-  //     if (flow.yarn_job_history !== "false") {
-  //       link = makeYarnUrl(flow, step);
-  //     } else {
-  //       link = 
-  //     }
-  //   }
-  //   var text = 
-  //   text += '</div>';
-
-  //   return text;
-  // }
-
   return view;
 
 }(jQuery));
