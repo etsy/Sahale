@@ -25,6 +25,7 @@ var ViewUtil = (function($) {
     var html = '<div height="550px">' +
       '<div style="text-align:center" class="alert alert-info" id="no-step" role="alert">Select A Node</div>';
     for (key in stepMap) {
+	
       var step = stepMap[key];
       html += '<div id="step-' + step.stepnumber + '">';
       html += '<div class="logbox"><a id=activatelinks href=# onclick=jumpToLinks(' + step.stepnumber + ')><b>Hadoop Log Links</b></a></div>';
@@ -332,7 +333,7 @@ var ViewUtil = (function($) {
 	    }
 	}
 
-	html += '</div>';
+	html += '</div></div></div>';
 	return html;
     }
 
