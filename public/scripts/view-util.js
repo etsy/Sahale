@@ -317,7 +317,7 @@ var ViewUtil = (function($) {
 	}
 	for(i = 0; i < logLinks.length; ++i) {
 	    var link = logLinks[i];
-	    html += '<div class="steplink"><a href="//' + link.url + '"><b>'+ link.name +'</b></a>';
+	    html += '<div class="steplink"><a href="//' + link.url + '"><b>'+ link.name +'</b></a></div>';
 	}
 	
 	if (additionalLinks !== undefined) {
@@ -333,7 +333,7 @@ var ViewUtil = (function($) {
 	    }
 	}
 
-	html += '</div></div></div>';
+	html += '</div>';
 	return html;
     }
 
