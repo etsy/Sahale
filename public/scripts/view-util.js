@@ -317,7 +317,7 @@ var ViewUtil = (function($) {
 	}
 	for(i = 0; i < logLinks.length; ++i) {
 	    var link = logLinks[i];
-	    html += '<div class="steplink"><a href="//' + link.url + '"><b>'+ link.name +'</b></a></div>';
+	    html += '<div class="steplink"><a href="//' + link.url + '" target=_blank><b>'+ link.name +'</b></a></div>';
 	}
 	
 	if (additionalLinks !== undefined) {
@@ -328,7 +328,7 @@ var ViewUtil = (function($) {
 	    	if (tokens.length == 2) {
 	    	    var name = tokens[0].replace(/\+/g, ' ');
 		    var url = Kiwi.compose(tokens[1], interpolationData);
-		    html += '<div class=steplink><a href=//' + url + '>' + name + '</a></div>';
+		    html += '<div class=steplink><a href=//' + url + ' target=_blank>' + name + '</a></div>';
 	    	}
 	    }
 	}
