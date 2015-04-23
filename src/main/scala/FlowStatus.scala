@@ -23,6 +23,7 @@ object FlowStatus {
     "flow_progress" -> "0.00",
     "flow_duration" -> "0",
     "flow_hdfs_bytes_written" -> "0",
+    "cascade_id" -> FlowTracker.UNKNOWN,
     "yarn_job_history" -> FlowTracker.NOT_YARN_JOB
   )
 }
@@ -48,8 +49,11 @@ class FlowStatus(val flow: Flow[_]) {
     "flow_progress" -> flowProgress,
     "flow_duration" -> updateFlowDuration, // milliseconds
     "flow_hdfs_bytes_written" -> flowHdfsBytesWritten,
+    "cascade_id" -> getCascadeId,
     "yarn_job_history" -> getHistoryServerFromFlowProps // host:port for YARN log links
   )
+
+  def getCascadeId: String = { flow.getCascadeID }
 
   def getFlowStatus: String = {
     flow.getFlowStats.getStatus.toString

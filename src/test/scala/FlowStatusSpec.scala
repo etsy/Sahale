@@ -16,6 +16,7 @@ class FlowStatusSpec extends FlatSpec with ShouldMatchers {
     "flow_progress" -> "0.00",
     "flow_duration" -> "0",
     "flow_hdfs_bytes_written" -> "0",
+    "cascade_id" -> FlowTracker.UNKNOWN,
     "yarn_job_history" -> FlowTracker.NOT_YARN_JOB
   )
 
