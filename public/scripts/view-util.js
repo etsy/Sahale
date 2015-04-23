@@ -288,7 +288,7 @@ var ViewUtil = (function($) {
 	var html = '<div style="font-size:10px">';
 	var interpolationData = {
 	  user: flow.user_name,
-	  job_name: flow.flow_name.replace('com.etsy.scalding.jobs.', '').replace('.', '-'),
+	  job_name: flow.flow_name.replace('com.etsy.scalding.jobs.', '').replace(/\./g, '-'),
 	  flow_id: flow.flow_id,
 	  stage: step.stepnumber
 	};
