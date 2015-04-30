@@ -28,6 +28,9 @@ The other method is to include the Sahale JAR in your own project build as a dep
 
 Only jobs submitted to a Hadoop cluster are tracked. No local mode runs are tracked. All tracked jobs must include the argument `--track-job`. The `--track-job` argument is included in the `bin/runjob` convenience script by default.
 
+User who want to track additional job configuration properties using FlowTracker/Sahale, can now add a CSV list of the property names to `flow-tracker.properties` before building the FlowTracker JAR. An example that will add 2 additional data points to each FlowStep update:
+`user.selected.configs=mapreduce.task.io.sort.mb,oozie.job.id`
+
 The Name
 ===
 Sahale was handmade at [Etsy.com](http://www.etsy.com) and is named for [Sahale Mountain](http://en.wikipedia.org/wiki/Sahale_Mountain), which is a wonderful vantage point from which to view the Cascades ;)
