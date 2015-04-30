@@ -79,7 +79,7 @@ class FlowGraphBuilder(val flow: Flow[_], val stepStatusMap: mutable.Map[String,
       case _ => ("-1", "ERROR")
     }
     tempMap += (node -> stageNumber)
-    stepStatusMap += (stageId -> new StepStatus(stageNumber, stageId))
+    stepStatusMap += (stageId -> new StepStatus(stageNumber, stageId, FlowTracker.props))
   }
 
   /**

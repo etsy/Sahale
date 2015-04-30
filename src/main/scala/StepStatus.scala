@@ -7,10 +7,12 @@ import cascading.stats.{CascadingStats, FlowStepStats}
 import cascading.stats.hadoop.{HadoopStepStats, HadoopSliceStats}
 import cascading.tap.Tap
 import cascading.util.Util
-import org.apache.hadoop.mapred.JobConf
 
-//import org.json.JSONObject
 import com.codahale.jerkson.Json._
+
+import java.util.Properties
+
+import org.apache.hadoop.mapred.JobConf
 
 import scala.collection.mutable
 import scala.collection.JavaConversions._
@@ -21,8 +23,12 @@ import scala.collection.JavaConversions._
  *
  * @author Eli Reisman
  */
-class StepStatus(val stepNumber: String, val stepId: String) {
-  val propertiesToExtract = Seq("sahale.additional.links")
+class StepStatus(val stepNumber: String, val stepId: String, props: Properties) {
+  // if users want to track additional JobConf values, put the chosen keys in a CSV
+  // list in flow-tracker.properties entry "user.selected.configs" at build time
+  val propertiesToExtract = Seq("sahale.additional.links") ++ {
+    props.getProperty("user.selected.configs", "").split("""\s*,\s*""").map { _.trim }.filter { _ != "" }.toSeq
+  }
 
   var sources = FlowTracker.UNKNOWN
   var sink = FlowTracker.UNKNOWN
@@ -32,7 +38,11 @@ class StepStatus(val stepNumber: String, val stepId: String) {
   var mapProgress = "0.00"
   var reduceProgress = "0.00"
   var stepStatus = "NOT_LAUNCHED"
+  var stepPriority = "0"
   var stepRunningTime = "0"
+  var stepStartEpochMs = "0"
+  var stepSubmitEpochMs = "0"
+  var stepEndEpochMs = "0"
   var counters = Map[String, Any]()
   var hdfsBytesWritten = 0L
   var configurationProperties = Map[String, String]()
@@ -43,19 +53,23 @@ class StepStatus(val stepNumber: String, val stepId: String) {
 
   def toMap: Map[String, Any] = {
     Map(
-      "stepnumber" -> stepNumber,
-      "sources" -> sources,
-      "sink" -> sink,
-      "sourcesfields" -> sourcesFields,
-      "sinkfields" -> sinkFields,
-      "jobid" -> jobId,
-      "stepid" -> stepId,
-      "mapprogress" -> mapProgress,
-      "reduceprogress" -> reduceProgress,
-      "stepstatus" -> stepStatus,
-      "steprunningtime" -> stepRunningTime,
-      "counters" -> counters,
-      "configuration_properties" -> configurationProperties
+      "stepnumber"                -> stepNumber,
+      "sources"                   -> sources,
+      "sink"                      -> sink,
+      "sourcesfields"             -> sourcesFields,
+      "sinkfields"                -> sinkFields,
+      "jobid"                     -> jobId,
+      "stepid"                    -> stepId,
+      "mapprogress"               -> mapProgress,
+      "reduceprogress"            -> reduceProgress,
+      "stepstatus"                -> stepStatus,
+      "steppriority"              -> stepPriority,
+      "steprunningtime"           -> stepRunningTime,
+      "step_start_epoch_ms"       -> stepStartEpochMs,
+      "step_submit_epoch_ms"      -> stepSubmitEpochMs,
+      "step_end_epoch_ms"         -> stepEndEpochMs,
+      "counters"                  -> counters,
+      "configuration_properties"  -> configurationProperties
     )
   }
 
@@ -75,13 +89,28 @@ class StepStatus(val stepNumber: String, val stepId: String) {
   /**
    * Updates the non-static step properties.
    */
-  def update(hadoopStepStats: HadoopStepStats): Unit = {
+  def update(hadoopFlowStep: HadoopFlowStep): Unit = {
+    val hadoopStepStats = hadoopFlowStep.getFlowStepStats.asInstanceOf[HadoopStepStats]
+
     jobId = hadoopStepStats.getJobID
     mapProgress = getMapProgress(hadoopStepStats)
     reduceProgress = getReduceProgress(hadoopStepStats)
     stepRunningTime = getStepRunningTime(hadoopStepStats) // checks old stepStatus value - MUST be updated first!
-    stepStatus = hadoopStepStats.getStatus.toString 
+    stepStatus = hadoopStepStats.getStatus.toString
+    stepPriority = getStepPriority(hadoopFlowStep)
+
+    updateEpochMsFields(hadoopStepStats)
     updateStepCounters(hadoopStepStats)
+  }
+
+  def updateEpochMsFields(hss: HadoopStepStats): Unit = {
+    stepStartEpochMs = hss.getStartTime.toString
+    stepSubmitEpochMs = hss.getSubmitTime.toString
+    stepEndEpochMs = hss.getFinishedTime.toString
+  }
+
+  def getStepPriority(hfs: HadoopFlowStep): String = {
+    hfs.getSubmitPriority.toString
   }
 
   // Calling captureDetail every update just for this is not worth it.

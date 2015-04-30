@@ -16,8 +16,13 @@ class FlowStatusSpec extends FlatSpec with ShouldMatchers {
     "flow_progress" -> "0.00",
     "flow_duration" -> "0",
     "flow_hdfs_bytes_written" -> "0",
+    "flow_priority" -> "0",
     "cascade_id" -> FlowTracker.UNKNOWN,
-    "yarn_job_history" -> FlowTracker.NOT_YARN_JOB
+    "yarn_job_history" -> FlowTracker.NOT_YARN_JOB,
+    "hdfs_working_dir" -> FlowTracker.UNKNOWN,
+    "flow_start_epoch_ms"       -> "0",
+    "flow_submit_epoch_ms"      -> "0",
+    "flow_end_epoch_ms"         -> "0"
   )
 
   "A FlowStatus" should "provide a default initial state before the job launches" in {

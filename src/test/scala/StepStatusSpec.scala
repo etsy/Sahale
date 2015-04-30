@@ -9,42 +9,27 @@ import org.scalatest.junit.JUnitRunner
 class StepStatusSpec extends FlatSpec with ShouldMatchers {
 
   val expected = Map[String, Any](
-    "stepnumber" -> "foo",
-    "sources" -> FlowTracker.UNKNOWN,
-    "sink" -> FlowTracker.UNKNOWN,
-    "sourcesfields" -> FlowTracker.UNKNOWN,
-    "sinkfields" -> FlowTracker.UNKNOWN,
-    "jobid" -> "NO_JOB_ID",
-    "stepid" -> "bar",
-    "mapprogress" -> "0.00",
-    "reduceprogress" -> "0.00",
-    "stepstatus" -> "NOT_LAUNCHED",
-    "steprunningtime" -> "0",
-    "counters" -> Map[String, Any](),
-    "configuration_properties" -> Map[String, String]()
-/*
-    "maptasks" -> "0",
-    "reducetasks" -> "0",
-    "hdfsbytesread" -> "0",
-    "hdfsbyteswritten" -> "0",
-    "filebytesread" -> "0",
-    "filebyteswritten" -> "0",
-    "tuplesread" -> "0",
-    "tupleswritten" -> "0",
-    "datalocalmaptasks" -> "0",
-    "racklocalmaptasks" -> "0",
-    "committedheapbytes" -> "0",
-    "gcmillis" -> "0",
-    "cpumillis" -> "0",
-    "ioreadmillis" -> "0",
-    "iowritemillis" -> "0",
-    "failedmaptasks" -> "0",
-    "failedreducetasks" -> "0",
-*/
+    "stepnumber"                -> "foo",
+    "sources"                   -> FlowTracker.UNKNOWN,
+    "sink"                      -> FlowTracker.UNKNOWN,
+    "sourcesfields"             -> FlowTracker.UNKNOWN,
+    "sinkfields"                -> FlowTracker.UNKNOWN,
+    "jobid"                     -> "NO_JOB_ID",
+    "stepid"                    -> "bar",
+    "mapprogress"               -> "0.00",
+    "reduceprogress"            -> "0.00",
+    "stepstatus"                -> "NOT_LAUNCHED",
+    "steprunningtime"           -> "0",
+    "steppriority"              -> "0",
+    "step_start_epoch_ms"       -> "0",
+    "step_submit_epoch_ms"      -> "0",
+    "step_end_epoch_ms"         -> "0",
+    "counters"                  -> Map[String, Any](),
+    "configuration_properties"  -> Map[String, String]()
   )
 
   "A StepStatus" should "return a valid initial map given fixed input arguments" in {
-    val that = (new StepStatus("foo", "bar")).toMap
+    val that = (new StepStatus("foo", "bar", new java.util.Properties)).toMap
     that.map { e => e._2 should be (expected(e._1)) }
   }
 

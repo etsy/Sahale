@@ -21,6 +21,8 @@ class FlowGraphBuilderSpec extends FlatSpec with ShouldMatchers {
     ).getLines().mkString("\n")
   }
 
+  val emptyProps = new java.util.Properties
+
   val expectedEdgeMap = Map[String, Set[String]](
     "11" -> Set("33"),
     "22" -> Set("44"),
@@ -28,10 +30,10 @@ class FlowGraphBuilderSpec extends FlatSpec with ShouldMatchers {
   )
 
   val expectedStepStatusMap = mutable.Map[String, StepStatus](
-    "2AAA915A87DE4B52B2A56C249545C54D" -> new StepStatus("11", "2AAA915A87DE4B52B2A56C249545C54D"),
-    "6EC78784266342CB9424E9875FF4299F" -> new StepStatus("22", "6EC78784266342CB9424E9875FF4299F"),
-    "9FC4CA743ED5468EBC8C3CA76C6B12A6" -> new StepStatus("33", "9FC4CA743ED5468EBC8C3CA76C6B12A6"),
-    "C4047D6DEBB6427B8B95DAF19D3E5DE2" -> new StepStatus("44", "C4047D6DEBB6427B8B95DAF19D3E5DE2")
+    "2AAA915A87DE4B52B2A56C249545C54D" -> new StepStatus("11", "2AAA915A87DE4B52B2A56C249545C54D", emptyProps),
+    "6EC78784266342CB9424E9875FF4299F" -> new StepStatus("22", "6EC78784266342CB9424E9875FF4299F", emptyProps),
+    "9FC4CA743ED5468EBC8C3CA76C6B12A6" -> new StepStatus("33", "9FC4CA743ED5468EBC8C3CA76C6B12A6", emptyProps),
+    "C4047D6DEBB6427B8B95DAF19D3E5DE2" -> new StepStatus("44", "C4047D6DEBB6427B8B95DAF19D3E5DE2", emptyProps)
   )
 
   "A FlowGraphBuilder" should "extract a valid Edge Map from the planned Flow" in {

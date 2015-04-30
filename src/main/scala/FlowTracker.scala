@@ -8,6 +8,7 @@ import org.apache.http.client.params.ClientPNames
 import org.apache.log4j.Logger
 
 import cascading.flow.{Flow, FlowStep}
+import cascading.flow.hadoop.HadoopFlowStep
 import cascading.stats.{CascadingStats, FlowStepStats}
 import cascading.stats.hadoop.HadoopStepStats
 import cascading.tuple.Fields
@@ -40,7 +41,7 @@ object FlowTracker {
 
   val LOG: Logger = Logger.getLogger(classOf[FlowTracker])
 
-  private val props = getTrackerProperties
+  val props = getTrackerProperties
 
   def getDefaultHostPort = props("host").trim + ":" + props("port").trim
 
@@ -81,14 +82,15 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
 
       // loop and report progress until job is marked completed by caller
       while (!runCompleted.get) {
-        val nextReport = flow.getFlowStats.getFlowStepStats.toList.foldLeft(mutable.Map[String, StepStatus]()) {
-          (next: mutable.Map[String, StepStatus], fss: FlowStepStats) =>
-            fss match {
-              case hss: HadoopStepStats => updateStepMap(hss, next); next
+        val nextReport = flow.getFlowSteps.toList.foldLeft(mutable.Map[String, StepStatus]()) {
+          (next: mutable.Map[String, StepStatus], fs: FlowStep[_]) =>
+            fs match {
+              case hfs: HadoopFlowStep => updateStepMap(hfs, next); next
               case _ => next
             }
         }
-        // just ship the reports if any stage state changed in this iteration
+
+        // ship the reports if any stage state changed in this iteration
         if (nextReport.size > 0) {
           pushStepReport(flow.getID, nextReport)
           updateAndPushFlowReport(true)
@@ -121,18 +123,15 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
     println(Console.REVERSED + "Follow your running job's progress from your browser: " + sahaleUrl() + Console.RESET)
   }
 
-  def updateStepMap(flowStepStats: FlowStepStats, report: mutable.Map[String, StepStatus]): Unit = {
-    flowStepStats match {
-      case hadoopStepStats: HadoopStepStats => {
-        val id = hadoopStepStats.getID
-        val oldStep = stepStatusMap(id).toMap
-        stepStatusMap(id).update(hadoopStepStats)
-        if (null != report && oldStep != stepStatusMap(id).toMap) {
-          report(id) = stepStatusMap(id)
-        }
+  def updateStepMap(hfs: HadoopFlowStep, report: mutable.Map[String, StepStatus]): Unit = {
+      val id = hfs.getID
+      val oldStep = stepStatusMap(id).toMap
+
+      stepStatusMap(id).update(hfs)
+
+      if (null != report && oldStep != stepStatusMap(id).toMap) {
+        report(id) = stepStatusMap(id)
       }
-      case _ => // do nothing if not a Hadoop step
-    }
   }
 
 
@@ -147,12 +146,12 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
   }
 
   def getColoredFlowStatus: String = {
-    val statusColor = flowStatus.getFlowStatus match {
+    val statusColor = flow.getFlowStats.getStatus.toString match {
       case "SUCCESSFUL" | "RUNNING" => Console.GREEN
       case "FAILED" => Console.RED
       case _ => Console.WHITE
     }
-    statusColor + flowStatus.getFlowStatus + Console.WHITE
+    statusColor + flow.getFlowStats.getStatus.toString + Console.WHITE
   }
 
 
@@ -190,10 +189,10 @@ def updateAndPushFlowReport(shouldLogToConsole: Boolean): Unit = {
 
   def pushFinalReport: Unit = {
     try {
-      flow.getFlowStats.getFlowStepStats.toList.foreach {
-        fss: FlowStepStats =>
-          fss match {
-            case hss: HadoopStepStats => updateStepMap(hss, null)
+      flow.getFlowSteps.toList.foreach {
+        fs: FlowStep[_] =>
+          fs match {
+            case hfs: HadoopFlowStep => updateStepMap(hfs, null)
             case _ =>
           }
       }
