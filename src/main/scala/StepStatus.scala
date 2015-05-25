@@ -8,7 +8,8 @@ import cascading.stats.hadoop.{HadoopStepStats, HadoopSliceStats}
 import cascading.tap.Tap
 import cascading.util.Util
 
-import com.codahale.jerkson.Json._
+import spray.json._
+import DefaultJsonProtocol._
 
 import java.util.Properties
 
@@ -43,7 +44,7 @@ class StepStatus(val stepNumber: String, val stepId: String, props: Properties) 
   var stepStartEpochMs = "0"
   var stepSubmitEpochMs = "0"
   var stepEndEpochMs = "0"
-  var counters = Map[String, Any]()
+  var counters = Map[String, Map[String, Long]]()
   var hdfsBytesWritten = 0L
   var configurationProperties = Map[String, String]()
 
@@ -71,6 +72,34 @@ class StepStatus(val stepNumber: String, val stepId: String, props: Properties) 
       "counters"                  -> counters,
       "configuration_properties"  -> configurationProperties
     )
+  }
+
+  def jsonMap: String = {
+    Map(
+      "stepnumber"                -> toJsonString(stepNumber),
+      "sources"                   -> toJsonString(sources),
+      "sink"                      -> toJsonString(sink),
+      "sourcesfields"             -> toJsonString(sourcesFields),
+      "sinkfields"                -> toJsonString(sinkFields),
+      "jobid"                     -> toJsonString(jobId),
+      "stepid"                    -> toJsonString(stepId),
+      "mapprogress"               -> toJsonString(mapProgress),
+      "reduceprogress"            -> toJsonString(reduceProgress),
+      "stepstatus"                -> toJsonString(stepStatus),
+      "steppriority"              -> toJsonString(stepPriority),
+      "steprunningtime"           -> toJsonString(stepRunningTime),
+      "step_start_epoch_ms"       -> toJsonString(stepStartEpochMs),
+      "step_submit_epoch_ms"      -> toJsonString(stepSubmitEpochMs),
+      "step_end_epoch_ms"         -> toJsonString(stepEndEpochMs),
+      "counters"                  -> counters.map { case(k: String, v: Map[String,Long]) => (k, v.toJson) }.toJson,
+      "configuration_properties"  -> configurationProperties.toJson
+    ).toJson.compactPrint
+  }
+
+  def toJsonString(s: String): JsValue = s match {
+    case s: String if (s != null) => JsString(s)
+    case null => JsNull
+    case err => throw new DeserializationException("Error while serializing StepStatus into JSON: expected string value, got: " + err)
   }
 
   def setConfigurationProperties(conf: JobConf): Unit = {

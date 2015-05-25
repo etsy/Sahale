@@ -18,11 +18,11 @@ import java.net.SocketException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.Properties
 
-import com.codahale.jerkson.Json._
-
 import scala.collection.mutable
 import scala.collection.JavaConversions._
 
+import spray.json._
+import DefaultJsonProtocol._
 
 object FlowTracker {
   val PROPSFILE = "flow-tracker.properties"
@@ -255,14 +255,17 @@ def updateAndPushFlowReport(shouldLogToConsole: Boolean): Unit = {
     val sendMap: Map[String, String] = Map(
       "flowname" -> flow.getName,
       "flowstatus" -> flowStatus,
-      "json" -> java.net.URLEncoder.encode(generate(map).toString, "UTF-8")
+      "json" -> java.net.URLEncoder.encode(
+          map.map { case(k, v) => (k, if (null == v) JsNull else JsString(v)) }.asInstanceOf[Map[String, JsValue]].toJson.compactPrint,
+          "UTF-8"
+        )
     )
     pushReport(flow.getID, sahaleUrl(UPDATE_FLOW), sendMap)
   }
 
   def pushStepReport(flowId: String, steps: mutable.Map[String, StepStatus]): Int = {
     val sendMap: Map[String, String] = steps.map {
-      step => step._1 -> java.net.URLEncoder.encode(generate(step._2.toMap).toString, "UTF-8")
+      step => step._1 -> java.net.URLEncoder.encode(step._2.jsonMap, "UTF-8")
     }.toMap
     pushReport(flowId, sahaleUrl(UPDATE_STEPS), sendMap)
   }

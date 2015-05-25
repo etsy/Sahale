@@ -55,13 +55,20 @@ class FlowStatus(val flow: Flow[_]) {
     "flow_duration"           -> updateFlowDuration, // milliseconds
     "flow_hdfs_bytes_written" -> flowHdfsBytesWritten,
     "flow_priority"           -> flow.getSubmitPriority.toString,
-    "cascade_id"              -> flow.getCascadeID,
+    "cascade_id"              -> getCascadeId,
     "yarn_job_history"        -> getHistoryServerFromFlowProps, // host:port for YARN log links
     "hdfs_working_dir"        -> getHdfsWorkingDir,
     "flow_start_epoch_ms"     -> flow.getFlowStats.getStartTime.toString,
     "flow_submit_epoch_ms"    -> flow.getFlowStats.getSubmitTime.toString,
     "flow_end_epoch_ms"       -> flow.getFlowStats.getFinishedTime.toString
   )
+
+  def getCascadeId: String = {
+    flow.getCascadeID match {
+      case s: String => s
+      case _         => FlowTracker.UNKNOWN
+    }
+  }
 
   def getHdfsWorkingDir: String = {
     flow.getProperty("mapreduce.job.working.dir") match {
