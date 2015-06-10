@@ -94,6 +94,7 @@ var ViewUtil = (function($) {
     var rows = '<tr>' +
       '<th>Job Name</th>' +
       '<th>User</th>' +
+      '<th>Cluster</th>' +
       '<th>Status</th>' +
       '<th># of Steps</th>' +
       '<th>Running Time</th>' +
@@ -106,6 +107,7 @@ var ViewUtil = (function($) {
       rows += '<tr>' +
         '<td>' + prettyLinkedJobName(f.flow_name, f.flow_id) + '</td>' +
         '<td>' + f.user_name + '</td>' + // removed link to Staff page for OSS version
+	'<td>' + f.cluster_name + '</td>' +
         '<td>' + prettyFlowStatus(f.flow_status) + '</td>' +
         '<td>' + f.total_stages + '</td>' +
         '<td>' + view.prettyFlowTimeFromMillis(f.flow_duration) + '</td>' +

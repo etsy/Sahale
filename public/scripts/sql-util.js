@@ -20,6 +20,10 @@ var one_week_offset = 86400 * 7; // for DEBUG purposes only
 
 
 ////////////////// Exported public functions ////////////////////
+exports.getClusterNameMapping = function(call_back) {
+    call_back(dsn['cluster_name_mapping']);
+}
+
 exports.getRunningFlows = function(call_back) {
   var now       = getNowEpoch();
   var recent    = now - small_time_offset;
