@@ -1,6 +1,17 @@
 var DataUtil = (function() {
-  var data = {};
+    var data = {};
 
+    var cluster_name_mapping = null;
+
+    $.ajax({
+	async: false,
+	type: 'GET',
+	url: '/cluster_name_mapping',
+	success: function(data) {
+	    cluster_name_mapping = data;
+	}
+    });
+    
   data.unpackFlow = function(flow) {
     // unpack JSON fields
     var outFlow = JSON.parse(flow['flow_json']);
@@ -11,6 +22,8 @@ var DataUtil = (function() {
     outFlow.flow_status = flow.flow_status;
     outFlow.create_date = flow.create_date;
     outFlow.update_date = flow.update_date;
+    outFlow.cluster_name = cluster_name_mapping[outFlow.jt_url] || 'Unknown';
+
 
     return outFlow;
   }

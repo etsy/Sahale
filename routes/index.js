@@ -24,6 +24,12 @@ exports.search = function(req, res) {
 }
 
 /////////// API ENDPOINTS RETURNING JSON DATA /////////
+exports.cluster_name_mapping = function(req, res) {
+    sqlutil.getClusterNameMapping(
+	function(data) { res.json(data); }
+    )
+}
+
 exports.flows_running = function(req, res) {
   sqlutil.getRunningFlows(
     function(data) { res.json(data); }
