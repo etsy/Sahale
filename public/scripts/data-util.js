@@ -22,7 +22,7 @@ var DataUtil = (function() {
     outFlow.flow_status = flow.flow_status;
     outFlow.create_date = flow.create_date;
     outFlow.update_date = flow.update_date;
-    outFlow.cluster_name = cluster_name_mapping[outFlow.jt_url];
+    outFlow.cluster_name = cluster_name_mapping[outFlow.jt_url] || 'Unknown';
 
 
     return outFlow;
