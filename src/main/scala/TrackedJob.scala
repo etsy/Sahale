@@ -15,7 +15,6 @@ import com.twitter.scalding._
  * @author Eli Reisman
  */
 class TrackedJob(args: Args) extends com.twitter.scalding.Job(args) {
-  @transient private val done = new AtomicBoolean(false)
 
   /**
    * Override run() to control the lifecycle of the tracker threads using try/finally.
@@ -34,22 +33,28 @@ class TrackedJob(args: Args) extends com.twitter.scalding.Job(args) {
   }
 
   def runTrackedJob(implicit mode: Mode) = {
+    var done: AtomicBoolean = null
+    var thread: Thread = null
+
     try {
       val flow = buildFlow
-      trackThisFlow(flow)
+      val serverHostPort: Option[String] = args.optional("server")
+      done = new AtomicBoolean(false); // replace the flag for iterative runs with multiple Flows
+      thread = new Thread(new FlowTracker(flow, done, serverHostPort))
+      thread.start
       flow.complete
       flow.getFlowStats.isSuccessful // return Boolean
     } catch {
       case t: Throwable => throw t
     } finally {
-      // ensure all threads are cleaned up before we propagate exceptions or complete the run.
-      done.set(true)
-      Thread.sleep(100)
+      // ensure the thread is cleaned up when the job is complete
+      if (null != done) {
+        done.set(true)
+        if (null != thread) {
+          try { thread.join(); } catch { case ignored: InterruptedException => }
+        }
+      }
     }
   }
 
-  private def trackThisFlow(f: Flow[_]): Unit = {
-    val serverHostPort: Option[String] = args.optional("server")
-    (new Thread(new FlowTracker(f, done, serverHostPort))).start
-  }
 }
