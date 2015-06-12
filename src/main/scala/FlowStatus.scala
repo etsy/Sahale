@@ -31,6 +31,8 @@ object FlowStatus {
     "flow_submit_epoch_ms"      -> "0",
     "flow_end_epoch_ms"         -> "0"
   )
+
+  val EPSILON = 2L * 86400L * 1000L // two days in millis is a safe bet
 }
 
 /**
@@ -91,9 +93,10 @@ class FlowStatus(val flow: Flow[_]) {
     }
   }
 
+  // sometimes Cascading will report the current epoch_ms rather than job duration :(
   def updateFlowDuration: String = {
-    flow.getFlowStats.getFlowStepStats.toList.map {
-      fss => fss.getCurrentDuration
-    }.max.toString
+    val fetched = math.max(flow.getFlowStats.getCurrentDuration, 0L)
+    val test = math.abs(System.currentTimeMillis - fetched)
+    if (test < FlowStatus.EPSILON) "0" else fetched.toString
   }
 }
