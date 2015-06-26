@@ -55,31 +55,7 @@ class StepStatus(val stepNumber: String, val stepId: String, props: Properties) 
   var hdfsBytesWritten = 0L
   var configurationProperties = Map[String, String]()
 
-  override def toString: String = {
-    toMap.toString
-  }
-
-  def toMap: Map[String, Any] = {
-    Map(
-      "stepnumber"                -> stepNumber,
-      "sources"                   -> sources,
-      "sink"                      -> sink,
-      "sourcesfields"             -> sourcesFields,
-      "sinkfields"                -> sinkFields,
-      "jobid"                     -> jobId,
-      "stepid"                    -> stepId,
-      "mapprogress"               -> mapProgress,
-      "reduceprogress"            -> reduceProgress,
-      "stepstatus"                -> stepStatus,
-      "steppriority"              -> stepPriority,
-      "steprunningtime"           -> stepRunningTime,
-      "step_start_epoch_ms"       -> stepStartEpochMs,
-      "step_submit_epoch_ms"      -> stepSubmitEpochMs,
-      "step_end_epoch_ms"         -> stepEndEpochMs,
-      "counters"                  -> counters,
-      "configuration_properties"  -> configurationProperties
-    )
-  }
+  override def toString: String = jsonMap
 
   def jsonMap: String = {
     Map(
