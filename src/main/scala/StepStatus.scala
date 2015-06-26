@@ -11,6 +11,7 @@ import cascading.util.Util
 import spray.json._
 import DefaultJsonProtocol._
 
+import org.apache.log4j.Logger
 import java.util.Properties
 
 import org.apache.hadoop.mapred.JobConf
@@ -19,12 +20,18 @@ import scala.collection.mutable
 import scala.collection.JavaConversions._
 
 
+object StepStatus {
+  val LOG: Logger = Logger.getLogger(classOf[StepStatus])
+}
+
 /**
  * Value class to store tracked per-step workflow data.
  *
  * @author Eli Reisman
  */
 class StepStatus(val stepNumber: String, val stepId: String, props: Properties) {
+  import com.etsy.sahale.StepStatus.LOG
+
   // if users want to track additional JobConf values, put the chosen keys in a CSV
   // list in flow-tracker.properties entry "user.selected.configs" at build time
   val propertiesToExtract = Seq("sahale.additional.links") ++ {
@@ -149,6 +156,7 @@ class StepStatus(val stepNumber: String, val stepId: String, props: Properties) 
     val diff: Long = forceUpdate match {
       case true => {
         try {
+          LOG.info("Calling captureDetail() on HadoopStepStats")
           hss.captureDetail // ain't cheap, keep an eye on it
           var minStart: Long = Long.MaxValue
           var maxEnd: Long = Long.MinValue

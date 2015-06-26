@@ -80,23 +80,13 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
     try {
       initializeTrackedJobState
 
-      // loop and report progress until job is marked completed by caller
       while (!runCompleted.get) {
-        val nextReport = flow.getFlowSteps.toList.foldLeft(mutable.Map[String, StepStatus]()) {
-          (next: mutable.Map[String, StepStatus], fs: FlowStep[_]) =>
-            fs match {
-              case hfs: HadoopFlowStep => updateStepMap(hfs, next); next
-              case _ => next
-            }
-        }
-
-        // ship the reports if any stage state changed in this iteration
-        if (nextReport.size > 0) {
-          pushStepReport(flow.getID, nextReport)
-          updateAndPushFlowReport(true)
-        }
+        updateSteps
+        updateFlow
+        logFlowStatus
         try { Thread.sleep(REFRESH_INTERVAL_MS) } catch { case _: Exception => }
       }
+
     } catch {
       case t: Throwable => {
         LOG.warn("FlowTracker for this run has thrown an exception. " +
@@ -104,7 +94,8 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
         runCompleted.set(true);
       }
     } finally {
-      pushFinalReport
+      updateSteps
+      updateFlow
       if (null != client) {
         client.getHttpConnectionManager.asInstanceOf[MultiThreadedHttpConnectionManager].shutdown
       }
@@ -119,43 +110,38 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
     pushFlowReport(flow, INITIAL_FLOW_STATE, FlowStatus.initial)
     val edgeMap = (new FlowGraphBuilder(flow, stepStatusMap)).composeDag
     pushReport(flow.getID, sahaleUrl(CREATE_EDGES), edgeMap)
-    pushStepReport(flow.getID, stepStatusMap)
+    pushStepReport(flow.getID, stepStatusMap.toMap)
     println(Console.REVERSED + "Follow your running job's progress from your browser: " + sahaleUrl() + Console.RESET)
-  }
-
-  def updateStepMap(hfs: HadoopFlowStep, report: mutable.Map[String, StepStatus]): Unit = {
-      val id = hfs.getID
-      val oldStep = stepStatusMap(id).toMap
-
-      stepStatusMap(id).update(hfs)
-
-      if (null != report && oldStep != stepStatusMap(id).toMap) {
-        report(id) = stepStatusMap(id)
-      }
-  }
-
-
-/////////////////// Utility functions for console progress bar /////////////////
-
-  def logFlowStatus: Unit = {
-    val arrows = (20 * (flowStatus.flowProgress.toDouble / 100.0)).toInt
-    val progressBar = Console.WHITE + "[" + Console.YELLOW + (">" * arrows) + Console.WHITE + (" " * (20 - arrows)) + "]"
-    print("\u000D" + (" " * 60));
-    print("\u000D" + Console.WHITE + "Job Status: " + getColoredFlowStatus + "\tProgress: " + flowStatus.flowProgress + "% " +
-      progressBar + "\t Running " + (flowStatus.updateFlowDuration.toLong / 1000) + "secs" + Console.RESET + (" " * 10));
-  }
-
-  def getColoredFlowStatus: String = {
-    val statusColor = flow.getFlowStats.getStatus.toString match {
-      case "SUCCESSFUL" | "RUNNING" => Console.GREEN
-      case "FAILED" => Console.RED
-      case _ => Console.WHITE
-    }
-    statusColor + flow.getFlowStats.getStatus.toString + Console.WHITE
   }
 
 
 /////////////////// Utility functions for aggregating Step data for Flow updates /////////////////
+  def updateFlow: Unit = {
+    val makeAverage: Double = 2.0 * flow.getFlowStats.getStepsCount.toDouble
+    val progressTotal = "%3.2f" format ((sumMapProgress + sumReduceProgress) / makeAverage)
+
+    flowStatus.flowProgress = progressTotal
+    flowStatus.flowHdfsBytesWritten = sumHdfsBytesWritten
+
+    pushFlowReport(flow, flow.getFlowStats.getStatus.toString, flowStatus.toMap)
+  }
+
+  def updateSteps: Unit = pushStepReport(flow.getID,
+    flow.getFlowSteps.toList.foldLeft(Map.empty[String, StepStatus]) {
+      (next: Map[String, StepStatus], fs: FlowStep[_]) =>
+        val hfs: HadoopFlowStep = fs.asInstanceOf[HadoopFlowStep]
+        val id = hfs.getID
+        val oldStatus = stepStatusMap(id).stepStatus
+        val newStatus = hfs.getFlowStepStats.getStatus.toString
+        (oldStatus, newStatus) match {
+          case ("RUNNING", _) | (_, "RUNNING") => {
+            stepStatusMap(id).update(hfs)
+            next ++ Map(id -> stepStatusMap(id))
+          }
+          case _  => next
+        }
+    }
+  )
 
   def sumHdfsBytesWritten: String = {
     stepStatusMap.keys.foldLeft(0L) { (sum: Long, stageId: String) =>
@@ -177,32 +163,6 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
 
 
 /////////////////// Utiilty functions for pushing data to Sahale server /////////////////
-
-def updateAndPushFlowReport(shouldLogToConsole: Boolean): Unit = {
-    val makeAverage: Double = 2.0 * flow.getFlowStats.getStepsCount.toDouble
-    val progressTotal = "%3.2f" format ((sumMapProgress + sumReduceProgress) / makeAverage)
-    flowStatus.flowProgress = progressTotal
-    flowStatus.flowHdfsBytesWritten = sumHdfsBytesWritten
-    if (shouldLogToConsole) { logFlowStatus }
-    pushFlowReport(flow, flow.getFlowStats.getStatus.toString, flowStatus.toMap)
-  }
-
-  def pushFinalReport: Unit = {
-    try {
-      flow.getFlowSteps.toList.foreach {
-        fs: FlowStep[_] =>
-          fs match {
-            case hfs: HadoopFlowStep => updateStepMap(hfs, null)
-            case _ =>
-          }
-      }
-      pushStepReport(flow.getID, stepStatusMap)
-      updateAndPushFlowReport(false)
-    } finally {
-    }
-  }
-
-
   def getHttpClient = {
     val c = new HttpClient(new MultiThreadedHttpConnectionManager)
     c.getParams().setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.BROWSER_COMPATIBILITY);
@@ -256,18 +216,45 @@ def updateAndPushFlowReport(shouldLogToConsole: Boolean): Unit = {
       "flowname" -> flow.getName,
       "flowstatus" -> flowStatus,
       "json" -> java.net.URLEncoder.encode(
-          map.map { case(k, v) => (k, if (null == v) JsNull else JsString(v)) }.asInstanceOf[Map[String, JsValue]].toJson.compactPrint,
+          map.map {
+            case(k, v) => (k, if (null == v) JsNull else JsString(v))
+          }.asInstanceOf[Map[String, JsValue]].toJson.compactPrint,
           "UTF-8"
         )
     )
     pushReport(flow.getID, sahaleUrl(UPDATE_FLOW), sendMap)
   }
 
-  def pushStepReport(flowId: String, steps: mutable.Map[String, StepStatus]): Int = {
-    val sendMap: Map[String, String] = steps.map {
-      step => step._1 -> java.net.URLEncoder.encode(step._2.jsonMap, "UTF-8")
-    }.toMap
-    pushReport(flowId, sahaleUrl(UPDATE_STEPS), sendMap)
+  def pushStepReport(flowId: String, steps: Map[String, StepStatus]): Int = {
+    steps.keys.size match {
+      case none: Int if (none == 0) => LOG.info("No new FlowStep updates to push to Sahale") ; none
+      case count => {
+        LOG.info("Pushing " + count + " FlowStep updates to Sahale")
+        val sendMap: Map[String, String] = steps.map {
+          step => step._1 -> java.net.URLEncoder.encode(step._2.jsonMap, "UTF-8")
+        }.toMap
+        pushReport(flowId, sahaleUrl(UPDATE_STEPS), sendMap)
+      }
+    }
+  }
+
+
+/////////////////// Utility functions for console progress bar /////////////////
+  def logFlowStatus: Unit = {
+    val arrows = (20 * (flowStatus.flowProgress.toDouble / 100.0)).toInt
+    val progressBar = Console.WHITE + "[" + Console.YELLOW + (">" * arrows) + Console.WHITE + (" " * (20 - arrows)) + "]"
+    print("\u000D" + (" " * 60));
+    print("\u000D" + Console.WHITE + "Job Status: " + getColoredFlowStatus + "\tProgress: " + flowStatus.flowProgress + "% " +
+      progressBar + "\t Running " + (flowStatus.updateFlowDuration.toLong / 1000) + "secs" + Console.RESET + (" " * 10));
+  }
+
+  def getColoredFlowStatus: String = {
+    val statusColor = flow.getFlowStats.getStatus.toString match {
+      case "SUCCESSFUL" | "RUNNING" => Console.GREEN
+      case "FAILED" => Console.RED
+      case _ => Console.WHITE
+    }
+    statusColor + flow.getFlowStats.getStatus.toString + Console.WHITE
   }
 
 }
