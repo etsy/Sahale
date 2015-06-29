@@ -7,7 +7,7 @@ import org.apache.hadoop.mapred.{JobConf, JobClient}
 import org.apache.http.client.params.ClientPNames
 import org.apache.log4j.Logger
 
-import cascading.flow.{Flow, FlowStep}
+import cascading.flow.{Flow, FlowStep, FlowStepStrategy}
 import cascading.flow.hadoop.HadoopFlowStep
 import cascading.stats.{CascadingStats, FlowStepStats}
 import cascading.stats.hadoop.HadoopStepStats
@@ -71,7 +71,11 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
   // manages global job state for this run
   val flowStatus = new FlowStatus(flow)
 
-  flow.setFlowStepStrategy(new FlowTrackerStepStrategy(stepStatusMap))
+  // so that we can compose a chain of multiple strategies, end users might
+  // already have FlowStepStrategy implementations they need to apply later
+  flow.setFlowStepStrategy(
+    FlowStepStrategies.plus(flow.getFlowStepStrategy, new FlowTrackerStepStrategy(stepStatusMap))
+  )
 
   def this(flow: Flow[_], runCompleted: AtomicBoolean) = this(flow, runCompleted, None)
 
