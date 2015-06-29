@@ -32,9 +32,12 @@ object StepStatus {
 class StepStatus(val stepNumber: String, val stepId: String, props: Properties) {
   import com.etsy.sahale.StepStatus.LOG
 
+  // will be reset for us by FlowTrackerStepStrategy
+  private var stepStartMillis = System.currentTimeMillis
+
   // if users want to track additional JobConf values, put the chosen keys in a CSV
   // list in flow-tracker.properties entry "user.selected.configs" at build time
-  val propertiesToExtract = Seq("sahale.additional.links") ++ {
+  private val propertiesToExtract = Seq("sahale.additional.links") ++ {
     props.getProperty("user.selected.configs", "").split("""\s*,\s*""").map { _.trim }.filter { _ != "" }.toSeq
   }
 
@@ -47,7 +50,7 @@ class StepStatus(val stepNumber: String, val stepId: String, props: Properties) 
   var reduceProgress = "0.00"
   var stepStatus = "NOT_LAUNCHED"
   var stepPriority = "0"
-  var stepRunningTime = "0"
+  var stepRunningTime = 0L
   var stepStartEpochMs = "0"
   var stepSubmitEpochMs = "0"
   var stepEndEpochMs = "0"
@@ -70,7 +73,7 @@ class StepStatus(val stepNumber: String, val stepId: String, props: Properties) 
       "reduceprogress"            -> toJsonString(reduceProgress),
       "stepstatus"                -> toJsonString(stepStatus),
       "steppriority"              -> toJsonString(stepPriority),
-      "steprunningtime"           -> toJsonString(stepRunningTime),
+      "steprunningtime"           -> toJsonString(stepRunningTime.toString),
       "step_start_epoch_ms"       -> toJsonString(stepStartEpochMs),
       "step_submit_epoch_ms"      -> toJsonString(stepSubmitEpochMs),
       "step_end_epoch_ms"         -> toJsonString(stepEndEpochMs),
@@ -125,34 +128,9 @@ class StepStatus(val stepNumber: String, val stepId: String, props: Properties) 
     hfs.getSubmitPriority.toString
   }
 
-  // Calling captureDetail every update just for this is not worth it.
-  // Just be sure final update of run picks up accurate stats for this.
-  def getStepRunningTime(hss: HadoopStepStats): String = {
-    val forceUpdate: Boolean = (stepStatus == "RUNNING" && hss.getStatus.toString != "RUNNING")
-    val diff: Long = forceUpdate match {
-      case true => {
-        try {
-          LOG.info("Calling captureDetail() on HadoopStepStats")
-          hss.captureDetail // ain't cheap, keep an eye on it
-          var minStart: Long = Long.MaxValue
-          var maxEnd: Long = Long.MinValue
-          hss.getTaskStats.map { entry: (String, HadoopSliceStats) =>
-            val start: Long = entry._2.getStartTime
-            if (start < minStart) minStart = start
-            val end: Long = entry._2.getFinishTime
-            if (end > maxEnd) maxEnd = end
-          }
-          if (maxEnd - minStart < 1L) 0L else (maxEnd - minStart) / 1000L
-        } catch {
-          case _: Exception => 0L
-        }
-      }
-      case _ => {
-        stepRunningTime.toLong
-      }
-    }
-    diff.toString
-  }
+  def getStepRunningTime(hss: HadoopStepStats): Long = (System.currentTimeMillis - stepStartMillis) / 1000L
+
+  def markStartTime: Unit = stepStartMillis = System.currentTimeMillis
 
   def updateStepCounters(hss: HadoopStepStats): Unit = {
     counters = dumpCounters(hss).foldLeft(mutable.Map[String, Map[String, Long]]()) {

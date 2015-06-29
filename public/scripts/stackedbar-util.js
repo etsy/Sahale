@@ -57,8 +57,6 @@ var StackedBarUtil = (function($) {
   function formatTipMessage(step) {
     if (["PENDING", "SUBMITTED", "STARTED", "NOT_LAUNCHED"].indexOf(step.stepstatus) !== -1) {
       return 'Step ' + step.stepnumber + ': Unknown';
-    } else if (step.stepstatus === "RUNNING") {
-      return 'Step ' + step.stepnumber + ': In Progress';
     }
 
     return 'Step ' + step.stepnumber + ': ' + step.steprunningtime + ' secs';

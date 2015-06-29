@@ -41,7 +41,7 @@ class StepStatusSpec extends FlatSpec with ShouldMatchers {
     that.mapProgress should equal (expected("mapprogress"))
     that.reduceProgress should equal (expected("reduceprogress"))
     that.stepStatus should equal (expected("stepstatus"))
-    that.stepRunningTime should equal (expected("steprunningtime"))
+    that.stepRunningTime.toString should equal (expected("steprunningtime"))
     that.stepPriority should equal (expected("steppriority"))
     that.stepStartEpochMs should equal (expected("step_start_epoch_ms"))
     that.stepSubmitEpochMs should equal (expected("step_submit_epoch_ms"))

@@ -63,15 +63,17 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
   extends java.lang.Runnable {
   import com.etsy.sahale.FlowTracker._
 
-  def this(flow: Flow[_], runCompleted: AtomicBoolean) = this(flow, runCompleted, None)
-
-  val client = getHttpClient
-
   // mutable because we have to build this mapping as we go after run() is called
   val stepStatusMap = mutable.Map[String, StepStatus]()
 
+  val client = getHttpClient
+
   // manages global job state for this run
   val flowStatus = new FlowStatus(flow)
+
+  flow.setFlowStepStrategy(new FlowTrackerStepStrategy(stepStatusMap))
+
+  def this(flow: Flow[_], runCompleted: AtomicBoolean) = this(flow, runCompleted, None)
 
   /**
    * Runs after the Flow is connected and complete() is called on it.
