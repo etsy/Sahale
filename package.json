@@ -4,7 +4,7 @@
   "email": "ereisman@etsy.com",
   "repository": {
     "type": "git",
-    "url": "https://github.etsycorp.com/Engineering/Sahale.git"
+    "url": "https://github.com/etsy/Sahale.git"
   },
   "license": "Apache-2.0",
   "dependencies": {
