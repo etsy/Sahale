@@ -39,8 +39,9 @@ class TrackedJob(args: Args) extends com.twitter.scalding.Job(args) {
     try {
       val flow = buildFlow
       val serverHostPort: Option[String] = args.optional("server")
+      val disableProgressBar = args.boolean("disable-progress-bar")
       done = new AtomicBoolean(false); // replace the flag for iterative runs with multiple Flows
-      thread = new Thread(new FlowTracker(flow, done, serverHostPort))
+      thread = new Thread(new FlowTracker(flow, done, serverHostPort, disableProgressBar))
       thread.start
       flow.complete
       flow.getFlowStats.isSuccessful // return Boolean

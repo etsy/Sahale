@@ -59,7 +59,7 @@ object FlowTracker {
  *
  * @author Eli Reisman
  */
-class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPort: Option[String] = None)
+class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPort: Option[String] = None, val disableProgressBar: Boolean = false)
   extends java.lang.Runnable {
   import com.etsy.sahale.FlowTracker._
 
@@ -89,7 +89,9 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
       while (!runCompleted.get) {
         updateSteps
         updateFlow
-        logFlowStatus
+        if (!disableProgressBar) {
+          logFlowStatus
+        }
         try { Thread.sleep(REFRESH_INTERVAL_MS) } catch { case _: Exception => }
       }
 
