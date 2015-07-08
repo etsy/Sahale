@@ -14,7 +14,7 @@ fs.readFile('db-config.json', 'UTF-8', function(err, data) {
 
 // The time windows (secs back from 'now') for
 // running and recently completed Flows to query
-var small_time_offset = 30;
+var small_time_offset = 60 * 10; // 10 minutes
 var big_time_offset = 21600;
 var one_week_offset = 86400 * 7; // for DEBUG purposes only
 
