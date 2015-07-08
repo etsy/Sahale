@@ -28,7 +28,7 @@ exports.getRunningFlows = function(call_back) {
   var now       = getNowEpoch();
   var recent    = now - small_time_offset;
   executeQuery(
-    'SELECT * FROM cascading_job_flows WHERE update_date > ? ORDER BY create_date DESC ',
+    "SELECT * FROM cascading_job_flows WHERE update_date > ? AND flow_status IN ('RUNNING', 'SUBMITTED', 'STARTED') ORDER BY create_date DESC ",
     [recent],
     call_back
   );
