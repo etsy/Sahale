@@ -38,6 +38,11 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
     addAllVertices(graph_data, step_map);
     addAllEdges(graph_data, step_map, edges);
     renderD3Graph(graph_data);
+
+    // ugly hack to handle chrome wierdness with SVG rendering
+    if (navigator.userAgent.toLowerCase().indexOf('chrome') > -1) {
+      $("#flowgraph > g .node.enter > rect").css("opacity", "0");
+    }
   }
 
 
