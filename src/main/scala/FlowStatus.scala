@@ -17,7 +17,7 @@ import scala.collection.JavaConversions._
 object FlowStatus {
   def initial: Map[String, String] = Map(
     "jt_url"                    -> FlowTracker.UNKNOWN,
-    "user_name"                 -> System.getProperty("user.name"),
+    "user_name"                 -> FlowTracker.UNKNOWN,
     "flow_status"               -> "NOT_LAUNCHED",
     "total_stages"              -> "0",
     "flow_progress"             -> "0.00",
@@ -50,7 +50,7 @@ class FlowStatus(val flow: Flow[_]) {
    */
   def toMap: Map[String, String] = Map(
     "jt_url"                  -> getJobTrackerFromFlowProps,
-    "user_name"               -> System.getProperty("user.name", FlowTracker.UNKNOWN),
+    "user_name"               -> getUsernameFromFlowProps,
     "flow_status"             -> flow.getFlowStats.getStatus.toString,
     "total_stages"            -> flow.getFlowStats.getStepsCount.toString,
     "flow_progress"           -> flowProgress,
@@ -76,6 +76,13 @@ class FlowStatus(val flow: Flow[_]) {
     flow.getProperty("mapreduce.job.working.dir") match {
       case wd: String => wd
       case _          => FlowTracker.UNKNOWN
+    }
+  }
+
+  def getUsernameFromFlowProps: String = {
+    flow.getProperty("sahale.custom.user.name") match {
+      case s: String => s
+      case _ => System.getProperty("user.name")
     }
   }
 

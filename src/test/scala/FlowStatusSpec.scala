@@ -10,7 +10,7 @@ class FlowStatusSpec extends FlatSpec with ShouldMatchers {
 
   val initialExpected = Map[String, String](
     "jt_url" -> FlowTracker.UNKNOWN,
-    "user_name" -> System.getProperty("user.name"),
+    "user_name" -> FlowTracker.UNKNOWN,
     "flow_status" -> "NOT_LAUNCHED",
     "total_stages" -> "0",
     "flow_progress" -> "0.00",
