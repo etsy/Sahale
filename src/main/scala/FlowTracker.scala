@@ -36,6 +36,8 @@ object FlowTracker {
   val CREATE_EDGES= "edges/update"
 
   val REFRESH_INTERVAL_MS = 8 * 1000
+  val ONE_SECOND = 1000
+  val PENDING_RETRY_MAX = 6
 
   val CheckIsCascadingFlowId = """([A-Fa-f0-9]+)""".r
 
@@ -102,8 +104,9 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
         runCompleted.set(true);
       }
     } finally {
-      updateSteps
-      updateFlow
+        updateSteps
+        updateFlow
+        resolvePendingStepStatuses
       if (null != client) {
         client.getHttpConnectionManager.asInstanceOf[MultiThreadedHttpConnectionManager].shutdown
       }
@@ -122,8 +125,27 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
     println(Console.REVERSED + "Follow your running job's progress from your browser: " + sahaleUrl() + Console.RESET)
   }
 
+  def resolvePendingStepStatuses: Unit = {
+    var attempts = 1
+    while(finalStatusNotResolved && attempts <= PENDING_RETRY_MAX) {
+      LOG.info(s"Some job steps have not reported final status yet, retrying (attempt $attempts)")
+      updateSteps
+      updateFlow
+      attempts += 1
+      try { Thread.sleep(attempts * attempts * ONE_SECOND) } catch { case _: Exception => }
+    }
+  }
+
 
 /////////////////// Utility functions for aggregating Step data for Flow updates /////////////////
+  def finalStatusNotResolved: Boolean = {
+    val flowSuccessful = List("RUNNING", "SUCCESSFUL").contains (flow.getFlowStats.getStatus)
+    val stepsNotResolved = stepStatusMap.values.exists {
+      step: StepStatus => ! List("SUCCESSFUL", "SKIPPED").contains (step.stepStatus)
+    }
+    flowSuccessful && stepsNotResolved
+  }
+
   def updateFlow: Unit = {
     val makeAverage: Double = 2.0 * flow.getFlowStats.getStepsCount.toDouble
     val progressTotal = "%3.2f" format ((sumMapProgress + sumReduceProgress) / makeAverage)
