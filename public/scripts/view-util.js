@@ -97,7 +97,9 @@ var ViewUtil = (function($) {
       '<th>Cluster</th>' +
       '<th>Status</th>' +
       '<th># of Steps</th>' +
-      '<th>Running Time</th>' +
+	'<th>Running Time</th>' +
+	'<th>Start Time</th>' +
+	'<th>End Time</th>' +
       '<th>Progress</th>' +
       '</tr>';
 
@@ -111,6 +113,8 @@ var ViewUtil = (function($) {
         '<td>' + prettyFlowStatus(f.flow_status) + '</td>' +
         '<td>' + f.total_stages + '</td>' +
         '<td>' + view.prettyFlowTimeFromMillis(f.flow_duration) + '</td>' +
+	    '<td>' + renderDate(f.flow_start_epoch_ms) + '</td>' +
+	    '<td>' + renderDate(f.flow_end_epoch_ms) + '</td>' +
         '<td>' + prettyProgress(fp, barStylez) + '</td>' +
         '</tr>';
     }
@@ -285,6 +289,16 @@ var ViewUtil = (function($) {
     }
     return html;
   }
+
+    function renderDate(epoch_ms_str) {
+	if (epoch_ms_str !== "0") {
+	    var date = new Date(parseInt(epoch_ms_str));
+	    return moment(date).utc().format('MM-DD-YYYY HH:mm:ss z');
+	} else {
+	    return "";
+	}
+	
+    }
 
     function renderLinks(step, flow) {
 	var html = '<div style="font-size:10px">';
