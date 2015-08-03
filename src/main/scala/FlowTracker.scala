@@ -102,7 +102,7 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
         runCompleted.set(true);
       }
     } finally {
-        finalStepsUpdate
+        updateSteps
         updateFlow
       if (null != client) {
         client.getHttpConnectionManager.asInstanceOf[MultiThreadedHttpConnectionManager].shutdown
@@ -142,7 +142,7 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
         val oldStatus = stepStatusMap(id).stepStatus
         val newStatus = hfs.getFlowStepStats.getStatus.toString
         (oldStatus, newStatus) match {
-          case ("RUNNING", _) | (_, "RUNNING") => {
+          case (o, n) if (n == "RUNNING" || o != n) => {
             stepStatusMap(id).update(hfs)
             next ++ Map(id -> stepStatusMap(id))
           }
@@ -150,14 +150,6 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
         }
     }
   )
-
-  def finalStepsUpdate: Unit = {
-    flow.getFlowSteps.toList.map { fs: FlowStep[_] =>
-      val hfs: HadoopFlowStep = fs.asInstanceOf[HadoopFlowStep]
-      stepStatusMap(hfs.getID).update(hfs)
-    }
-    pushStepReport(flow.getID, stepStatusMap.toMap)
-  }
 
   def sumHdfsBytesWritten: String = {
     stepStatusMap.keys.foldLeft(0L) { (sum: Long, stageId: String) =>
