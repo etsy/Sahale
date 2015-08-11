@@ -7,7 +7,7 @@
     </layout>
   </appender>
   <root>
-    <level value="warn" />
+    <level value="info" />
     <appender-ref ref="FlowTrackerLogger" />
   </root>
 </log4j:configuration>
