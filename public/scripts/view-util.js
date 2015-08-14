@@ -3,21 +3,21 @@ var ViewUtil = (function($) {
   var view = {};
 
   ////////// public ViewUtil functions ////////////////
-  view.renderRunningJobs = function(flows) {
+    view.renderRunningJobs = function(flows, clusterFilter) {
     $("#running").hide().html(
-        renderJobsTable(flows, "progress-bar-warning progress-bar-striped active")
+        renderJobsTable(flows, "progress-bar-warning progress-bar-striped active", clusterFilter)
       ).fadeIn(500);
   }
 
-  view.renderCompletedJobs = function(flows) {
+    view.renderCompletedJobs = function(flows, clusterFilter) {
     $("#completed").hide().html(
-        renderJobsTable(flows, "progress-bar-info")
+        renderJobsTable(flows, "progress-bar-info", clusterFilter)
       ).fadeIn(500);
   }
 
-  view.renderMatchedJobs = function(flows) {
+    view.renderMatchedJobs = function(flows, clusterFilter) {
     $("#matched").hide().html(
-        renderJobsTable(flows, "progress-bar-info")
+        renderJobsTable(flows, "progress-bar-info", clusterFilter)
       ).fadeIn(500);
   }
 
@@ -90,37 +90,42 @@ var ViewUtil = (function($) {
   }
 
   ///////////////// private utility functions ////////////////
-  function renderJobsTable(flows, barStylez) {
-    var rows = '<tr>' +
-      '<th>Job Name</th>' +
-      '<th>User</th>' +
-      '<th>Cluster</th>' +
-      '<th>Status</th>' +
-      '<th># of Steps</th>' +
-	'<th>Running Time</th>' +
-	'<th>Start Time</th>' +
-	'<th>End Time</th>' +
-      '<th>Progress</th>' +
-      '</tr>';
-
-    for (var i = 0; i < flows.length; ++i) {
-      var f = flows[i]
-      var fp = function(f) { if (f.flow_status === "SUCCESSFUL") return "100.00"; else return f.flow_progress; }(f);
-      rows += '<tr>' +
-        '<td>' + prettyLinkedJobName(f.flow_name, f.flow_id) + '</td>' +
-        '<td>' + f.user_name + '</td>' + // removed link to Staff page for OSS version
-	'<td>' + f.cluster_name + '</td>' +
-        '<td>' + prettyFlowStatus(f.flow_status) + '</td>' +
-        '<td>' + f.total_stages + '</td>' +
-        '<td>' + view.prettyFlowTimeFromMillis(f.flow_duration) + '</td>' +
-	    '<td>' + renderDate(f.flow_start_epoch_ms) + '</td>' +
-	    '<td>' + renderDate(f.flow_end_epoch_ms) + '</td>' +
-        '<td>' + prettyProgress(fp, barStylez) + '</td>' +
-        '</tr>';
+    function renderJobsTable(flows, barStylez, clusterFilter) {
+	var rows = '<tr>' +
+	    '<th>Job Name</th>' +
+	    '<th>User</th>' +
+	    '<th>Cluster</th>' +
+	    '<th>Status</th>' +
+	    '<th># of Steps</th>' +
+	    '<th>Running Time</th>' +
+	    '<th>Start Time</th>' +
+	    '<th>End Time</th>' +
+	    '<th>Progress</th>' +
+	    '</tr>';
+	for (var i = 0; i < flows.length; ++i) {
+	    var f = flows[i];
+	    if (clusterFilter === undefined || f.cluster_name === clusterFilter) {
+		var fp = function(f) { if (f.flow_status === "SUCCESSFUL") return "100.00"; else return f.flow_progress; }(f);
+		rows += '<tr>' +
+		    '<td>' + prettyLinkedJobName(f.flow_name, f.flow_id) + '</td>' +
+		    '<td>' + f.user_name + '</td>' + // removed link to Staff page for OSS version
+		    '<td>' + renderClusterFilterLink(f.cluster_name) + '</td>' +
+		    '<td>' + prettyFlowStatus(f.flow_status) + '</td>' +
+		    '<td>' + f.total_stages + '</td>' +
+		    '<td>' + view.prettyFlowTimeFromMillis(f.flow_duration) + '</td>' +
+		    '<td>' + renderDate(f.flow_start_epoch_ms) + '</td>' +
+		    '<td>' + renderDate(f.flow_end_epoch_ms) + '</td>' +
+		    '<td>' + prettyProgress(fp, barStylez) + '</td>' +
+		    '</tr>';
+	    }
+	}
+	return rows;
     }
-    return rows;
-  }
 
+    function renderClusterFilterLink(clusterName) {
+	return '<a href=?cluster=' + clusterName + '>' + clusterName + '</a>';
+    }
+    
   function renderTabHeader(idnum) {
     var html = '<ul id="tabs-step-' + idnum + '" class="nav nav-tabs" data-tabs="tabs">';
     html += '<li class="active"><a href="#jobstats-' + idnum + '" data-toggle="tab">Stats</a></li>';

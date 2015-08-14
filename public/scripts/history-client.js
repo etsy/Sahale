@@ -1,23 +1,29 @@
 // Setup and callback chains for the Flow details page
 $(document).ready(function() {
   // extract the Flow ID (for db query) from this page's URL path
-  var flow_name = document.URL.substring(document.URL.lastIndexOf('/') + 1);
+    var flow_name = document.URL.substring(document.URL.lastIndexOf('/') + 1);
+    var params = URI(window.location.href).search(true);
 
   $.get('/flow_history/' + flow_name, function(flows) {
-    var unpacked = DataUtil.unpackFlows(flows);
+      var unpacked = DataUtil.unpackFlows(flows);
+      if (params.cluster !== undefined) {
+	  unpacked = unpacked.filter(function(item) {
+	      return item.cluster_name === params.cluster;
+	  });
+      }
     var aggr_flow_data = {};
-    unpacked.forEach(function(item, ndx, arr) {
-      aggr_flow_data[item.flow_id] = {
-        maptasks: 0,
-        reducetasks: 0,
-        diskwrites: 0,
-        hdfswrites: 0
-      };
-    });
+      unpacked.forEach(function(item, ndx, arr) {
+	  aggr_flow_data[item.flow_id] = {
+	      maptasks: 0,
+	      reducetasks: 0,
+	      diskwrites: 0,
+	      hdfswrites: 0
+	  };
+      });
     var data = "flows=" + Object.keys(aggr_flow_data).join("~");
 
     // render the chart-style flow list for this job at the bottom of the page
-    ViewUtil.renderCompletedJobs(unpacked);
+      ViewUtil.renderCompletedJobs(unpacked, params.cluster);
 
     // get the (flow => steps) rollup data we need to aggregate for these charts
     $.post('/step_group', data, function(steps, code, xhr) {
