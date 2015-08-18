@@ -85,6 +85,7 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
   override def run(): Unit = {
     try {
       initializeTrackedJobState
+      registerShutdownHook
 
       while (!runCompleted.get) {
         updateSteps
@@ -102,12 +103,20 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
         runCompleted.set(true);
       }
     } finally {
-        updateSteps
-        updateFlow
+      updateSteps
+      updateFlow
       if (null != client) {
         client.getHttpConnectionManager.asInstanceOf[MultiThreadedHttpConnectionManager].shutdown
       }
     }
+  }
+
+  /**
+   * Register a shutdown hook to perform the final update
+   */
+  def registerShutdownHook: Unit = {
+    val shutdownHookWorker = new Thread(new FlowTrackerShutdownHookWorker)
+    Runtime.getRuntime.addShutdownHook(shutdownHookWorker)
   }
 
   /**
@@ -123,7 +132,7 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
   }
 
 
-/////////////////// Utility functions for aggregating Step data for Flow updates /////////////////
+  /////////////////// Utility functions for aggregating Step data for Flow updates /////////////////
   def updateFlow: Unit = {
     val makeAverage: Double = 2.0 * flow.getFlowStats.getStepsCount.toDouble
     val progressTotal = "%3.2f" format ((sumMapProgress + sumReduceProgress) / makeAverage)
@@ -169,7 +178,7 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
     }
   }
 
-/////////////////// Utiilty functions for pushing data to Sahale server /////////////////
+  /////////////////// Utiilty functions for pushing data to Sahale server /////////////////
   def getHttpClient = {
     val c = new HttpClient(new MultiThreadedHttpConnectionManager)
     c.getParams().setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.BROWSER_COMPATIBILITY);
@@ -223,11 +232,11 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
       "flowname" -> flow.getName,
       "flowstatus" -> flowStatus,
       "json" -> java.net.URLEncoder.encode(
-          map.map {
-            case(k, v) => (k, if (null == v) JsNull else JsString(v))
-          }.asInstanceOf[Map[String, JsValue]].toJson.compactPrint,
-          "UTF-8"
-        )
+        map.map {
+          case(k, v) => (k, if (null == v) JsNull else JsString(v))
+        }.asInstanceOf[Map[String, JsValue]].toJson.compactPrint,
+        "UTF-8"
+      )
     )
     pushReport(flow.getID, sahaleUrl(UPDATE_FLOW), sendMap)
   }
@@ -246,7 +255,7 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
   }
 
 
-/////////////////// Utility functions for console progress bar /////////////////
+  /////////////////// Utility functions for console progress bar /////////////////
   def logFlowStatus: Unit = {
     val arrows = (20 * (flowStatus.flowProgress.toDouble / 100.0)).toInt
     val progressBar = Console.WHITE + "[" + Console.YELLOW + (">" * arrows) + Console.WHITE + (" " * (20 - arrows)) + "]"
@@ -264,4 +273,23 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
     statusColor + flow.getFlowStats.getStatus.toString + Console.WHITE
   }
 
+
+  /**
+   * There is an edge case in the tracking that occurs sometimes when the client JVM is terminated with a SIGTERM
+   * Normally this would interrupt the tracking and prevent sending a final update
+   * This could cause jobs to appear to stick around in a running state even though they have been killed
+   * Registering a shutdown hook lets us perform a final update during the process of shutting down the JVM
+   */
+  private class FlowTrackerShutdownHookWorker extends Runnable {
+    val tracker = FlowTracker.this
+
+    override def run(): Unit = {
+      if (!tracker.runCompleted.get && tracker.client != null) {
+        LOG.info("Performing final update from shutdown hook")
+        tracker.updateSteps
+        tracker.updateFlow
+        tracker.client.getHttpConnectionManager.asInstanceOf[MultiThreadedHttpConnectionManager].shutdown
+      }
+    }
+  }
 }
