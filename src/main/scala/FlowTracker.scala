@@ -1,8 +1,5 @@
 package com.etsy.sahale
 
-import cascading.util.ShutdownUtil
-import cascading.util.ShutdownUtil.Hook
-import cascading.util.ShutdownUtil.Hook.Priority
 import org.apache.commons.httpclient.{HttpClient, MultiThreadedHttpConnectionManager, Header}
 import org.apache.commons.httpclient.cookie.CookiePolicy
 import org.apache.commons.httpclient.methods.PostMethod
