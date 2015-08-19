@@ -284,14 +284,11 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
     val tracker = FlowTracker.this
 
     override def run(): Unit = {
-      LOG.info("Entering shutdown hook")
-      if (!tracker.runCompleted.get) {
+      if (!tracker.runCompleted.get && tracker.client != null) {
         LOG.info("Performing final update from shutdown hook")
         tracker.updateSteps
         tracker.updateFlow
-        if (tracker.client != null) {
-          tracker.client.getHttpConnectionManager.asInstanceOf[MultiThreadedHttpConnectionManager].shutdown
-        }
+        tracker.client.getHttpConnectionManager.asInstanceOf[MultiThreadedHttpConnectionManager].shutdown
       }
     }
   }
