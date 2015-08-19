@@ -118,7 +118,8 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
    * Register a shutdown hook to perform the final update
    */
   def registerShutdownHook: Unit = {
-    ShutdownUtil.addHook(new FlowTrackerShutdownHookWorker)
+    val shutdownHookWorker = new Thread(new FlowTrackerShutdownHookWorker)
+    Runtime.getRuntime.addShutdownHook(shutdownHookWorker)
   }
 
   /**
@@ -282,10 +283,10 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
    * This could cause jobs to appear to stick around in a running state even though they have been killed
    * Registering a shutdown hook lets us perform a final update during the process of shutting down the JVM
    */
-  private class FlowTrackerShutdownHookWorker extends Hook {
+  private class FlowTrackerShutdownHookWorker extends Runnable {
     val tracker = FlowTracker.this
 
-    override def execute(): Unit = {
+    override def run(): Unit = {
       LOG.info("Entering shutdown hook")
       if (!tracker.runCompleted.get) {
         LOG.info("Performing final update from shutdown hook")
@@ -296,9 +297,5 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
         }
       }
     }
-
-    // Setting the priority to LAST allows us to ensure that the Cascading shutdown hook that kills running stages
-    // has happened before sending our final update
-    override def priority(): Priority = Priority.LAST
   }
 }
