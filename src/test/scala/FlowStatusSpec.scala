@@ -22,7 +22,8 @@ class FlowStatusSpec extends FlatSpec with ShouldMatchers {
     "hdfs_working_dir" -> FlowTracker.UNKNOWN,
     "flow_start_epoch_ms"       -> "0",
     "flow_submit_epoch_ms"      -> "0",
-    "flow_end_epoch_ms"         -> "0"
+    "flow_end_epoch_ms"         -> "0",
+    "flow_links" -> FlowTracker.UNKNOWN
   )
 
   "A FlowStatus" should "provide a default initial state before the job launches" in {

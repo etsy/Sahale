@@ -29,7 +29,8 @@ object FlowStatus {
     "hdfs_working_dir"          -> FlowTracker.UNKNOWN,
     "flow_start_epoch_ms"       -> "0",
     "flow_submit_epoch_ms"      -> "0",
-    "flow_end_epoch_ms"         -> "0"
+    "flow_end_epoch_ms"         -> "0",
+    "flow_links"                -> FlowTracker.UNKNOWN
   )
 
   val EPSILON = 2L * 86400L * 1000L // two days in millis is a safe bet
@@ -62,8 +63,16 @@ class FlowStatus(val flow: Flow[_]) {
     "hdfs_working_dir"        -> getHdfsWorkingDir,
     "flow_start_epoch_ms"     -> flow.getFlowStats.getStartTime.toString,
     "flow_submit_epoch_ms"    -> flow.getFlowStats.getSubmitTime.toString,
-    "flow_end_epoch_ms"       -> flow.getFlowStats.getFinishedTime.toString
+    "flow_end_epoch_ms"       -> flow.getFlowStats.getFinishedTime.toString,
+    "flow_links"              -> getFlowLinks
   )
+
+  def getFlowLinks: String = {
+    flow.getProperty("sahale.flow.links") match {
+      case s: String => s
+      case _ => FlowTracker.UNKNOWN
+    }
+  }
 
   def getCascadeId: String = {
     flow.getCascadeID match {
