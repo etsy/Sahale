@@ -82,7 +82,7 @@ var DataUtil = (function() {
     step.map_vcore_millis = checkedStepUnpack(step, 'mapreduce.JobCounter', 'VCORES_MILLIS_MAPS', 0);
     step.reduce_vcore_millis = checkedStepUnpack(step, 'mapreduce.JobCounter', 'VCORES_MILLIS_REDUCES', 0);
     step.map_vcore_secs = Math.round(step.map_vcore_millis / 1000);
-    step.reduce_vcore_secs = Math.round(step.map_vcore_secs / 1000)
+    step.reduce_vcore_secs = Math.round(step.reduce_vcore_millis / 1000)
     step.configuration_properties = extractConfigurationProperties(step);
 
     return step;
