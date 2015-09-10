@@ -193,6 +193,10 @@ var ViewUtil = (function($) {
       '<th>Map Tasks:</th><td class="mr-count-red">' + step.maptasks + '</td>' +
       '<th>Reduce Tasks:</th><td class="mr-count-blue">' + step.reducetasks + '</td>' +
       '</tr>' +
+      '<tr>' +
+      '<th>Map Vcore-Seconds:</th><td class="mr-count-red">' + step.map_vcore_secs + '</td>' +
+      '<th>Reduce Vcore-Seconds:</th><td class="mr-count-blue">' + step.reduce_vcore_secs + '</td>' +
+      '</tr>' +
       '</table>';
   }
 
