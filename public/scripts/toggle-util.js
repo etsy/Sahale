@@ -18,22 +18,22 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     step_map = sm;
 
     assignData(
-      [numTasksMapFunc, hdfsReadsMapFunc, clusterReadsMapFunc, localityMapFunc, ioSecsMapFunc],
+      [numTasksMapFunc, hdfsReadsMapFunc, clusterReadsMapFunc, localityMapFunc, ioSecsMapFunc, vcoreMillisMapFunc],
       "mapData"
     );
 
     assignData(
-      [numTasksReduceFunc, hdfsWritesReduceFunc, clusterWritesReduceFunc, localityReduceFunc, ioSecsReduceFunc],
+      [numTasksReduceFunc, hdfsWritesReduceFunc, clusterWritesReduceFunc, localityReduceFunc, ioSecsReduceFunc, vcoreMillisReduceFunc],
       "reduceData"
     );
 
     assignData(
-      [numTasksTipFunc, hdfsTipFunc, clusterTipFunc, localityTipFunc, ioSecsTipFunc],
+      [numTasksTipFunc, hdfsTipFunc, clusterTipFunc, localityTipFunc, ioSecsTipFunc, vcoreMillisTipFunc],
       "tipData"
     );
 
     assignData(
-      [numTasksMaxValueFunc, hdfsMaxValueFunc, clusterMaxValueFunc, localityMaxValueFunc, ioSecsMaxValueFunc],
+      [numTasksMaxValueFunc, hdfsMaxValueFunc, clusterMaxValueFunc, localityMaxValueFunc, ioSecsMaxValueFunc, vcoreMillisMaxValueFunc],
       "maxValues"
     );
 
@@ -42,7 +42,8 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
       "GB Read/Written (HDFS) per Step",
       "GB Read/Written (Cluster Disk) per Step",
       "% of Node and Rack Locality per Step",
-      "Cascading Total R/W Durations (all Tasks) per Step"
+      "Cascading Total R/W Durations (all Tasks) per Step",
+      "Vcore-Seconds per Step"	
     ]);
   }
 
@@ -266,6 +267,60 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
   function localityMaxValueFunc(step_map) {
     return 100;
   }
+
+    //////// vcoreMillis* functions  ////////
+    function vcoreMillisMapFunc(step_map) {
+	var arr = [];
+	for (key in step_map) {
+	    var step = step_map[key];
+	    var value = step.map_vcore_secs;
+	    arr.push({
+		x: key,
+		y: value
+	    });
+	}
+	return arr;
+    }
+
+    function vcoreMillisReduceFunc(step_map) {
+	var arr = [];
+	for (key in step_map) {
+	    var step = step_map[key];
+	    var value = step.reduce_vcore_secs;
+	    arr.push({
+		x: key,
+		y: value
+	    });
+	}
+	return arr;
+    }
+
+    function vcoreMillisTipFunc(step_map) {
+	var arr = [];
+	for (key in step_map) {
+	    var step  = step_map[key];
+	    var map = step.map_vcore_secs;
+	    var reduce = step.reduce_vcore_secs;
+	    arr.push('<span style="color:Pink">' + map + ' Vcore-Seconds</span> Map Tasks<br>' +
+		     '<span style="color:LightBlue">' + reduce + ' Vcore-Seconds</span> Reduce Tasks<p>' +
+		     ' in Job Step ' + key
+		    );
+	}
+	return arr;
+    }
+
+    function vcoreMillisMaxValueFunc(step_map) {
+	var max = 0;
+	for (key in step_map) {
+	    var step = step_map[key];
+	    var map = step.map_vcore_secs;
+	    var reduce = step.reduce_vcore_secs;
+	    if (parseInt(map) > parseInt(max)) { max = map; }
+	    if (parseInt(reduce) > parseInt(max)) { max = reduce; }
+	}
+	return max;
+    }
+
 
   //////// ioSecs* functions  ////////
   function ioSecsMapFunc(step_map) {
