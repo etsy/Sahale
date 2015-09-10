@@ -18,22 +18,22 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     step_map = sm;
 
     assignData(
-      [numTasksMapFunc, hdfsReadsMapFunc, clusterReadsMapFunc, localityMapFunc, ioSecsMapFunc, vcoreMillisMapFunc],
+      [numTasksMapFunc, hdfsReadsMapFunc, clusterReadsMapFunc, localityMapFunc, ioSecsMapFunc, vcoreSecsMapFunc],
       "mapData"
     );
 
     assignData(
-      [numTasksReduceFunc, hdfsWritesReduceFunc, clusterWritesReduceFunc, localityReduceFunc, ioSecsReduceFunc, vcoreMillisReduceFunc],
+      [numTasksReduceFunc, hdfsWritesReduceFunc, clusterWritesReduceFunc, localityReduceFunc, ioSecsReduceFunc, vcoreSecsReduceFunc],
       "reduceData"
     );
 
     assignData(
-      [numTasksTipFunc, hdfsTipFunc, clusterTipFunc, localityTipFunc, ioSecsTipFunc, vcoreMillisTipFunc],
+      [numTasksTipFunc, hdfsTipFunc, clusterTipFunc, localityTipFunc, ioSecsTipFunc, vcoreSecsTipFunc],
       "tipData"
     );
 
     assignData(
-      [numTasksMaxValueFunc, hdfsMaxValueFunc, clusterMaxValueFunc, localityMaxValueFunc, ioSecsMaxValueFunc, vcoreMillisMaxValueFunc],
+      [numTasksMaxValueFunc, hdfsMaxValueFunc, clusterMaxValueFunc, localityMaxValueFunc, ioSecsMaxValueFunc, vcoreSecsMaxValueFunc],
       "maxValues"
     );
 
@@ -268,8 +268,8 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     return 100;
   }
 
-    //////// vcoreMillis* functions  ////////
-    function vcoreMillisMapFunc(step_map) {
+    //////// vcoreSecs* functions  ////////
+    function vcoreSecsMapFunc(step_map) {
 	var arr = [];
 	for (key in step_map) {
 	    var step = step_map[key];
@@ -282,7 +282,7 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
 	return arr;
     }
 
-    function vcoreMillisReduceFunc(step_map) {
+    function vcoreSecsReduceFunc(step_map) {
 	var arr = [];
 	for (key in step_map) {
 	    var step = step_map[key];
@@ -295,7 +295,7 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
 	return arr;
     }
 
-    function vcoreMillisTipFunc(step_map) {
+    function vcoreSecsTipFunc(step_map) {
 	var arr = [];
 	for (key in step_map) {
 	    var step  = step_map[key];
@@ -309,7 +309,7 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
 	return arr;
     }
 
-    function vcoreMillisMaxValueFunc(step_map) {
+    function vcoreSecsMaxValueFunc(step_map) {
 	var max = 0;
 	for (key in step_map) {
 	    var step = step_map[key];
