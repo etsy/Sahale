@@ -63,6 +63,11 @@ var StateUtil = (function() {
     sahale_state.chart_state += 1;
   }
 
+    // just track clicks for use in toggle-utils
+  state.decrementChartState = function() {
+    sahale_state.chart_state -= 1;
+  }
+
   state.getChartState = function() {
     return sahale_state.chart_state;
   }
