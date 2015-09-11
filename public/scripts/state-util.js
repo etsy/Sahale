@@ -58,14 +58,23 @@ var StateUtil = (function() {
     sahale_state.tabs_state[stepnum] = klazz;
   }
 
-  // just track clicks for use in toggle-utils
-  state.incrementChartState = function() {
-    sahale_state.chart_state += 1;
+    // just track clicks for use in toggle-utils
+    // This will keep chart_state in the range 0 to max-1
+  state.incrementChartState = function(max) {
+      sahale_state.chart_state += 1;
+      if (sahale_state.chart_state == max) {
+	  sahale_state.chart_state = 0;
+      }
   }
 
     // just track clicks for use in toggle-utils
-  state.decrementChartState = function() {
-    sahale_state.chart_state -= 1;
+    // This will keep chart_state in the range 0 to max-1
+  state.decrementChartState = function(max) {
+      if (sahale_state.chart_state == 0) {
+	  sahale_state.chart_state = max - 1;
+      } else {
+	  sahale_state.chart_state -= 1;
+      }
   }
 
   state.getChartState = function() {
