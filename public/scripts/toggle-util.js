@@ -48,7 +48,7 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
   }
 
   function renderAndRegisterEvent() {
-      var ndx = parseInt(StateUtil.getChartState() % toggle.mapData.length);
+      var ndx = parseInt(StateUtil.getChartState());
     var actitle = $("#actitle");
       actitle.text(toggle.titles[ndx]);
       actitle.append('<button class="glyphicon glyphicon-arrow-right" style="float:right" id="actoggle_right"></button>');
