@@ -48,13 +48,19 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
   }
 
   function renderAndRegisterEvent() {
-    var ndx = parseInt(StateUtil.getChartState() % toggle.mapData.length);
+      var ndx = parseInt(StateUtil.getChartState());
     var actitle = $("#actitle");
-    actitle.text(toggle.titles[ndx]);
-    actitle.append('<button class="glyphicon glyphicon-stats" style="float:right" id="actoggle"></button>');
+      actitle.text(toggle.titles[ndx]);
+      actitle.append('<button class="glyphicon glyphicon-arrow-right" style="float:right" id="actoggle_right"></button>');
+      actitle.append('<button class="glyphicon glyphicon-arrow-left" style="float:right" id="actoggle_left"></button>');
 
-    $("#actoggle").on("click", function(evt) {
-      StateUtil.incrementChartState();
+    $("#actoggle_right").on("click", function(evt) {
+      StateUtil.incrementChartState(toggle.mapData.length);
+      renderAndRegisterEvent();
+    });
+
+    $("#actoggle_left").on("click", function(evt) {
+      StateUtil.decrementChartState(toggle.mapData.length);
       renderAndRegisterEvent();
     });
 
