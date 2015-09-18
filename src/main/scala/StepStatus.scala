@@ -36,7 +36,7 @@ class StepStatus(val stepNumber: String, val stepId: String, props: Properties) 
   private var stepStartMillis = System.currentTimeMillis
 
   // if users want to track additional JobConf values, put the chosen keys in a CSV
-  // list in flow-tracker.properties entry "user.selected.configs" at build time
+  // list in flow-tracker.properties entry "sahale.step.selected.configs" at build time
   private val propertiesToExtract = Seq("sahale.additional.links") ++ {
     props.getProperty("sahale.step.selected.configs", "").split("""\s*,\s*""").map { _.trim }.filter { _ != "" }.toSeq
   }
