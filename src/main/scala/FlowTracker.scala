@@ -147,12 +147,14 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
     flow.getFlowSteps.toList.foldLeft(Map.empty[String, StepStatus]) {
       (next: Map[String, StepStatus], fs: FlowStep[_]) =>
         val hfs: HadoopFlowStep = fs.asInstanceOf[HadoopFlowStep]
+        val conf = hfs.getConfig
         val id = hfs.getID
         val oldStatus = stepStatusMap(id).stepStatus
         val newStatus = hfs.getFlowStepStats.getStatus.toString
         (oldStatus, newStatus) match {
           case (o, n) if (n == "RUNNING" || o != n) => {
             stepStatusMap(id).update(hfs)
+            stepStatusMap(id).setConfigurationProperties(conf)
             next ++ Map(id -> stepStatusMap(id))
           }
           case _  => next
