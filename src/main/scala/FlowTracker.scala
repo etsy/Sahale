@@ -69,7 +69,7 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
   val client = getHttpClient
 
   // manages global job state for this run
-  val flowStatus = new FlowStatus(flow)
+  val flowStatus = new FlowStatus(flow, FlowTracker.props)
 
   // so that we can compose a chain of multiple strategies, end users might
   // already have FlowStepStrategy implementations they need to apply later

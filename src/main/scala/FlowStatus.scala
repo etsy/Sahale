@@ -1,6 +1,8 @@
 package com.etsy.sahale
 
 
+import java.util.Properties
+
 import cascading.flow.Flow
 import cascading.stats.CascadingStats
 import cascading.stats.hadoop.HadoopStepStats
@@ -41,10 +43,12 @@ object FlowStatus {
  *
  * @author Eli Reisman
  */
-class FlowStatus(val flow: Flow[_]) {
+class FlowStatus(val flow: Flow[_], props: Properties) {
   // these are updated in the FlowTracker using StepStatus rollups
   var flowProgress = "0.00"
   var flowHdfsBytesWritten = "0"
+
+  private val flowPropertiesToExtract = props.getProperty("sahale.flow.selected.configs", "").split("""\s*,\s*""").map { _.trim }.filter { _ != "" }.toSeq
 
   /**
    * Populates a map of up-to-date Flow properties to push to server.
@@ -65,7 +69,17 @@ class FlowStatus(val flow: Flow[_]) {
     "flow_submit_epoch_ms"    -> flow.getFlowStats.getSubmitTime.toString,
     "flow_end_epoch_ms"       -> flow.getFlowStats.getFinishedTime.toString,
     "flow_links"              -> getFlowLinks
-  )
+  ) ++ getFlowConfigurationProperties
+
+  def getFlowConfigurationProperties: Map[String, String] = {
+    (flowPropertiesToExtract map { prop: String =>
+      val propValue = flow.getProperty(prop) match {
+        case s: String => s
+        case _ => FlowTracker.UNKNOWN
+      }
+      (prop, propValue)
+    }).toMap
+  }
 
   def getFlowLinks: String = {
     flow.getProperty("sahale.flow.links") match {
