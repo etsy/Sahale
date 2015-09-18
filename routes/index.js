@@ -42,6 +42,12 @@ exports.flows_completed = function(req, res) {
   );
 };
 
+exports.flows_completed_all = function(req, res) {
+  sqlutil.getAllCompletedFlows(
+    function(data) { res.json(data); }
+  );
+};
+
 exports.flow_search = function(req, res){
   sqlutil.getMatchingFlows(
     req.param('searchterm'),

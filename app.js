@@ -40,6 +40,7 @@ app.get('/search', routes.search);
 // JSON API for db reads
 app.get('/flows/running', routes.flows_running);
 app.get('/flows/completed', routes.flows_completed);
+app.get('/flows/completed/all', routes.flows_completed_all);
 app.get('/flows/search/:searchterm', routes.flow_search);
 app.get('/flow/:flow_id', routes.flow);
 app.get('/steps/:flow_id', routes.steps);

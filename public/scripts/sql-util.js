@@ -46,6 +46,18 @@ exports.getCompletedFlows = function(call_back) {
   );
 }
 
+exports.getAllCompletedFlows = function(call_back) {
+  var now       = getNowEpoch();
+  var completed = 0;
+  executeQuery(
+    'SELECT * FROM cascading_job_flows ' +
+    "WHERE update_date > ? AND flow_status IN ('STOPPED', 'FAILED', 'SUCCESSFUL', 'SKIPPED') " +
+    'ORDER BY create_date DESC ',
+    [completed],
+    call_back
+  );
+}
+
 exports.getMatchingFlows = function(search_term, call_back) {
   var like = '%' + decodeURIComponent(search_term).replace('+', ' ').trim().replace(/\s+/g, "%") + '%';
   executeQuery(
