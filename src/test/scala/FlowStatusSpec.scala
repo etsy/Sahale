@@ -1,5 +1,7 @@
 package com.etsy.sahale
 
+import java.util.Properties
+
 import org.junit.runner.RunWith
 
 import org.scalatest._
@@ -31,7 +33,7 @@ class FlowStatusSpec extends FlatSpec with ShouldMatchers {
   }
 
   "A FlowStatus" should "require a valid Flow instance" in {
-    val fs = new FlowStatus(null)
+    val fs = new FlowStatus(null, new Properties())
     intercept[NullPointerException] {
       fs.toMap
     }
