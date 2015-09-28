@@ -43,7 +43,7 @@ $(document).ready(function() {
         ToggleUtil.renderCharts(step_map);
 
         // render the running times chart
-        StackedBarUtil.renderRunningTimes(step_map, flow);
+        StackedBarUtil.render(step_map, flow);
 
         // get event handling wired up
         GraphUtil.setEventHandlers(step_map);

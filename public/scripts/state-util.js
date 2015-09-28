@@ -7,7 +7,8 @@ var StateUtil = (function() {
     scale: 1,
     curid: 0,
     tabs_state: {},
-    chart_state: 0
+      chart_state: 0,
+      right_toggle_state: 0
   };
   var sahale_state = null;
 
@@ -80,6 +81,28 @@ var StateUtil = (function() {
   state.getChartState = function() {
     return sahale_state.chart_state;
   }
+
+    state.incrementRightToggleState = function(max) {
+	sahale_state.right_toggle_state += 1;
+	if (sahale_state.right_toggle_state == max) {
+	    sahale_state.right_toggle_state = 0;
+	}
+    }
+
+    state.decrementRightToggleState = function(max) {
+	if (sahale_state.right_toggle_state == 0) {
+	    sahale_state.right_toggle_state = max - 1;
+	} else {
+	    sahale_state.right_toggle_state -= 1;
+	}
+    }
+
+    state.getRightToggleState = function() {
+	if (sahale_state.right_toggle_state === null) {
+	    sahale_state.right_toggle_state = 0;
+	}
+	return sahale_state.right_toggle_state;
+    }
 
   // called from graph-util just before setFlowState is called on page refresh
   state.updateViewState = function(transx, transy, sc) {
