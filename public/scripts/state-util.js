@@ -7,12 +7,13 @@ var StateUtil = (function() {
     scale: 1,
     curid: 0,
     tabs_state: {},
-      chart_state: 0,
-      right_toggle_state: 0
+    chart_state: 0,
+    right_toggle_state: 0
   };
   var sahale_state = null;
 
-  state.captureGraphViewYOffset = function(offset) {
+  state.captureGraphViewYOffset = function(height) {
+    var offset = 183.0 - (parseInt(height) / 2.0);
     SAHALE_INIT_STATE.ty = offset;
   }
 
@@ -50,17 +51,16 @@ var StateUtil = (function() {
     sahale_state.scale = val;
   }
 
-  state.getTabState = function(stepnum) {
-    return sahale_state.tabs_state[stepnum];
+  state.getTabState = function() {
+    return sahale_state.tabs_state;
   }
 
-  // tabs should be tracked by CSS classname to set "active", indexed per step number
-  state.updateTabState = function(stepnum, klazz) {
-    sahale_state.tabs_state[stepnum] = klazz;
+  state.updateTabState = function(stepnum, tab_id) {
+    sahale_state.tabs_state[stepnum] = tab_id;
   }
 
-    // just track clicks for use in toggle-utils
-    // This will keep chart_state in the range 0 to max-1
+  // just track clicks for use in toggle-utils
+  // This will keep chart_state in the range 0 to max-1
   state.incrementChartState = function(max) {
       sahale_state.chart_state += 1;
       if (sahale_state.chart_state == max) {
@@ -68,8 +68,8 @@ var StateUtil = (function() {
       }
   }
 
-    // just track clicks for use in toggle-utils
-    // This will keep chart_state in the range 0 to max-1
+  // just track clicks for use in toggle-utils
+  // This will keep chart_state in the range 0 to max-1
   state.decrementChartState = function(max) {
       if (sahale_state.chart_state == 0) {
 	  sahale_state.chart_state = max - 1;
@@ -82,27 +82,27 @@ var StateUtil = (function() {
     return sahale_state.chart_state;
   }
 
-    state.incrementRightToggleState = function(max) {
-	sahale_state.right_toggle_state += 1;
-	if (sahale_state.right_toggle_state == max) {
-	    sahale_state.right_toggle_state = 0;
-	}
+  state.incrementRightToggleState = function(max) {
+    sahale_state.right_toggle_state += 1;
+    if (sahale_state.right_toggle_state == max) {
+        sahale_state.right_toggle_state = 0;
     }
+  }
 
-    state.decrementRightToggleState = function(max) {
-	if (sahale_state.right_toggle_state == 0) {
-	    sahale_state.right_toggle_state = max - 1;
-	} else {
-	    sahale_state.right_toggle_state -= 1;
-	}
+  state.decrementRightToggleState = function(max) {
+    if (sahale_state.right_toggle_state == 0) {
+        sahale_state.right_toggle_state = max - 1;
+    } else {
+        sahale_state.right_toggle_state -= 1;
     }
+  }
 
-    state.getRightToggleState = function() {
-	if (sahale_state.right_toggle_state === null) {
-	    sahale_state.right_toggle_state = 0;
-	}
-	return sahale_state.right_toggle_state;
+  state.getRightToggleState = function() {
+    if (sahale_state.right_toggle_state === null) {
+        sahale_state.right_toggle_state = 0;
     }
+	  return sahale_state.right_toggle_state;
+  }
 
   // called from graph-util just before setFlowState is called on page refresh
   state.updateViewState = function(transx, transy, sc) {

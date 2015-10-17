@@ -17,59 +17,59 @@ var StackedBarUtil = (function($, StateUtil) {
 	renderAndRegisterEvent();
     }
 
-    function renderAndRegisterEvent() {
-	var ndx = parseInt(StateUtil.getRightToggleState());
-	var title = $('#right_toggle_title')
-	title.text(toggle.title[ndx]);
-	title.append('<button class="glyphicon glyphicon-arrow-right" style="float:right" id="right_toggle_right"></button>');
-	title.append('<button class="glyphicon glyphicon-arrow-left" style="float:right" id="right_toggle_left"></button>');
-	console.log(StateUtil.getRightToggleState());
-	console.log(JSON.stringify(toggle.html[ndx]));
-	console.log(JSON.stringify(toggle.title[ndx]));
-	$("#timechart").html(toggle.html[ndx]);
+  function renderAndRegisterEvent() {
+    var ndx = parseInt(StateUtil.getRightToggleState());
+    var title = $('#right_toggle_title')
+    title.text(toggle.title[ndx]);
+    title.append('<button class="glyphicon glyphicon-arrow-right" style="float:right" id="right_toggle_right"></button>');
+    title.append('<button class="glyphicon glyphicon-arrow-left" style="float:right" id="right_toggle_left"></button>');
+    //console.log(StateUtil.getRightToggleState());
+    //console.log(JSON.stringify(toggle.html[ndx]));
+    //console.log(JSON.stringify(toggle.title[ndx]));
+    $("#timechart").html(toggle.html[ndx]);
 
-	$("#right_toggle_right").on("click", function(evt) {
-	    StateUtil.incrementRightToggleState(toggle.html.length);
-	    renderAndRegisterEvent();
-	});
+    $("#right_toggle_right").on("click", function(evt) {
+        StateUtil.incrementRightToggleState(toggle.html.length);
+        renderAndRegisterEvent();
+    });
 
-	$("#right_toggle_left").on("click", function(evt) {
-	    StateUtil.decrementRightToggleState(toggle.html.length);
-	    renderAndRegisterEvent();
-	});
+    $("#right_toggle_left").on("click", function(evt) {
+        StateUtil.decrementRightToggleState(toggle.html.length);
+        renderAndRegisterEvent();
+    });
+  }
+
+  function renderJobLinks(flow) {
+    var interpolationData = {
+        user: flow.user_name,
+        job_name: flow.flow_name.replace('com.etsy.scalding.jobs.', '').replace(/\./g, '-'),
+        flow_id: flow.flow_id
+    };
+
+    var flowLinks = flow.flow_links;
+
+    var html = '<div class="logbox">';
+    html += '<div style="font-size:10px">';
+
+    if (flowLinks !== undefined) {
+        var links = flowLinks.split(';');
+        for (i = 0; i < links.length; ++i) {
+          var link = links[i];
+          var tokens = link.split('|');
+          if (tokens.length == 2) {
+              var name = tokens[0].replace(/\+/g, ' ');
+          var url = Kiwi.compose(tokens[1], interpolationData);
+          html += '<div class=steplink><a href=//' + url + ' target=_blank>' + name + '</a></div>';
+          }
+        }
     }
 
-    function renderJobLinks(flow) {
-	var interpolationData = {
-	    user: flow.user_name,
-	    job_name: flow.flow_name.replace('com.etsy.scalding.jobs.', '').replace(/\./g, '-'),
-	    flow_id: flow.flow_id
-	};
+    html += '</div>';
+    html += "</div>";
 
-	var flowLinks = flow.flow_links;
-	
-	var html = '<div class="logbox">';
-	html += '<div style="font-size:10px">';
+    return html;
+  }
 
-	if (flowLinks !== undefined) {
-	    var links = flowLinks.split(';');
-	    for (i = 0; i < links.length; ++i) {
-	    	var link = links[i];
-	    	var tokens = link.split('|');
-	    	if (tokens.length == 2) {
-	    	    var name = tokens[0].replace(/\+/g, ' ');
-		    var url = Kiwi.compose(tokens[1], interpolationData);
-		    html += '<div class=steplink><a href=//' + url + ' target=_blank>' + name + '</a></div>';
-	    	}
-	    }
-	}
-
-	html += '</div>';
-	html += "</div>";
-
-	return html;
-    }
-    
   function renderRunningTimes(step_map, flow) {
     var width_map = generateWidthMap(step_map);
 

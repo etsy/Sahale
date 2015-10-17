@@ -14,7 +14,6 @@ $(document).ready(function() {
 
     // should only be one row returned
     var flow = DataUtil.unpackFlow(flow_data[0]);
-    GraphUtil.captureFlowId(flow);
 
     // set up nav bar button links, job name, etc.
     GraphUtil.setNavigationLinks(flow);

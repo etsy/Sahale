@@ -28,7 +28,6 @@ var ViewUtil = (function($) {
 	
       var step = stepMap[key];
       html += '<div id="step-' + step.stepnumber + '">';
-      html += '<div class="logbox"><a id=activatelinks href=# onclick=jumpToLinks(' + step.stepnumber + ')><b>Hadoop Log Links</b></a></div>';
       html += renderMapReduceProgress(step);
       html += renderTabHeader(step.stepnumber);
       html += '<div id="the-content-' + step.stepnumber + '" class="tab-content push-it-down">';

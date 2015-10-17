@@ -2,21 +2,15 @@
 var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
 
   // Global module state
-  var graph = {},
-    translateRegex = /translate\(\s*([0-9.-]+)\s*,\s*([0-9.-]+)\)/,
-    scaleRegex =     /scale\(\s*([0-9.-]+)\s*\)/,
-    flow_id =         "",
-    height =         0,
-    theG =           null
+  var graph  = {},
+    flow_id  = "",
+    theG     = null
   ;
 
 
   //////////////////////// GraphUtil public functions //////////////////////
-  graph.captureFlowId = function(fl) {
-    flow_id = fl.flow_id;
-  }
-
   graph.setNavigationLinks = function(flow) {
+    flow_id = flow.flow_id;
     $('#jobname').text(flow.flow_name.replace('com.etsy.scalding.jobs.',''));
     $('li.flowname a').attr('href', '/history/' + flow.flow_name);
     $('li.clearstate a').click(function() {
@@ -30,6 +24,7 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
     for (var key in step_map) {
       registerHover(step_map[key]);
     }
+    registerTabShown();
     updateUnloadHandler();
     updateViewState(step_map);
   }
@@ -75,10 +70,6 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
     d3.select("#flowgraph").call(d3.behavior.zoom().on("zoom", zoomFunction));
   }
 
-  function getAdjustedYPanelHeight() {
-    return 183.0 - (parseInt(height) / 2.0);
-  }
-
   function addElephant(item) {
     return '<img width="40px" height="40px" ' +
       'title="MapReduce Job (Step ' + item.stepnumber + ' of Flow)" ' +
@@ -106,15 +97,31 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
     var layout = renderer.layout().rankDir("LR");
     layout = renderer.layout(layout).run(graph_data, theG);
     // capture some state to maintain view during transformations/refreshes etc.
-    height = layout.graph().height;
-    StateUtil.captureGraphViewYOffset(getAdjustedYPanelHeight());
+    StateUtil.captureGraphViewYOffset(layout.graph().height);
   }
 
   // load graph view state or set init values, call zoom event to exec
   function updateViewState(step_map) {
-    state = StateUtil.getFlowState(flow_id);
-    checkPreviouslySelectedVertex(step_map);
+    var state = StateUtil.getFlowState(flow_id);
+    setPreviouslySelectedVertex(step_map);
+    setPreviouslyActiveTabs();
     theG.attr("transform", stringifyTransform(state));
+  }
+
+  function setPreviouslyActiveTabs() {
+    // tabs is like { "12" : "sometab-12", "3" : "othertab-3", ... }
+    var tabs = StateUtil.getTabState();
+    for (key in tabs) {
+      $(".nav-tabs a[href=#" + tabs[key] + "]").tab("show");
+    }
+  }
+
+  function registerTabShown() {
+    $(document).on('shown.bs.tab', 'a[data-toggle="tab"]', function (e) {
+      //console.debug(e.target.href);
+      var result = /[a-z_]+-([0-9]+)/.exec(e.target.href);
+      StateUtil.updateTabState(result[1], result[0]);
+    });
   }
 
   function registerHover(step) {
@@ -129,9 +136,7 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
 
         StateUtil.updateCurrentId(step.stepnumber);
         $(this).addClass("hi-lite").focus();
-        var mrTitle = $("#mrdetail-title");
-        mrTitle.html(ViewUtil.renderStepStatus(step)).show().focus();
-
+        $("#mrdetail-title").html(ViewUtil.renderStepStatus(step)).show().focus();
         $("#step-" + StateUtil.getFlowState(flow_id).curid).fadeIn(200);
       },
       function(e) {
@@ -158,28 +163,22 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
   function updateUnloadHandler() {
     $(window).on("unload", function() {
       if (flow_id && flow_id !== "")  {
-        setViewState(flow_id);
+        var raw = d3.select("#flowgraph > g").attr("transform");
+        var tMatch = /translate\(\s*([0-9.-]+)\s*,\s*([0-9.-]+)\)/.exec(raw);
+        var sMatch = /scale\(\s*([0-9.-]+)\s*\)/.exec(raw);
+        var transx = tMatch[1];
+        var transy = tMatch[2];
+        var scalexy = sMatch[1];
+        StateUtil.updateViewState(transx, transy, scalexy);
+        StateUtil.setFlowState(flow_id);
       }
     });
-  }
-
-  // converts string 'transform' attribute -> JSON string using
-  // sessionStorage (with flow_id as key) to retain after page refresh
-  function setViewState() {
-    var raw = d3.select("#flowgraph > g").attr("transform");
-    var tMatch = translateRegex.exec(raw);
-    var sMatch = scaleRegex.exec(raw);
-    var transx = tMatch[1];
-    var transy = tMatch[2];
-    var scalexy = sMatch[1];
-    StateUtil.updateViewState(transx, transy, scalexy);
-    StateUtil.setFlowState(flow_id);
   }
 
   // if there was a previous selected state, restore it - but store the
   // color of the current selected job stage from using fresh page data
   // as it could have been updated during page refresh.
-  function checkPreviouslySelectedVertex(step_map) {
+  function setPreviouslySelectedVertex(step_map) {
     var state = StateUtil.getFlowState(flow_id);
     if (state.curid !== 0) {
       $("#no-step").remove();
