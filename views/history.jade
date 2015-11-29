@@ -10,20 +10,27 @@ block content
       div.panel-body#charts
         h4 Running Times
         div.chartbox#runningtimes
+          img(class='waitforrender', src='/images/pleasewait.gif', alt='Loading, please wait...')
           svg.rrchart
         h4 Cluster Slots Used
         div.chartbox#slotcounts
+          img(class='waitforrender', src='/images/pleasewait.gif', alt='Loading, please wait...')
           svg.rrchart
         h4 HDFS Space Used
         div.chartbox#hdfswrites
+          img(class='waitforrender', src='/images/pleasewait.gif', alt='Loading, please wait...')
           svg.rrchart
         h4 Cluster Disk Used
         div.chartbox#diskwrites
+          img(class='waitforrender', src='/images/pleasewait.gif', alt='Loading, please wait...')
           svg.rrchart
       div.panel.panel-default
       div.panel-heading(style='text-align:center')
         h3 Completed Jobs
       div.panel-body
         table.table.table-hover.table-striped.table-condensed#completed
+
+  script.
+    var flow_name = '#{flow_name}';
 
   script(src='/scripts/history-client.js')

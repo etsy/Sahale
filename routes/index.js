@@ -18,16 +18,20 @@ exports.flowgraph = function(req, res) {
   res.render('flowgraph', { flow_id: req.param('flow_id') });
 };
 
+exports.load = function(req, res) {
+  res.render('load', { cluster_name: req.param('cluster') });
+}
+
 exports.search = function(req, res) {
   var st = decodeURIComponent(req.param('searchterm'));
   res.render('search', { search_term: st });
 }
 
 /////////// API ENDPOINTS RETURNING JSON DATA /////////
-exports.cluster_name_mapping = function(req, res) {
-    sqlutil.getClusterNameMapping(
-	function(data) { res.json(data); }
-    )
+exports.sahale_config_data = function(req, res) {
+    sqlutil.getSahaleConfigData(
+      function(data) { res.json(data); }
+    );
 }
 
 exports.flows_running = function(req, res) {

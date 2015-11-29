@@ -24,7 +24,7 @@ fi
 # Pick up the fatjar for classpath/jar decl
 FATJAR=`[ -e target ] && ls target/ | grep jar-with-dependencies`
 if [ -z "$FATJAR" ]; then
-  echo "[ERROR] target/ dir not found, please run 'mvn install' (assumes Maven3 and JDK are installed)"
+  echo "[ERROR] target/ dir not found, please run 'mvn install' (assumes Maven3 and JDK7 are installed)"
   exit 1
 else
   FATJAR="target/$FATJAR"

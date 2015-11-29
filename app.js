@@ -35,6 +35,7 @@ app.get('/', routes.index);
 app.get('/help', routes.help);
 app.get('/flowgraph/:flow_id', routes.flowgraph);
 app.get('/history/:flow_name', routes.history);
+app.get('/load/:cluster', routes.load);
 app.get('/search', routes.search);
 
 // JSON API for db reads
@@ -47,7 +48,7 @@ app.get('/steps/:flow_id', routes.steps);
 app.get('/edges/:flow_id', routes.edges);
 app.get('/flow_history/:flow_name', routes.flow_history);
 app.post('/step_group', routes.step_group); // read only but uses POST due to param size
-app.get('/cluster_name_mapping', routes.cluster_name_mapping);
+app.get('/sahale_config_data', routes.sahale_config_data);
 
 // JSON API routes & handlers for POSTed data from running Cascading jobs
 app.post('/flow/update/:flow_id', routes.insert_or_update_flow);

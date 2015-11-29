@@ -1,21 +1,23 @@
 ////////////////////////////// For running time stacked bar ///////////////////
 var StackedBarUtil = (function($, StateUtil) {
-    var sbutil = {};
-    var toggle = {};
+  var sbutil = {};
+  var toggle = {};
 
-    toggle.title = [
-	'Running Time Per Step',
-	'Job Links'
+  toggle.title = [
+    'Running Time Per Step',
+    'Job Links',
+    'Job Args'
+  ];
+  toggle.html = [];
+
+  sbutil.render = function(step_map, flow) {
+    toggle.html = [
+      renderRunningTimes(step_map, flow),
+      renderJobLinks(flow),
+      renderJobArgs(flow)
     ];
-    toggle.html = [];
-
-    sbutil.render = function(step_map, flow) {
-	toggle.html = [
-	    renderRunningTimes(step_map, flow),
-	    renderJobLinks(flow)
-	];
-	renderAndRegisterEvent();
-    }
+    renderAndRegisterEvent();
+  }
 
   function renderAndRegisterEvent() {
     var ndx = parseInt(StateUtil.getRightToggleState());
@@ -39,10 +41,24 @@ var StackedBarUtil = (function($, StateUtil) {
     });
   }
 
+  function renderJobArgs(flow) {
+    var html = '<div class="logbox" style="overflow-y:auto;height:110px;">';
+    var args = flow['scalding.job.args'];
+    if (args !== undefined) {
+      for (var i = 0; i < args.length; ++i) {
+        html += '<div style="text-align:center">' + args[i] + '</div>';
+      }
+    } else {
+      html += '<div style="text-align:center">No Job Args Found</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
   function renderJobLinks(flow) {
     var interpolationData = {
         user: flow.user_name,
-        job_name: flow.flow_name.replace('com.etsy.scalding.jobs.', '').replace(/\./g, '-'),
+        job_name: flow.truncated_name.replace(/\./g, '-'),
         flow_id: flow.flow_id
     };
 
@@ -53,7 +69,7 @@ var StackedBarUtil = (function($, StateUtil) {
 
     if (flowLinks !== undefined) {
         var links = flowLinks.split(';');
-        for (i = 0; i < links.length; ++i) {
+        for (var i = 0; i < links.length; ++i) {
           var link = links[i];
           var tokens = link.split('|');
           if (tokens.length == 2) {

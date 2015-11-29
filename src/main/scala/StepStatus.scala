@@ -57,6 +57,7 @@ class StepStatus(val stepNumber: String, val stepId: String, props: Properties) 
   var counters = Map[String, Map[String, Long]]()
   var hdfsBytesWritten = 0L
   var configurationProperties = Map[String, String]()
+  var hasReduceStage = false // not pushed to server
 
   override def toString: String = jsonMap
 
@@ -113,6 +114,7 @@ class StepStatus(val stepNumber: String, val stepId: String, props: Properties) 
     stepRunningTime = getStepRunningTime(hadoopStepStats) // checks old stepStatus value - MUST be updated first!
     stepStatus = hadoopStepStats.getStatus.toString
     stepPriority = getStepPriority(hadoopFlowStep)
+    hasReduceStage = stepHasReduceStage(hadoopFlowStep) // not pushed to server, used by FlowTracker prog calc
 
     updateEpochMsFields(hadoopStepStats)
     updateStepCounters(hadoopStepStats)
@@ -167,6 +169,10 @@ class StepStatus(val stepNumber: String, val stepId: String, props: Properties) 
       case true => "0.00"
       case _    => "%3.2f" format (hss.getReduceProgress * 100.0)
     }
+  }
+
+  def stepHasReduceStage(hfs: HadoopFlowStep): Boolean = {
+    hfs.getConfig.asInstanceOf[JobConf].getNumReduceTasks > 0L
   }
 
   def getHdfsBytesWritten(hss: HadoopStepStats): Long = {

@@ -1,0 +1,18 @@
+extends load-layout
+
+block content
+
+  div.container
+
+    div.panel.panel-default
+      div.panel-heading(style='text-align:center')
+        h3(id='clustername') Running Jobs: #{cluster_name}
+      div.panel-body
+        div(id='clusterviz')
+          img(class='waitforrender', src='/images/pleasewait.gif', alt='Loading, please wait...')
+
+  script.
+    var cluster_name = '#{cluster_name}';
+
+  script(src='/scripts/load-client.js')
+

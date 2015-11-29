@@ -1,11 +1,9 @@
 $(document).ready(function() {
 
-    jumpToLinks = function(stepNum) {
-	$('.nav-tabs a[href="#links-' + stepNum + '"]').tab('show');
-    }
+  jumpToLinks = function(stepNum) {
+    $('.nav-tabs a[href="#links-' + stepNum + '"]').tab('show');
+  }
 
-  // extract the Flow ID (for db query) from this page's URL path
-  var flow_id = document.URL.substring(document.URL.lastIndexOf('/') + 1);
   var graph_data = new dagreD3.Digraph();
   var step_map = null;
 
@@ -46,6 +44,9 @@ $(document).ready(function() {
 
         // get event handling wired up
         GraphUtil.setEventHandlers(step_map);
+
+        // remove the spinners
+        $('.waitforrender').remove()
 
         // set refresh interval only if the Flow isn't finished running
         if (["FAILED", "STOPPED", "SUCCESSFUL"].indexOf(flow.flow_status) < 0) {

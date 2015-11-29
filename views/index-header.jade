@@ -12,6 +12,11 @@ div.navbar.navbar-inverse.navbar-fixed-top(role='navigation')
         li
           a(href='/') All Jobs
         li
+          a.dropdown-toggle(data-toggle='dropdown') Load View
+            ul.dropdown-menu#load-view-dropdown
+              li
+                a(href='/load/All') All Clusters
+        li
           a(href='/help') Help
       div(class='col-sm-3 col-md-3 pull-right')
         form(class='navbar-form', role='search')

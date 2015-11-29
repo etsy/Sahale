@@ -11,7 +11,7 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
   //////////////////////// GraphUtil public functions //////////////////////
   graph.setNavigationLinks = function(flow) {
     flow_id = flow.flow_id;
-    $('#jobname').text(flow.flow_name.replace('com.etsy.scalding.jobs.',''));
+    $('#jobname').text(flow.truncated_name);
     $('li.flowname a').attr('href', '/history/' + flow.flow_name);
     $('li.clearstate a').click(function() {
       StateUtil.clearFlowState(flow.flow_id);

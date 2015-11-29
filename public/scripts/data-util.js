@@ -1,17 +1,8 @@
 var DataUtil = (function() {
-    var data = {};
+  var data = {};
 
-    var cluster_name_mapping = null;
+  var SAHALE_SERVER_CONFIG = "sahale_server_config";
 
-    $.ajax({
-	async: false,
-	type: 'GET',
-	url: '/cluster_name_mapping',
-	success: function(data) {
-	    cluster_name_mapping = data;
-	}
-    });
-    
   data.unpackFlow = function(flow) {
     // unpack JSON fields
     var outFlow = JSON.parse(flow['flow_json']);
@@ -22,11 +13,35 @@ var DataUtil = (function() {
     outFlow.flow_status = flow.flow_status;
     outFlow.create_date = flow.create_date;
     outFlow.update_date = flow.update_date;
-    outFlow.cluster_name = cluster_name_mapping[outFlow.jt_url] || 'Unknown';
+    outFlow.cluster_name = getClusterNameMapping(outFlow);
+    outFlow.truncated_name = getTruncatedName(outFlow);
 
+    if (outFlow['scalding.job.args']) {
+      outFlow['scalding.job.args'] = outFlow['scalding.job.args'].split('+');
+    }
 
     return outFlow;
   }
+
+  data.getConfigState = function() {
+    var sc = sessionStorage.getItem(SAHALE_SERVER_CONFIG);
+    if (sc) {
+      sc = JSON.parse(sc);
+    } else {
+      $.ajax({
+        async: false,
+        type: 'GET',
+        url: '/sahale_config_data',
+        success: function(data) {
+          sc = data;
+          sessionStorage.setItem(SAHALE_SERVER_CONFIG, JSON.stringify(sc));
+        }
+      });
+    }
+    return sc;
+  }
+
+  var server_config = data.getConfigState();
 
   data.unpackFlows = function(flowz) {
     var out = [];
@@ -61,10 +76,7 @@ var DataUtil = (function() {
     step.flow_id = item['flow_id'];
     step.step_id = item['step_id'];
 
-    // if legacy data, we're done here.
-    if (step['hdfsbytesread'] !== undefined) return step;
-
-    // if not, we need to set "shortcut" fields from the counters map
+   // set "shortcut" fields from the counters map
     step.maptasks = checkedStepUnpack(step, 'mapreduce.JobCounter', 'TOTAL_LAUNCHED_MAPS', 0);
     step.reducetasks = checkedStepUnpack(step, 'mapreduce.JobCounter', 'TOTAL_LAUNCHED_REDUCES', 0);
     step.failedmaptasks = checkedStepUnpack(step, 'mapreduce.JobCounter', 'NUM_FAILED_MAPS', 0);
@@ -86,11 +98,6 @@ var DataUtil = (function() {
     step.configuration_properties = extractConfigurationProperties(step);
 
     return step;
-
-    // TODO: these are not exposed in Sahale yet, add them
-    //step.committedheapbytes = checkedStepUnpack(step, 'mapreduce.TaskCounter', 'COMMITTED_HEAP_BYTES', 0);
-    //step.gcmillis = checkedStepUnpack(step, 'mapreduce.TaskCounter', 'GC_TIME_MILLIS', 0);
-    //step.cpumillis = checkedStepUnpack(step, 'mapreduce.TaskCounter', 'CPU_MILLISECONDS', 0);
   }
 
   function checkedStepUnpack(step, group, counter, defaultValue) {
@@ -112,13 +119,25 @@ var DataUtil = (function() {
     return step['counters'][group][counter] || defaultValue;
   }
 
-    function extractConfigurationProperties(step) {
-	if (step['configuration_properties'] === undefined) {
-	    return {};
-	}
-
-	return step['configuration_properties'];
+  function extractConfigurationProperties(step) {
+    if (step['configuration_properties'] === undefined) {
+      return {};
     }
+    return step['configuration_properties'];
+  }
+
+  function getTruncatedName(outFlow) {
+    var jnp = server_config['job_name_prefix'] || '';
+    if (jnp !== '') {
+      return outFlow.flow_name.replace(jnp, '');
+    }
+    return outFlow.flow_name;
+  }
+
+  function getClusterNameMapping(outFlow) {
+    var cnm = server_config['cluster_name_mapping'];
+    return cnm[outFlow.jt_url] || 'Unknown';
+  }
 
   return data;
 }());

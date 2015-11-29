@@ -50,7 +50,7 @@ div#areachart {
   border-radius: 4px;
 }
 
-g.node {
+g .node {
   border-radius: 18px;
   border: solid 2px black;
   height: 64px;
@@ -141,25 +141,25 @@ div.chartbox {
 
 
 .axis path, .axis line {
-    fill: none;
-    stroke: #000;
-    shape-rendering: crispEdges;
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
 }
 
 .axis text {
-    font: 8px sans-serif;
+  font: 8px sans-serif;
 }
 
 .axis .grid-line{
-    stroke: black;
-    shape-rendering: crispEdges;
-    stroke-opacity: .2;
+  stroke: black;
+  shape-rendering: crispEdges;
+  stroke-opacity: .2;
 }
 
 .mapLine{
-    fill: none;
-    stroke: darkred;
-    stroke-width: 1.5px;
+  fill: none;
+  stroke: darkred;
+  stroke-width: 1.5px;
 }
 
 .mapDot {
@@ -168,15 +168,15 @@ div.chartbox {
 }
 
 .mapArea {
-    stroke: none;
-    fill: darkred;
-    fill-opacity: .2;
+  stroke: none;
+  fill: darkred;
+  fill-opacity: .2;
 }
 
 .reduceLine{
-    fill: none;
-    stroke: steelblue;
-    stroke-width: 1.5px;
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
 }
 
 .reduceDot {
@@ -185,9 +185,9 @@ div.chartbox {
 }
 
 .reduceArea {
-    stroke: none;
-    fill: steelblue;
-    fill-opacity: .2;
+  stroke: none;
+  fill: steelblue;
+  fill-opacity: .2;
 }
 
 #timechart {
@@ -204,55 +204,55 @@ div.chartbox {
 }
 
 span.time-block {
-    display: inline-block;
-    height: 36px;
-    border-radius: 18px;
+  display: inline-block;
+  height: 36px;
+  border-radius: 18px;
 }
 
 .color-cycle-grey-1 {
-    background-color: #686868;
+  background-color: #686868;
 }
 
 .color-cycle-grey-2 {
-    background-color: #c8c8c8;
+  background-color: #c8c8c8;
 }
 
 .color-cycle-grey-3 {
-    background-color: #e8e8e8;
+  background-color: #e8e8e8;
 }
 
 .color-cycle-red-1 {
-    background-color: darkred;
+  background-color: darkred;
 }
 
 .color-cycle-red-2 {
-    background-color: firebrick;
+  background-color: firebrick;
 }
 
 .color-cycle-red-3 {
-    background-color: indianred;
+  background-color: indianred;
 }
 
 .color-cycle-green-1 {
-    background-color: #006633;
+  background-color: #006633;
 }
 
 .color-cycle-green-2 {
-    background-color: #33CC00;
+  background-color: #33CC00;
 }
 
 .color-cycle-green-3 {
-    background-color: #66EE33;
+  background-color: #66EE33;
 }
 
 .color-cycle-orange-1 {
-    background-color: #ffcc66;
+  background-color: #ffcc66;
 }
 
 .color-cycle-orange-2 {
-    background-color: #ff9900;
+  background-color: #ff9900;
 }
 
 .color-cycle-orange-3 {
-    background-color: #ff5500;
+  background-color: #ff5500;
 }

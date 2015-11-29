@@ -43,12 +43,19 @@ object FlowStatus {
  *
  * @author Eli Reisman
  */
-class FlowStatus(val flow: Flow[_], props: Properties) {
+class FlowStatus(val flow: Flow[_], props: Properties, jobArgs: Array[String]) {
+
+  def this(flow: Flow[_], props: Properties) = this(flow, props, Array.empty[String])
+
   // these are updated in the FlowTracker using StepStatus rollups
   var flowProgress = "0.00"
   var flowHdfsBytesWritten = "0"
 
-  private val flowPropertiesToExtract = props.getProperty("sahale.flow.selected.configs", "").split("""\s*,\s*""").map { _.trim }.filter { _ != "" }.toSeq
+  private val flowPropertiesToExtract = props
+    .getProperty("sahale.flow.selected.configs", "")
+    .split("""\s*,\s*""")
+    .map { _.trim }
+    .filter { _ != "" }.toSeq
 
   /**
    * Populates a map of up-to-date Flow properties to push to server.

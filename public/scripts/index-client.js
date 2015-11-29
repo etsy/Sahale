@@ -2,6 +2,8 @@ $(document).ready(function() {
 
   var params = URI(window.location.href).search(true);
 
+  LoadUtil.populateDropDown();
+
   // populate and render tables
   $.get('/flows/running', function(data) {
       ViewUtil.renderRunningJobs(DataUtil.unpackFlows(data), params.cluster);

@@ -59,8 +59,10 @@ object FlowTracker {
  *
  * @author Eli Reisman
  */
-class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPort: Option[String] = None, val disableProgressBar: Boolean = false)
-  extends java.lang.Runnable {
+class FlowTracker(val flow: Flow[_],
+                  val runCompleted: AtomicBoolean,
+                  val hostPort: String,
+                  val disableProgressBar: Boolean) extends java.lang.Runnable {
   import com.etsy.sahale.FlowTracker._
 
   // mutable because we have to build this mapping as we go after run() is called
@@ -77,11 +79,11 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
     FlowStepStrategies.plus(flow.getFlowStepStrategy, new FlowTrackerStepStrategy(stepStatusMap))
   )
 
-  def this(flow: Flow[_], runCompleted: AtomicBoolean) = this(flow, runCompleted, None)
+  // Constructors below are for easy Java interop with FlowTracker
+  def this(flow: Flow[_], runCompleted: AtomicBoolean, hostPort: String) = this(flow, runCompleted, hostPort, false)
 
-  /**
-   * Runs after the Flow is connected and complete() is called on it.
-   */
+  def this(flow: Flow[_], runCompleted: AtomicBoolean) = this(flow, runCompleted, "", false)
+
   override def run(): Unit = {
     try {
       initializeTrackedJobState
@@ -134,10 +136,7 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
 
   /////////////////// Utility functions for aggregating Step data for Flow updates /////////////////
   def updateFlow: Unit = {
-    val makeAverage: Double = 2.0 * flow.getFlowStats.getStepsCount.toDouble
-    val progressTotal = "%3.2f" format ((sumMapProgress + sumReduceProgress) / makeAverage)
-
-    flowStatus.flowProgress = progressTotal
+    flowStatus.flowProgress = calculateFlowProgress
     flowStatus.flowHdfsBytesWritten = sumHdfsBytesWritten
 
     pushFlowReport(flow, flow.getFlowStats.getStatus.toString, flowStatus.toMap)
@@ -168,16 +167,26 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
     }.toString
   }
 
-  def sumMapProgress: Double = {
-    stepStatusMap.keys.foldLeft(0.0) { (sum: Double, stageId: String) =>
-      sum + stepStatusMap(stageId).mapProgress.toDouble
+  def sumMapProgress: (Double, Int) = {
+    stepStatusMap.keys.foldLeft( (0.0, 0) ) { (acc: (Double, Int), stageId: String) =>
+      (acc._1 + stepStatusMap(stageId).mapProgress.toDouble, acc._2 + 1)
     }
   }
 
-  def sumReduceProgress: Double = {
-    stepStatusMap.keys.foldLeft(0.0) { (sum: Double, stageId: String) =>
-      sum + stepStatusMap(stageId).reduceProgress.toDouble
+  def sumReduceProgress: (Double, Int) = {
+    stepStatusMap.keys.foldLeft( (0.0, 0) ) { (acc: (Double, Int), stageId: String) =>
+      val step = stepStatusMap(stageId)
+      step.hasReduceStage match {
+        case true => (acc._1 + step.reduceProgress.toDouble, acc._2 + 1)
+        case _    => (acc._1, acc._2)
+      }
     }
+  }
+
+  def calculateFlowProgress: String = {
+    val mapProg = sumMapProgress
+    val reduceProg = sumReduceProgress
+    "%3.2f" format ((mapProg._1 + reduceProg._1) / (mapProg._2 + reduceProg._2))
   }
 
   /////////////////// Utiilty functions for pushing data to Sahale server /////////////////
@@ -224,8 +233,8 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
   def sahaleUrl(suffix: String = ""): String = {
     val path = "/" + suffix
     hostPort match {
-      case Some(hp) => hp.trim + path
-      case None => getDefaultHostPort + path
+      case ""         => getDefaultHostPort + path
+      case hp: String => hp.trim + path
     }
   }
 
@@ -247,7 +256,7 @@ class FlowTracker(val flow: Flow[_], val runCompleted: AtomicBoolean, val hostPo
     steps.keys.size match {
       case none: Int if (none == 0) => LOG.info("No new FlowStep updates to push to Sahale") ; none
       case count => {
-        LOG.info("Pushing " + count + " FlowStep updates to Sahale")
+        LOG.debug("Pushing " + count + " FlowStep updates to Sahale")
         val sendMap: Map[String, String] = steps.map {
           step => step._1 -> java.net.URLEncoder.encode(step._2.jsonMap, "UTF-8")
         }.toMap

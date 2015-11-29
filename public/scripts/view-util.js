@@ -1,21 +1,21 @@
-/////////////////////////////// For Table Views ////////////////////////////////////
+// Table-style views are generated with these helpers
 var ViewUtil = (function($) {
   var view = {};
 
   ////////// public ViewUtil functions ////////////////
-    view.renderRunningJobs = function(flows, clusterFilter) {
+  view.renderRunningJobs = function(flows, clusterFilter) {
     $("#running").hide().html(
         renderJobsTable(flows, "progress-bar-warning progress-bar-striped active", clusterFilter)
       ).fadeIn(500);
   }
 
-    view.renderCompletedJobs = function(flows, clusterFilter) {
+  view.renderCompletedJobs = function(flows, clusterFilter) {
     $("#completed").hide().html(
         renderJobsTable(flows, "progress-bar-info", clusterFilter)
       ).fadeIn(500);
   }
 
-    view.renderMatchedJobs = function(flows, clusterFilter) {
+  view.renderMatchedJobs = function(flows, clusterFilter) {
     $("#matched").hide().html(
         renderJobsTable(flows, "progress-bar-info", clusterFilter)
       ).fadeIn(500);
@@ -25,7 +25,7 @@ var ViewUtil = (function($) {
     var html = '<div height="550px">' +
       '<div style="text-align:center" class="alert alert-info" id="no-step" role="alert">Select A Node</div>';
     for (key in stepMap) {
-	
+
       var step = stepMap[key];
       html += '<div id="step-' + step.stepnumber + '">';
       html += renderMapReduceProgress(step);
@@ -89,42 +89,42 @@ var ViewUtil = (function($) {
   }
 
   ///////////////// private utility functions ////////////////
-    function renderJobsTable(flows, barStylez, clusterFilter) {
-	var rows = '<tr>' +
-	    '<th>Job Name</th>' +
-	    '<th>User</th>' +
-	    '<th>Cluster</th>' +
-	    '<th>Status</th>' +
-	    '<th># of Steps</th>' +
-	    '<th>Running Time</th>' +
-	    '<th>Start Time</th>' +
-	    '<th>End Time</th>' +
-	    '<th>Progress</th>' +
-	    '</tr>';
-	for (var i = 0; i < flows.length; ++i) {
-	    var f = flows[i];
-	    if (clusterFilter === undefined || f.cluster_name === clusterFilter) {
-		var fp = function(f) { if (f.flow_status === "SUCCESSFUL") return "100.00"; else return f.flow_progress; }(f);
-		rows += '<tr>' +
-		    '<td>' + prettyLinkedJobName(f.flow_name, f.flow_id) + '</td>' +
-		    '<td>' + f.user_name + '</td>' + // removed link to Staff page for OSS version
-		    '<td>' + renderClusterFilterLink(f.cluster_name) + '</td>' +
-		    '<td>' + prettyFlowStatus(f.flow_status) + '</td>' +
-		    '<td>' + f.total_stages + '</td>' +
-		    '<td>' + view.prettyFlowTimeFromMillis(f.flow_duration) + '</td>' +
-		    '<td>' + renderDate(f.flow_start_epoch_ms) + '</td>' +
-		    '<td>' + renderDate(f.flow_end_epoch_ms) + '</td>' +
-		    '<td>' + prettyProgress(fp, barStylez) + '</td>' +
-		    '</tr>';
-	    }
-	}
-	return rows;
+  function renderJobsTable(flows, barStylez, clusterFilter) {
+    var rows = '<tr>' +
+      '<th>Job Name</th>' +
+      '<th>User</th>' +
+      '<th>Cluster</th>' +
+      '<th>Status</th>' +
+      '<th># of Steps</th>' +
+      '<th>Running Time</th>' +
+      '<th>Start Time</th>' +
+      '<th>End Time</th>' +
+      '<th>Progress</th>' +
+      '</tr>';
+    for (var i = 0; i < flows.length; ++i) {
+      var f = flows[i];
+      if (clusterFilter === undefined || f.cluster_name === clusterFilter) {
+        var fp = function(f) { if (f.flow_status === "SUCCESSFUL") return "100.00"; else return f.flow_progress; }(f);
+        rows += '<tr>' +
+          '<td>' + prettyLinkedJobName(f) + '</td>' +
+          '<td>' + f.user_name + '</td>' + // removed link to Staff page for OSS version
+          '<td>' + renderClusterFilterLink(f.cluster_name) + '</td>' +
+          '<td>' + prettyFlowStatus(f.flow_status) + '</td>' +
+          '<td>' + f.total_stages + '</td>' +
+          '<td>' + view.prettyFlowTimeFromMillis(f.flow_duration) + '</td>' +
+          '<td>' + renderDate(f.flow_start_epoch_ms) + '</td>' +
+          '<td>' + renderDate(f.flow_end_epoch_ms) + '</td>' +
+          '<td>' + prettyProgress(fp, barStylez) + '</td>' +
+          '</tr>';
+      }
     }
+    return rows;
+  }
 
-    function renderClusterFilterLink(clusterName) {
-	return '<a href=?cluster=' + clusterName + '>' + clusterName + '</a>';
-    }
-    
+  function renderClusterFilterLink(clusterName) {
+    return '<a href=?cluster=' + clusterName + '>' + clusterName + '</a>';
+  }
+
   function renderTabHeader(idnum) {
     var html = '<ul id="tabs-step-' + idnum + '" class="nav nav-tabs" data-tabs="tabs">';
     html += '<li class="active"><a href="#jobstats-' + idnum + '" data-toggle="tab">Stats</a></li>';
@@ -135,10 +135,8 @@ var ViewUtil = (function($) {
     return html;
   }
 
-  function prettyLinkedJobName(name, flowId) {
-    return '<a href="/flowgraph/' + flowId + '">' +
-      name.replace('com.etsy.scalding.jobs.', '') +
-      '</a>';
+  function prettyLinkedJobName(f) {
+    return '<a href="/flowgraph/' + f.flow_id + '">' + f.truncated_name + '</a>';
   }
 
   function prettyFlowStatus(flowStatus) {
@@ -299,66 +297,66 @@ var ViewUtil = (function($) {
   }
 
     function renderDate(epoch_ms_str) {
-	if (epoch_ms_str !== "0") {
-	    var date = new Date(parseInt(epoch_ms_str));
-	    return moment(date).utc().format('MM-DD-YYYY HH:mm:ss z');
-	} else {
-	    return "";
-	}
-	
+  if (epoch_ms_str !== "0") {
+      var date = new Date(parseInt(epoch_ms_str));
+      return moment(date).utc().format('MM-DD-YYYY HH:mm:ss z');
+  } else {
+      return "";
+  }
+  
     }
 
     function renderLinks(step, flow) {
-	var html = '<div style="font-size:10px">';
-	var interpolationData = {
-	  user: flow.user_name,
-	  job_name: flow.flow_name.replace('com.etsy.scalding.jobs.', '').replace(/\./g, '-'),
-	  flow_id: flow.flow_id,
-	  stage: step.stepnumber
-	};
-	var additionalLinks = step.configuration_properties['sahale.additional.links'];
-	var logLinks = [];
-	if (step.jobid !== null && step.jobid !== 'NO_JOB_ID') {
-	    if (flow.yarn_job_history !== "false") {
-		var jobLink = makeYarnUrl(flow, step);
-		logLinks.push({name: 'View Hadoop Logs', url: jobLink});
-		if (step.stepstatus == 'FAILED') {
-		    // We know this is a History Server link at this point, so this replacement should be valid
-		    var failedMapTasks = jobLink.replace("/job/", "/attempts/") + "/m/FAILED"
-		    var failedReduceTasks = jobLink.replace("/job/", "/attempts/") + "/r/FAILED"
-		    if (step.failedmaptasks > 0) {
-			logLinks.push({name: 'Failed Map Tasks', url: failedMapTasks});
-		    }
-		    if (step.failedreducetasks > 0) {
-			logLinks.push({name: 'Failed Reduce Tasks', url: failedReduceTasks});
-		    }
-		}
-		logLinks.push({name: 'ApplicationMaster', url: flow.jt_url + '/cluster/app/' + step.jobid.replace('job_', 'application_')});
-	    } else {
-		logLinks.push({name: 'View Hadoop Logs', url: 'http://' + flow.jt_url + ':50030/jobdetails.jsp?jobid=' + step.jobid + '&refresh=0'});
-	    }
-	    
-	}
-	for(i = 0; i < logLinks.length; ++i) {
-	    var link = logLinks[i];
-	    html += '<div class="steplink"><a href="//' + link.url + '" target=_blank><b>'+ link.name +'</b></a></div>';
-	}
-	
-	if (additionalLinks !== undefined) {
-	    var links = additionalLinks.split(';');
-	    for (i = 0; i < links.length; ++i) {
-	    	var link = links[i];
-	    	var tokens = link.split('|');
-	    	if (tokens.length == 2) {
-	    	    var name = tokens[0].replace(/\+/g, ' ');
-		    var url = Kiwi.compose(tokens[1], interpolationData);
-		    html += '<div class=steplink><a href=//' + url + ' target=_blank>' + name + '</a></div>';
-	    	}
-	    }
-	}
+  var html = '<div style="font-size:10px">';
+  var interpolationData = {
+    user: flow.user_name,
+    job_name: flow.truncated_name.replace(/\./g, '-'),
+    flow_id: flow.flow_id,
+    stage: step.stepnumber
+  };
+  var additionalLinks = step.configuration_properties['sahale.additional.links'];
+  var logLinks = [];
+  if (step.jobid !== null && step.jobid !== 'NO_JOB_ID') {
+      if (flow.yarn_job_history !== "false") {
+    var jobLink = makeYarnUrl(flow, step);
+    logLinks.push({name: 'View Hadoop Logs', url: jobLink});
+    if (step.stepstatus == 'FAILED') {
+        // We know this is a History Server link at this point, so this replacement should be valid
+        var failedMapTasks = jobLink.replace("/job/", "/attempts/") + "/m/FAILED"
+        var failedReduceTasks = jobLink.replace("/job/", "/attempts/") + "/r/FAILED"
+        if (step.failedmaptasks > 0) {
+      logLinks.push({name: 'Failed Map Tasks', url: failedMapTasks});
+        }
+        if (step.failedreducetasks > 0) {
+      logLinks.push({name: 'Failed Reduce Tasks', url: failedReduceTasks});
+        }
+    }
+    logLinks.push({name: 'ApplicationMaster', url: flow.jt_url + '/cluster/app/' + step.jobid.replace('job_', 'application_')});
+      } else {
+    logLinks.push({name: 'View Hadoop Logs', url: 'http://' + flow.jt_url + ':50030/jobdetails.jsp?jobid=' + step.jobid + '&refresh=0'});
+      }
+      
+  }
+  for(i = 0; i < logLinks.length; ++i) {
+      var link = logLinks[i];
+      html += '<div class="steplink"><a href="//' + link.url + '" target=_blank><b>'+ link.name +'</b></a></div>';
+  }
+  
+  if (additionalLinks !== undefined) {
+      var links = additionalLinks.split(';');
+      for (i = 0; i < links.length; ++i) {
+        var link = links[i];
+        var tokens = link.split('|');
+        if (tokens.length == 2) {
+            var name = tokens[0].replace(/\+/g, ' ');
+        var url = Kiwi.compose(tokens[1], interpolationData);
+        html += '<div class=steplink><a href=//' + url + ' target=_blank>' + name + '</a></div>';
+        }
+      }
+  }
 
-	html += '</div>';
-	return html;
+  html += '</div>';
+  return html;
     }
 
   return view;

@@ -20,9 +20,8 @@ class TrackedJob(args: Args) extends com.twitter.scalding.Job(args) {
    * Override run() to control the lifecycle of the tracker threads using try/finally.
    * This will be run on the management process, your own Job code will run on the cluster.
    *
-   * ***WARNING***
-   * Scalding 0.12.0 breaks compatibiilty here: for Scalding 0.8.5, this signature must be:
-   * "override def run(implicit mode: Mode) = { ..."
+   * Older Scalding versions break compatibiilty here. On older Scalding, this signature should be:
+   * override def run(implicit mode: Mode)
    */
   override def run: Boolean = {
     mode match {
@@ -38,9 +37,9 @@ class TrackedJob(args: Args) extends com.twitter.scalding.Job(args) {
 
     try {
       val flow = buildFlow
-      val serverHostPort: Option[String] = args.optional("server")
+      val serverHostPort: String = args.optional("server").getOrElse("")
       val disableProgressBar = args.boolean("disable-progress-bar")
-      done = new AtomicBoolean(false); // replace the flag for iterative runs with multiple Flows
+      done = new AtomicBoolean(false) // replace the flag for iterative runs with multiple Flows
       thread = new Thread(new FlowTracker(flow, done, serverHostPort, disableProgressBar))
       thread.start
       flow.complete

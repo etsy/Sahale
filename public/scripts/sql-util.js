@@ -4,13 +4,16 @@ var mysql = require('mysql');
 
 // users must customize the 'db-config.json' file and
 // create the required tables before running the app
+var dsnJson = '{}';
 var dsn = null;
 fs.readFile('db-config.json', 'UTF-8', function(err, data) {
   if (err) {
     return console.log(err);
   }
+  dsnJson = data;
   dsn = JSON.parse(data);
 });
+var removeFromDsn = [ 'user', 'password', 'host', 'port', 'database' ];
 
 // The time windows (secs back from 'now') for
 // running and recently completed Flows to query
@@ -20,8 +23,12 @@ var one_week_offset = 86400 * 7; // for DEBUG purposes only
 
 
 ////////////////// Exported public functions ////////////////////
-exports.getClusterNameMapping = function(call_back) {
-    call_back(dsn['cluster_name_mapping']);
+exports.getSahaleConfigData = function(call_back) {
+  var sahaleConfigData = JSON.parse(dsnJson); // fresh copy can be mutated
+  for (i in removeFromDsn) {
+    sahaleConfigData[removeFromDsn[i]] = '';
+  }
+  call_back(sahaleConfigData);
 }
 
 exports.getRunningFlows = function(call_back) {
@@ -80,7 +87,7 @@ exports.getFlowsByJobName = function(jobName, call_back) {
 }
 
 exports.getStepsByManyFlowIds = function(str, call_back) {
-  var flow_ids = str.split("~");
+  var flow_ids = JSON.parse(str);
   var args = '';
   flow_ids.forEach(function(item, ndx, arr) {
     args += "'" + item + "'";
