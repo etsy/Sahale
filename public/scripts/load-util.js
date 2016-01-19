@@ -50,9 +50,9 @@ var LoadUtil = (function($, d3, DataUtil) {
     var color = d3.scale.category20().domain(d3.range(0, 20, 1));
  
     var force = d3.layout.force()
-        .charge(-80)
-        .gravity(0.01)
-        .linkDistance(90)
+        .charge(-75)
+        .gravity(0.02)
+        .linkDistance(80)
         .size([width, height]);
 
     var svg = d3.select("#clusterviz").append("svg:svg")
