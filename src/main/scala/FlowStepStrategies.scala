@@ -4,9 +4,7 @@ import java.util.List
 
 import cascading.flow.{FlowStep, Flow, FlowStepStrategy}
 
-/**
- * Borrowed from Scalding because they made it private :(
- */
+// same approach as in Scalding
 object FlowStepStrategies {
   /**
    * Returns a new FlowStepStrategy that runs both strategies in sequence.

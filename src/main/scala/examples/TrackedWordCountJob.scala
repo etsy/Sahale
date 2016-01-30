@@ -16,28 +16,27 @@ import scala.util.matching.Regex
  * bin/runjob com.etsy.sahale.examples.TrackedWordCountJob --input /hdfs/path/to/input/dir --output /hdfs/path/to/output/dir
  */
 class TrackedWordCountJob(args : Args) extends TrackedJob(args) {
+  val StartsWithVowelRegex = """^[aeiou]""".r
+  val DoesntStartWithVowelRegex = """^[^aeiou]""".r
+
   val pipe = TextLine(args("input"))
-    .flatMap('line -> 'word) { line : String => tokenize(line) }
+    .flatMap('line -> 'word) { ln: String => ln.toLowerCase.replaceAll("[^a-z0-9\\s]", "").split("\\s+") }
     .groupBy('word) { _.size('count) }
 
-  val startsWithVowel = doFakeWork(pipe, """^[aeiou]""".r).rename(('word, 'count) -> ('vowel, 'vowel_count))
-  val startsWithConsonant = doFakeWork(pipe, """^[^aeiou]""".r)
+  val startsWithVowel = doFakeWork(pipe, StartsWithVowelRegex, 'swv, 'swv_count)
+
+  val doesntStartWithVowel = doFakeWork(pipe, DoesntStartWithVowelRegex, 'word, 'count)
 
   // even more useless work
-  startsWithConsonant
-    .joinWithSmaller('word -> 'vowel, startsWithVowel, joiner = new OuterJoin())
+  doesntStartWithVowel.joinWithSmaller('word -> 'swv, startsWithVowel, joiner = new OuterJoin())
     .write(Tsv(args("output")))
 
-  def doFakeWork(pipe: Pipe, pattern: Regex): Pipe = {
+  // do some busy work to add stages to the job
+  def doFakeWork(pipe: Pipe, pattern: Regex, word: Symbol, count: Symbol): Pipe = {
     pipe
-      .filter('word) { w: String => w match {case pattern(_) => true ; case _ => false} }
+      .filter('word) { w: String => !(pattern findFirstIn w).isEmpty }
       .map('count -> 'count) { c: String => c.toLong }
-      .groupAll { _.sortBy('count).take(10) }
-  }
-
-  // Split a piece of text into individual words.
-  def tokenize(text : String) : Array[String] = {
-    // Lowercase each word and remove punctuation.
-    text.toLowerCase.replaceAll("[^a-zA-Z0-9\\s]", "").split("\\s+")
+      .groupAll { _.sortBy('count).take(20) }
+      .rename(('word, 'count) -> (word, count))
   }
 }
