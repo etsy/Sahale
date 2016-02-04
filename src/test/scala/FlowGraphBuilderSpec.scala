@@ -23,33 +23,34 @@ class FlowGraphBuilderSpec extends FlatSpec with ShouldMatchers {
 
   val emptyProps = new java.util.Properties
 
-  val expectedEdgeMap = Map[String, Set[String]](
-    "11" -> Set("33"),
-    "22" -> Set("44"),
-    "33" -> Set("44")
+  val expectedEdgeMap = Map[String, Set[Int]](
+    "11" -> Set(33),
+    "22" -> Set(44),
+    "33" -> Set(44)
   )
 
   val expectedStepStatusMap = mutable.Map[String, StepStatus](
-    "2AAA915A87DE4B52B2A56C249545C54D" -> new StepStatus("11", "2AAA915A87DE4B52B2A56C249545C54D", emptyProps),
-    "6EC78784266342CB9424E9875FF4299F" -> new StepStatus("22", "6EC78784266342CB9424E9875FF4299F", emptyProps),
-    "9FC4CA743ED5468EBC8C3CA76C6B12A6" -> new StepStatus("33", "9FC4CA743ED5468EBC8C3CA76C6B12A6", emptyProps),
-    "C4047D6DEBB6427B8B95DAF19D3E5DE2" -> new StepStatus("44", "C4047D6DEBB6427B8B95DAF19D3E5DE2", emptyProps)
+    "2AAA915A87DE4B52B2A56C249545C54D" -> new StepStatus(null, 11, "2AAA915A87DE4B52B2A56C249545C54D", emptyProps),
+    "6EC78784266342CB9424E9875FF4299F" -> new StepStatus(null, 22, "6EC78784266342CB9424E9875FF4299F", emptyProps),
+    "9FC4CA743ED5468EBC8C3CA76C6B12A6" -> new StepStatus(null, 33, "9FC4CA743ED5468EBC8C3CA76C6B12A6", emptyProps),
+    "C4047D6DEBB6427B8B95DAF19D3E5DE2" -> new StepStatus(null, 44, "C4047D6DEBB6427B8B95DAF19D3E5DE2", emptyProps)
   )
 
   "A FlowGraphBuilder" should "extract a valid Edge Map from the planned Flow" in {
-    val fgb = new FlowGraphBuilder(null, mutable.Map[String, StepStatus]())
+    val fgb = newFlowGraphBuilder
     fgb.extractVerticesAndEdgesFromDot(graphDotString)
-    fgb.edgeMap.toMap should be (expectedEdgeMap)
+    fgb.edgeMap should be (expectedEdgeMap)
   }
 
   "A FlowGraphBuilder" should "extract a valid StepStatus map from the planned Flow" in {
-    val fgb = new FlowGraphBuilder(null, mutable.Map[String, StepStatus]())
+    val fgb = newFlowGraphBuilder
     fgb.extractVerticesAndEdgesFromDot(graphDotString)
-    prep(fgb.stepStatusMap) should be (prep(expectedStepStatusMap))
+    fgb.stepStatusMap should be (expectedStepStatusMap)
   }
 
-  def prep(map: mutable.Map[String, StepStatus]): String = {
-    map.keys.toList.sortWith(_ < _).map { k => k + "\t" + map(k) }.mkString("\n")
+  def newFlowGraphBuilder: FlowGraphBuilder = {
+    new FlowGraphBuilder(null, mutable.Map[String, StepStatus](), mutable.Map[String, Set[Int]](), true)
   }
+
 }
 

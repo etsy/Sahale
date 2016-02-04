@@ -15,27 +15,14 @@ import org.apache.log4j.Logger
 import scala.collection.mutable
 import scala.collection.JavaConversions._
 
+import spray.json._
+import DefaultJsonProtocol._
+
 
 object FlowStatus {
-  def initial: Map[String, String] = Map(
-    "jt_url"                    -> FlowTracker.UNKNOWN,
-    "user_name"                 -> FlowTracker.UNKNOWN,
-    "flow_status"               -> "NOT_LAUNCHED",
-    "total_stages"              -> "0",
-    "flow_progress"             -> "0.00",
-    "flow_duration"             -> "0",
-    "flow_hdfs_bytes_written"   -> "0",
-    "flow_priority"             -> "0",
-    "cascade_id"                -> FlowTracker.UNKNOWN,
-    "yarn_job_history"          -> FlowTracker.NOT_YARN_JOB,
-    "hdfs_working_dir"          -> FlowTracker.UNKNOWN,
-    "flow_start_epoch_ms"       -> "0",
-    "flow_submit_epoch_ms"      -> "0",
-    "flow_end_epoch_ms"         -> "0",
-    "flow_links"                -> FlowTracker.UNKNOWN
-  )
-
-  val EPSILON = 2L * 86400L * 1000L // two days in millis is a safe bet
+  val TEST_FLOW    = "com.etsy.sahale.TestFlow"
+  val TEST_ID      = "BEEFCAFE1234"
+  val EPSILON      = 2L * 86400L * 1000L // two days in millis is a safe bet
 }
 
 /**
@@ -43,97 +30,124 @@ object FlowStatus {
  *
  * @author Eli Reisman
  */
-class FlowStatus(val flow: Flow[_], props: Properties, jobArgs: Array[String]) {
+class FlowStatus(val flow: Flow[_], props: Properties, jobArgs: Array[String], isTest: Boolean = false) {
+  import com.etsy.sahale.FlowStatus._
+  import com.etsy.sahale.FlowTracker.{UNKNOWN,NOT_LAUNCHED,NOT_YARN_JOB}
 
   def this(flow: Flow[_], props: Properties) = this(flow, props, Array.empty[String])
 
-  // these are updated in the FlowTracker using StepStatus rollups
-  var flowProgress = "0.00"
-  var flowHdfsBytesWritten = "0"
+  val state = mutable.Map[String, Any](
+    "flow_id"                   -> (if (isTest) TEST_ID   else flow.getID),
+    "flow_name"                 -> (if (isTest) TEST_FLOW else flow.getName),
+    "jt_url"                    -> UNKNOWN,
+    "user_name"                 -> UNKNOWN,
+    "flow_status"               -> NOT_LAUNCHED,
+    "total_stages"              -> 0,
+    "flow_duration"             -> 0L,
+    "flow_priority"             -> 0,
+    "cascade_id"                -> UNKNOWN,
+    "yarn_job_history"          -> NOT_YARN_JOB,
+    "hdfs_working_dir"          -> UNKNOWN,
+    "flow_start_epoch_ms"       -> 0L,
+    "flow_submit_epoch_ms"      -> 0L,
+    "flow_end_epoch_ms"         -> 0L,
+    "flow_links"                -> UNKNOWN,
+    "aggregated"                -> Map.empty[String, Any],
+    "config_props"              -> Map.empty[String, String]
+  )
 
-  private val flowPropertiesToExtract = props
-    .getProperty("sahale.flow.selected.configs", "")
-    .split("""\s*,\s*""")
-    .map { _.trim }
-    .filter { _ != "" }.toSeq
+  def send: JsValue = JsonUtil.toJsonMap(state.toMap).toJson
+
+  // let caller grab typed info from internal cache
+  def get[T](key: String): T = state(key).asInstanceOf[T]
+
+  // let caller pull cached, aggregated step data without recalc
+  def getAggregate[T](key: String, default: T): T = {
+    get[Map[String, Any]]("aggregated").getOrElse(key, default).asInstanceOf[T]
+  }
 
   /**
    * Populates a map of up-to-date Flow properties to push to server.
    */
-  def toMap: Map[String, String] = Map(
-    "jt_url"                  -> getJobTrackerFromFlowProps,
-    "user_name"               -> getUsernameFromFlowProps,
-    "flow_status"             -> flow.getFlowStats.getStatus.toString,
-    "total_stages"            -> flow.getFlowStats.getStepsCount.toString,
-    "flow_progress"           -> flowProgress,
-    "flow_duration"           -> updateFlowDuration, // milliseconds
-    "flow_hdfs_bytes_written" -> flowHdfsBytesWritten,
-    "flow_priority"           -> flow.getSubmitPriority.toString,
-    "cascade_id"              -> getCascadeId,
-    "yarn_job_history"        -> getHistoryServerFromFlowProps, // host:port for YARN log links
-    "hdfs_working_dir"        -> getHdfsWorkingDir,
-    "flow_start_epoch_ms"     -> flow.getFlowStats.getStartTime.toString,
-    "flow_submit_epoch_ms"    -> flow.getFlowStats.getSubmitTime.toString,
-    "flow_end_epoch_ms"       -> flow.getFlowStats.getFinishedTime.toString,
-    "flow_links"              -> getFlowLinks
-  ) ++ getFlowConfigurationProperties
+  def update: Unit = state += (
+    "flow_id"              -> flow.getID,
+    "flow_name"            -> flow.getName,
+    "jt_url"               -> getJobTracker,
+    "user_name"            -> getUsername,
+    "flow_status"          -> flow.getFlowStats.getStatus.toString,
+    "total_stages"         -> flow.getFlowStats.getStepsCount, // Int
+    "flow_duration"        -> updateFlowDuration, // Long (milliseconds)
+    "flow_priority"        -> flow.getSubmitPriority, // Int
+    "cascade_id"           -> getCascadeId,
+    "yarn_job_history"     -> getHistoryServer, // host:port for YARN log links
+    "hdfs_working_dir"     -> getHdfsWorkingDir,
+    "flow_start_epoch_ms"  -> flow.getFlowStats.getStartTime, // Long
+    "flow_submit_epoch_ms" -> flow.getFlowStats.getSubmitTime, // Long
+    "flow_end_epoch_ms"    -> flow.getFlowStats.getFinishedTime, // Long
+    "flow_links"           -> getFlowLinks,
+    "aggregated"           -> aggregate,
+    "config_props"         -> updateFlowConfigProps
+  )
 
-  def getFlowConfigurationProperties: Map[String, String] = {
-    (flowPropertiesToExtract map { prop: String =>
-      val propValue = flow.getProperty(prop) match {
-        case s: String => s
-        case _ => FlowTracker.UNKNOWN
+  def registerAggregators(in: Map[String, () => Any]): Unit = aggregators ++= in
+
+
+  ///////////////// Utility methods ////////////////
+  private def aggregate: Map[String, Any] = aggregators.foldLeft(Map.empty[String, Any]) {
+    (acc, entry) => acc ++ Map(entry._1 -> entry._2())
+  }
+
+  private val aggregators = mutable.Map.empty[String, () => Any]
+
+  private def updateFlowConfigProps: Map[String, String] = {
+    flowPropsToExtract.foldLeft(Map.empty[String, String]) {
+      (map: Map[String, String], prop: String) => flow.getProperty(prop) match {
+        case s: String if (null != s) => map ++ Map(prop -> s)
+        case _                        => map ++ Map(prop -> UNKNOWN)
       }
-      (prop, propValue)
-    }).toMap
-  }
-
-  def getFlowLinks: String = {
-    flow.getProperty("sahale.flow.links") match {
-      case s: String => s
-      case _ => FlowTracker.UNKNOWN
     }
   }
 
-  def getCascadeId: String = {
-    flow.getCascadeID match {
-      case s: String => s
-      case _         => FlowTracker.UNKNOWN
-    }
+  private def getFlowLinks: String = flow.getProperty("sahale.flow.links") match {
+    case s: String => s
+    case _         => UNKNOWN
   }
 
-  def getHdfsWorkingDir: String = {
-    flow.getProperty("mapreduce.job.working.dir") match {
-      case wd: String => wd
-      case _          => FlowTracker.UNKNOWN
-    }
+  private def getCascadeId: String = flow.getCascadeID match {
+    case s: String => s
+    case _         => UNKNOWN
   }
 
-  def getUsernameFromFlowProps: String = {
-    flow.getProperty("sahale.custom.user.name") match {
-      case s: String => s
-      case _ => System.getProperty("user.name")
-    }
+  private def getHdfsWorkingDir: String = flow.getProperty("mapreduce.job.working.dir") match {
+    case wd: String => wd
+    case _          => UNKNOWN
   }
 
-  def getJobTrackerFromFlowProps: String = {
-    flow.getProperty("mapred.job.tracker") match {
-      case jt: String => if (jt.indexOf(":") > 0) { jt.substring(0, jt.indexOf(":")) } else { jt }
-      case _          => FlowTracker.UNKNOWN
-    }
+  private def getUsername: String = flow.getProperty("sahale.custom.user.name") match {
+    case s: String => s
+    case _         => System.getProperty("user.name")
   }
 
-  def getHistoryServerFromFlowProps: String = {
+  private def getJobTracker: String = flow.getProperty("mapred.job.tracker") match {
+    case jt: String if null != jt =>
+      if (jt.indexOf(":") > 0) { jt.substring(0, jt.indexOf(":")) } else { jt }
+    case _                        => UNKNOWN
+  }
+
+  private def getHistoryServer: String = {
     flow.getProperty("mapreduce.jobhistory.webapp.address") match {
       case historyServer: String => historyServer
-      case _ => FlowTracker.NOT_YARN_JOB
+      case _                     => NOT_YARN_JOB
     }
   }
 
-  // sometimes Cascading will report the current epoch_ms rather than job duration :(
-  def updateFlowDuration: String = {
+  // sometimes Cascading reports the current epoch_ms rather than job duration
+  private def updateFlowDuration: Long = {
     val fetched = math.max(flow.getFlowStats.getCurrentDuration, 0L)
     val test = math.abs(System.currentTimeMillis - fetched)
-    if (test < FlowStatus.EPSILON) "0" else fetched.toString
+    if (test < EPSILON) 0L else fetched
   }
+
+  private val flowPropsToExtract = props.getProperty("sahale.flow.selected.configs", "")
+    .split(",").map { _.trim }.filter { _ != "" }.toSeq
 }

@@ -10,34 +10,27 @@ import org.scalatest.junit.JUnitRunner
 @RunWith(classOf[JUnitRunner])
 class FlowStatusSpec extends FlatSpec with ShouldMatchers {
 
-  val initialExpected = Map[String, String](
-    "jt_url" -> FlowTracker.UNKNOWN,
-    "user_name" -> FlowTracker.UNKNOWN,
-    "flow_status" -> "NOT_LAUNCHED",
-    "total_stages" -> "0",
-    "flow_progress" -> "0.00",
-    "flow_duration" -> "0",
-    "flow_hdfs_bytes_written" -> "0",
-    "flow_priority" -> "0",
-    "cascade_id" -> FlowTracker.UNKNOWN,
-    "yarn_job_history" -> FlowTracker.NOT_YARN_JOB,
-    "hdfs_working_dir" -> FlowTracker.UNKNOWN,
-    "flow_start_epoch_ms"       -> "0",
-    "flow_submit_epoch_ms"      -> "0",
-    "flow_end_epoch_ms"         -> "0",
-    "flow_links" -> FlowTracker.UNKNOWN
-  )
-
   "A FlowStatus" should "provide a default initial state before the job launches" in {
-    FlowStatus.initial should be (initialExpected)
+    val fs = getTestFlowStatus
+    fs.get[String]("flow_name")     should equal (FlowStatus.TEST_FLOW)
+    fs.get[String]("jt_url")        should equal (FlowTracker.UNKNOWN)
+    fs.get[Int]("total_stages")     should equal (0)
+    fs.get[Map[String, Any]]("aggregated") should equal (Map.empty[String, Any])
+    fs.get[String]("flow_id")       should equal (FlowStatus.TEST_ID)
+    fs.get[Long]("flow_duration")   should equal (0L)
   }
 
-  "A FlowStatus" should "require a valid Flow instance" in {
-    val fs = new FlowStatus(null, new Properties())
+  "A FlowStatus" should "require a valid Flow instance in production use" in {
     intercept[NullPointerException] {
-      fs.toMap
+      new FlowStatus(null, new Properties())
     }
   }
 
-}
+  "A FlowStatus" should "allow registration of aggregator functions" in {
+    val fs = getTestFlowStatus
+    val func: () => Any = () => { (1 to 5).reduce(_+_) }
+    fs.registerAggregators( Map("test" -> func) )
+  }
 
+  def getTestFlowStatus: FlowStatus = new FlowStatus(null, new Properties(), Array.empty[String], true)
+}

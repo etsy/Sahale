@@ -1,181 +1,159 @@
 package com.etsy.sahale
 
 
-import cascading.flow.Flow
+import cascading.flow.{Flow, FlowStep}
 import cascading.flow.hadoop.HadoopFlowStep
 import cascading.stats.{CascadingStats, FlowStepStats}
 import cascading.stats.hadoop.{HadoopStepStats, HadoopSliceStats}
 import cascading.tap.Tap
 import cascading.util.Util
 
+import java.util.Properties
+
 import spray.json._
 import DefaultJsonProtocol._
 
-import org.apache.log4j.Logger
-import java.util.Properties
-
 import org.apache.hadoop.mapred.JobConf
+import org.apache.log4j.Logger
 
 import scala.collection.mutable
 import scala.collection.JavaConversions._
 
 
 object StepStatus {
+  val NO_JOB_ID = "NO_JOB_ID"
+  val NOT_LAUNCHED = "NOT_LAUNCHED"
+
   val LOG: Logger = Logger.getLogger(classOf[StepStatus])
 }
 
-/**
- * Value class to store tracked per-step workflow data.
- *
- * @author Eli Reisman
- */
-class StepStatus(val stepNumber: String, val stepId: String, props: Properties) {
-  import com.etsy.sahale.StepStatus.LOG
+class StepStatus(val flow: Flow[_], val stepNumber: Int, val stepId: String, props: Properties) {
+  import com.etsy.sahale.StepStatus._
+  import com.etsy.sahale.JsonUtil
+
+  private val state = mutable.Map[String, Any](
+    "step_number"               -> stepNumber,
+    "sources"                   -> Map.empty[String, Seq[String]],
+    "sink"                      -> Map.empty[String, Seq[String]],
+    "job_id"                    -> NO_JOB_ID,
+    "step_id"                   -> stepId,
+    "map_progress"              -> 0.0,
+    "reduce_progress"           -> 0.0,
+    "step_status"               -> NOT_LAUNCHED,
+    "step_priority"             -> 5,
+    "step_running_time"         -> 0L,
+    "step_start_epoch_ms"       -> 0L,
+    "step_submit_epoch_ms"      -> 0L,
+    "step_end_epoch_ms"         -> 0L,
+    "has_reduce_stage"          -> false,
+    "counters"                  -> Map.empty[String, Map[String, Long]],
+    "config_props"              -> Map.empty[String, String]
+  )
+
+  def send: JsValue = JsonUtil.toJsonMap(state.toMap).toJson
+
+  def getStatus: String = stats.getStatus.toString
+
+  // return reference to step status only if it was updated
+  def update = state += (
+    "has_reduce_stage"          -> stepHasReduceStage,
+    "job_id"                    -> stats.getJobID,
+    "step_running_time"         -> getStepRunningTime,
+    "step_status"               -> getStatus,
+    "map_progress"              -> getMapProgress,
+    "reduce_progress"           -> getReduceProgress,
+    "step_priority"             -> getStepPriority,
+    "step_start_epoch_ms"       -> stats.getStartTime,
+    "step_submit_epoch_ms"      -> stats.getSubmitTime,
+    "step_end_epoch_ms"         -> stats.getFinishedTime,
+    "counters"                  -> updateStepCounters,
+    "config_props"              -> updateHadoopConf
+  )
+
+  // for unit tests
+  override def equals(other: Any): Boolean = {
+    if (other != null && other.isInstanceOf[StepStatus]) {
+      val nss = other.asInstanceOf[StepStatus]
+      this.state == nss.state
+    } else {
+      false
+    }
+  }
+
+  // let caller pull from cached data when possible
+  def get[T](key: String): T = state(key).asInstanceOf[T]
+
+  // let caller pass in queries for the step encapsulated here
+  def extract[T](fn: (HadoopFlowStep) => T): T = fn(step)
+
+  def captureTaps(sources: Map[String, Seq[String]], sink: Map[String, Seq[String]]): Unit = state += (
+    "sources"   -> sources,
+    "sink"      -> sink
+  )
 
   // will be reset for us by FlowTrackerStepStrategy
   private var stepStartMillis = System.currentTimeMillis
 
-  // if users want to track additional JobConf values, put the chosen keys in a CSV
-  // list in flow-tracker.properties entry "sahale.step.selected.configs" at build time
-  private val propertiesToExtract = Seq("sahale.additional.links") ++ {
-    props.getProperty("sahale.step.selected.configs", "").split("""\s*,\s*""").map { _.trim }.filter { _ != "" }.toSeq
-  }
-
-  var sources = FlowTracker.UNKNOWN
-  var sink = FlowTracker.UNKNOWN
-  var sourcesFields = FlowTracker.UNKNOWN
-  var sinkFields = FlowTracker.UNKNOWN
-  var jobId = "NO_JOB_ID"
-  var mapProgress = "0.00"
-  var reduceProgress = "0.00"
-  var stepStatus = "NOT_LAUNCHED"
-  var stepPriority = "0"
-  var stepRunningTime = 0L
-  var stepStartEpochMs = "0"
-  var stepSubmitEpochMs = "0"
-  var stepEndEpochMs = "0"
-  var counters = Map[String, Map[String, Long]]()
-  var hdfsBytesWritten = 0L
-  var configurationProperties = Map[String, String]()
-  var hasReduceStage = false // not pushed to server
-
-  override def toString: String = jsonMap
-
-  def jsonMap: String = {
-    Map(
-      "stepnumber"                -> toJsonString(stepNumber),
-      "sources"                   -> toJsonString(sources),
-      "sink"                      -> toJsonString(sink),
-      "sourcesfields"             -> toJsonString(sourcesFields),
-      "sinkfields"                -> toJsonString(sinkFields),
-      "jobid"                     -> toJsonString(jobId),
-      "stepid"                    -> toJsonString(stepId),
-      "mapprogress"               -> toJsonString(mapProgress),
-      "reduceprogress"            -> toJsonString(reduceProgress),
-      "stepstatus"                -> toJsonString(stepStatus),
-      "steppriority"              -> toJsonString(stepPriority),
-      "steprunningtime"           -> toJsonString(stepRunningTime.toString),
-      "step_start_epoch_ms"       -> toJsonString(stepStartEpochMs),
-      "step_submit_epoch_ms"      -> toJsonString(stepSubmitEpochMs),
-      "step_end_epoch_ms"         -> toJsonString(stepEndEpochMs),
-      "counters"                  -> counters.map { case(k: String, v: Map[String,Long]) => (k, v.toJson) }.toJson,
-      "configuration_properties"  -> configurationProperties.toJson
-    ).toJson.compactPrint
-  }
-
-  def toJsonString(s: String): JsValue = s match {
-    case s: String if (s != null) => JsString(s)
-    case null => JsNull
-    case err => throw new DeserializationException("Error while serializing StepStatus into JSON: expected string value, got: " + err)
-  }
-
-  def setConfigurationProperties(conf: JobConf): Unit = {
-    this.configurationProperties = (propertiesToExtract map { prop: String =>
-      prop -> conf.get(prop, "")
-    }).toMap
-  }
-
-  def setSourcesAndSink(sources: String, sourcesFields: String, sink: String, sinkFields: String): Unit = {
-    this.sources = sources
-    this.sourcesFields = sourcesFields
-    this.sink = sink
-    this.sinkFields = sinkFields
-  }
-
-  /**
-   * Updates the non-static step properties.
-   */
-  def update(hadoopFlowStep: HadoopFlowStep): Unit = {
-    val hadoopStepStats = hadoopFlowStep.getFlowStepStats.asInstanceOf[HadoopStepStats]
-
-    jobId = hadoopStepStats.getJobID
-    mapProgress = getMapProgress(hadoopStepStats)
-    reduceProgress = getReduceProgress(hadoopStepStats)
-    stepRunningTime = getStepRunningTime(hadoopStepStats) // checks old stepStatus value - MUST be updated first!
-    stepStatus = hadoopStepStats.getStatus.toString
-    stepPriority = getStepPriority(hadoopFlowStep)
-    hasReduceStage = stepHasReduceStage(hadoopFlowStep) // not pushed to server, used by FlowTracker prog calc
-
-    updateEpochMsFields(hadoopStepStats)
-    updateStepCounters(hadoopStepStats)
-  }
-
-  def updateEpochMsFields(hss: HadoopStepStats): Unit = {
-    stepStartEpochMs = hss.getStartTime.toString
-    stepSubmitEpochMs = hss.getSubmitTime.toString
-    stepEndEpochMs = hss.getFinishedTime.toString
-  }
-
-  def getStepPriority(hfs: HadoopFlowStep): String = {
-    hfs.getSubmitPriority.toString
-  }
-
-  def getStepRunningTime(hss: HadoopStepStats): Long = (System.currentTimeMillis - stepStartMillis) / 1000L
-
   def markStartTime: Unit = stepStartMillis = System.currentTimeMillis
 
-  def updateStepCounters(hss: HadoopStepStats): Unit = {
-    counters = dumpCounters(hss).foldLeft(mutable.Map[String, Map[String, Long]]()) {
-      (acc, next) => acc.getOrElse(next._1, None) match {
-        case None => acc(next._1) = Map(next._2 -> next._3) ; acc
-        case _    => acc(next._1) = Map(next._2 -> next._3) ++ acc(next._1) ; acc
-      }
-    }.toMap
+  def getStepPriority: Int = step.getSubmitPriority
+
+  def getStepRunningTime: Long = (System.currentTimeMillis - stepStartMillis) / 1000L
+
+  def getMapProgress: Double = stats.getMapProgress.isNaN match {
+    case true => 0.0
+    case _    => JsonUtil.percent(stats.getMapProgress)
   }
 
-  def dumpCounters(hss: HadoopStepStats): Iterable[(String, String, Long)] = {
-    for (g <- hss.getCounterGroups ; c <- hss.getCountersFor(g)) yield {
-      (cleanGroupName(g), c, hss.getCounterValue(g, c))
+  def getReduceProgress: Double = stats.getReduceProgress.isNaN match {
+    case true => 0.0
+    case _    => JsonUtil.percent(stats.getReduceProgress)
+  }
+
+  def stepHasReduceStage: Boolean = {
+    step.getConfig.asInstanceOf[JobConf].getNumReduceTasks > 0L
+  }
+
+  def aggrFunc(group: String, key: String): Long = {
+    stats.getCounterValue(group, key)
+  }
+
+  //////////// INTERNALS ////////////
+  private lazy val step = flow.getFlowSteps.toList.filter {
+    fs: FlowStep[_] => fs.getID == stepId
+  }.head.asInstanceOf[HadoopFlowStep]
+
+  private def stats = step.getFlowStepStats.asInstanceOf[HadoopStepStats]
+
+  private def updateHadoopConf = propertiesToExtract.foldLeft(Map.empty[String, String]) {
+    (acc, prop) => acc ++ Map(prop -> step.getConfig.asInstanceOf[JobConf].get(prop, ""))
+  }
+
+  private def updateStepCounters: Map[String, Map[String, Long]] = dumpCounters.groupBy[String] {
+      i: (String, String, Long) => i._1
+    }.map {
+      case(k: String, v: Iterable[(String, String, Long)]) =>
+        k -> v.map { vv => vv._2 -> vv._3 }.toMap
+    }.toMap
+
+  private def dumpCounters: Iterable[(String, String, Long)] = {
+    for (g <- stats.getCounterGroups ; c <- stats.getCountersFor(g)) yield {
+      (cleanGroupName(g), c, stats.getCounterValue(g, c))
     }
   }
 
-  def cleanGroupName(name: String): String = {
+  // if users want to track additional JobConf values, put the chosen keys in a CSV
+  // list in flow-tracker.properties entry "sahale.step.selected.configs" at build time
+  private val propertiesToExtract = Seq("sahale.additional.links") ++ {
+    props.getProperty("sahale.step.selected.configs", "")
+      .split(""",""").map { _.trim }.filter { _ != "" }.toSeq
+  }
+
+  private def cleanGroupName(name: String): String = {
     name match {
       case oah: String if (oah.startsWith("org.apache.hadoop.")) => cleanGroupName(oah.substring(18))
       case ic: String if (ic.indexOf("""$""") >= 0) => cleanGroupName(ic.substring(0, ic.indexOf("""$""")))
       case _ => name
     }
-  }
-
-  def getMapProgress(hss: HadoopStepStats): String = {
-    hss.getMapProgress.isNaN match {
-      case true => "0.00"
-      case _    => "%3.2f" format (hss.getMapProgress * 100.0)
-    }
-  }
-
-  def getReduceProgress(hss: HadoopStepStats): String = {
-    hss.getReduceProgress.isNaN match {
-      case true => "0.00"
-      case _    => "%3.2f" format (hss.getReduceProgress * 100.0)
-    }
-  }
-
-  def stepHasReduceStage(hfs: HadoopFlowStep): Boolean = {
-    hfs.getConfig.asInstanceOf[JobConf].getNumReduceTasks > 0L
-  }
-
-  def getHdfsBytesWritten(hss: HadoopStepStats): Long = {
-    hss.getCounterValue("org.apache.hadoop.mapreduce.FileSystemCounter", "HDFS_BYTES_WRITTEN")
   }
 }

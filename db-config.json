@@ -3,5 +3,14 @@
   "port":       3306,
   "database":   "database.name.where.tables.were.created",
   "user":       "db_username_to_run_queries_as",
-  "password":   "db_password"
+  "password":   "db_password",
+  "flow_table_alias": "cascading_job_flows_new",
+  "step_table_alias": "cascading_job_steps_new",
+  "edge_table_alias": "cascading_job_edges_new",
+  "agg_table_alias":  "cascading_job_aggregated_new",
+  "cluster_name_mapping": {
+    "resource.manager.example.com": "Cluster Name",
+    "other.resource.manager.example.com": "Other Cluster"
+  },
+  "job_name_prefix": "com.example.long.pkg.name.to.truncate"
 }
