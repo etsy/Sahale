@@ -5,22 +5,22 @@ var DataUtil = (function() {
 
   data.unpackFlow = function(flow) {
     // unpack JSON fields
-    var outFlow = JSON.parse(flow['flow_json']);
+    var out_flow = JSON.parse(flow['flow_json']);
 
     // no need to unpack fields used in queries, they get their own columns
-    outFlow.flow_id = flow.flow_id;
-    outFlow.flow_name = flow.flow_name;
-    outFlow.flow_status = flow.flow_status;
-    outFlow.create_date = flow.create_date;
-    outFlow.update_date = flow.update_date;
-    outFlow.cluster_name = getClusterNameMapping(outFlow);
-    outFlow.truncated_name = getTruncatedName(outFlow);
+    out_flow.flow_id = flow.flow_id;
+    out_flow.flow_name = flow.flow_name;
+    out_flow.create_date = flow.create_date;
+    out_flow.update_date = flow.update_date;
+    out_flow.cluster_name = getClusterNameMapping(out_flow);
+    out_flow.truncated_name = getTruncatedName(out_flow);
 
-    if (outFlow['scalding.job.args']) {
-      outFlow['scalding.job.args'] = outFlow['scalding.job.args'].split('+');
+    var sja = out_flow['config_props']['scalding.job.args']
+    if (sja) {
+      out_flow['config_props']['scalding.job.args'] = sja.split(/\s+/);
     }
 
-    return outFlow;
+    return out_flow;
   }
 
   data.getConfigState = function() {
@@ -56,7 +56,7 @@ var DataUtil = (function() {
     var map = {};
     rows.forEach(function(item, ndx, arr) {
       var step = data.unpackStep(item);
-      map[step.stepnumber] = step;
+      map[step.step_number] = step;
     });
     return map;
   }
@@ -65,37 +65,42 @@ var DataUtil = (function() {
   data.unpackSteps = function(steps) {
     var out = [];
     steps.forEach(function(item, ndx, arr) {
-      var step = data.unpackStep(item);
-      out.push(step);
+      out.push(data.unpackStep(item));
     });
     return out;
   }
 
   data.unpackStep = function(item) {
     var step = JSON.parse(item.step_json);
-    step.flow_id = item['flow_id'];
-    step.step_id = item['step_id'];
 
-   // set "shortcut" fields from the counters map
-    step.maptasks = checkedStepUnpack(step, 'mapreduce.JobCounter', 'TOTAL_LAUNCHED_MAPS', 0);
-    step.reducetasks = checkedStepUnpack(step, 'mapreduce.JobCounter', 'TOTAL_LAUNCHED_REDUCES', 0);
-    step.failedmaptasks = checkedStepUnpack(step, 'mapreduce.JobCounter', 'NUM_FAILED_MAPS', 0);
-    step.failedreducetasks = checkedStepUnpack(step, 'mapreduce.JobCounter', 'NUM_FAILED_REDUCES', 0);
-    step.datalocalmaptasks = checkedStepUnpack(step, 'mapreduce.JobCounter', 'DATA_LOCAL_MAPS', 0);
-    step.racklocalmaptasks = checkedStepUnpack(step, 'mapreduce.JobCounter', 'RACK_LOCAL_MAPS', 0);
-    step.hdfsbytesread = checkedStepUnpack(step, 'mapreduce.FileSystemCounter', 'HDFS_BYTES_READ', 0);
-    step.hdfsbyteswritten = checkedStepUnpack(step, 'mapreduce.FileSystemCounter', 'HDFS_BYTES_WRITTEN', 0);
-    step.filebytesread = checkedStepUnpack(step, 'mapreduce.FileSystemCounter', 'FILE_BYTES_READ', 0);
-    step.filebyteswritten = checkedStepUnpack(step, 'mapreduce.FileSystemCounter', 'FILE_BYTES_WRITTEN', 0);
-    step.tuplesread = checkedStepUnpack(step, 'cascading.flow.StepCounters', 'Tuples_Read', 0);
-    step.tupleswritten = checkedStepUnpack(step, 'cascading.flow.StepCounters', 'Tuples_Written', 0);
-    step.ioreadmillis = checkedStepUnpack(step, 'cascading.flow.SliceCounters', 'Read_Duration', 0);
-    step.iowritemillis = checkedStepUnpack(step, 'cascading.flow.SliceCounters', 'Write_Duration', 0);
-    step.map_vcore_millis = checkedStepUnpack(step, 'mapreduce.JobCounter', 'VCORES_MILLIS_MAPS', 0);
-    step.reduce_vcore_millis = checkedStepUnpack(step, 'mapreduce.JobCounter', 'VCORES_MILLIS_REDUCES', 0);
-    step.map_vcore_secs = Math.round(step.map_vcore_millis / 1000);
-    step.reduce_vcore_secs = Math.round(step.reduce_vcore_millis / 1000)
-    step.configuration_properties = extractConfigurationProperties(step);
+    // top-level table fields we might want at some point
+    step.create_date          = item.create_date;
+    step.update_date          = item.update_date;
+    step.flow_id              = item.flow_id;
+    //step.step_id              = item.step_id; // provided in JSON
+
+    // set "shortcut" fields from the counters map
+    step.map_tasks            = checkedStepUnpack(step, 'mapreduce.JobCounter', 'TOTAL_LAUNCHED_MAPS', 0);
+    step.reduce_tasks         = checkedStepUnpack(step, 'mapreduce.JobCounter', 'TOTAL_LAUNCHED_REDUCES', 0);
+    step.failed_map_tasks     = checkedStepUnpack(step, 'mapreduce.JobCounter', 'NUM_FAILED_MAPS', 0);
+    step.failed_reduce_tasks  = checkedStepUnpack(step, 'mapreduce.JobCounter', 'NUM_FAILED_REDUCES', 0);
+    step.data_local_map_tasks = checkedStepUnpack(step, 'mapreduce.JobCounter', 'DATA_LOCAL_MAPS', 0);
+    step.rack_local_map_tasks = checkedStepUnpack(step, 'mapreduce.JobCounter', 'RACK_LOCAL_MAPS', 0);
+    step.hdfs_bytes_read      = checkedStepUnpack(step, 'mapreduce.FileSystemCounter', 'HDFS_BYTES_READ', 0);
+    step.hdfs_bytes_written   = checkedStepUnpack(step, 'mapreduce.FileSystemCounter', 'HDFS_BYTES_WRITTEN', 0);
+    step.file_bytes_read      = checkedStepUnpack(step, 'mapreduce.FileSystemCounter', 'FILE_BYTES_READ', 0);
+    step.file_bytes_written   = checkedStepUnpack(step, 'mapreduce.FileSystemCounter', 'FILE_BYTES_WRITTEN', 0);
+    step.tuples_read          = checkedStepUnpack(step, 'cascading.flow.StepCounters', 'Tuples_Read', 0);
+    step.tuples_written       = checkedStepUnpack(step, 'cascading.flow.StepCounters', 'Tuples_Written', 0);
+    step.io_read_millis       = checkedStepUnpack(step, 'cascading.flow.SliceCounters', 'Read_Duration', 0);
+    step.io_write_millis      = checkedStepUnpack(step, 'cascading.flow.SliceCounters', 'Write_Duration', 0);
+    step.map_vcore_millis     = checkedStepUnpack(step, 'mapreduce.JobCounter', 'VCORES_MILLIS_MAPS', 0);
+    step.reduce_vcore_millis  = checkedStepUnpack(step, 'mapreduce.JobCounter', 'VCORES_MILLIS_REDUCES', 0);
+    step.cpu_millis           = checkedStepUnpack(step, 'mapreduce.TaskCounter', 'CPU_MILLISECONDS', 0);
+    step.gc_millis            = checkedStepUnpack(step, 'mapreduce.TaskCounter', 'GC_TIME_MILLIS', 0);
+    step.map_vcore_secs       = Math.round(step.map_vcore_millis / 1000);
+    step.reduce_vcore_secs    = Math.round(step.reduce_vcore_millis / 1000)
+    step.config_props         = extractConfigurationProperties(step);
 
     return step;
   }
@@ -120,23 +125,23 @@ var DataUtil = (function() {
   }
 
   function extractConfigurationProperties(step) {
-    if (step['configuration_properties'] === undefined) {
+    if (step['config_props'] === undefined) {
       return {};
     }
-    return step['configuration_properties'];
+    return step['config_props'];
   }
 
-  function getTruncatedName(outFlow) {
+  function getTruncatedName(out_flow) {
     var jnp = server_config['job_name_prefix'] || '';
     if (jnp !== '') {
-      return outFlow.flow_name.replace(jnp, '');
+      return out_flow.flow_name.replace(jnp, '');
     }
-    return outFlow.flow_name;
+    return out_flow.flow_name;
   }
 
-  function getClusterNameMapping(outFlow) {
+  function getClusterNameMapping(out_flow) {
     var cnm = server_config['cluster_name_mapping'];
-    return cnm[outFlow.jt_url] || 'Unknown';
+    return cnm[out_flow.jt_url] || 'Unknown';
   }
 
   return data;

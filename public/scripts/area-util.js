@@ -23,7 +23,7 @@ var AreaChart = (function($, d3) {
     tipData = td;
     maxValue = mv;
     dataPoints = mapData.length;
-    width =  parseInt(spacing) * (parseInt(dataPoints) + 2);
+    width =  spacing * (dataPoints + 2);
 
     xFn = d3.scale.ordinal()
       .domain(getXRange(dataPoints))
@@ -149,14 +149,14 @@ var AreaChart = (function($, d3) {
   // returns array of range [0..N] where N === count === # of job stages in Flow
   function getXRange(count) {
     var temp = [];
-    for (var i = 1; i <= count; ++i) { temp.push(parseInt(i)); }
+    for (var i = 1; i <= count; ++i) { temp.push(i); }
     return temp;
   }
 
   // return X range adjusted by scaling factor (spacing between entries and constant term (left-side padding)
   function getXSpacing(count, padding) {
     return getXRange(count).map(
-      function(d) { return (d * parseInt(spacing)) + parseInt(padding); }
+      function(d) { return (d * spacing) + padding; }
     );
   }
 

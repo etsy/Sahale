@@ -146,7 +146,7 @@ var LoadUtil = (function($, d3, DataUtil) {
   }
 
   function makeNodes(flow, steps) {
-    var runningSteps = steps.filter(function(s) { return s.stepstatus == "RUNNING" });
+    var runningSteps = steps.filter(function(s) { return s.step_status == "RUNNING" });
 
     job_nodes.push({
       name: flow.flow_name + " (" + flow.user_name + ")",
@@ -164,20 +164,20 @@ var LoadUtil = (function($, d3, DataUtil) {
       var step = runningSteps[i];
 
       load.nodes.push({
-        name: "step: " + step.stepnumber + " | " + step.maptasks + " mappers",
-        group: mapStepColor(step.stepnumber),
-        radius: setNodeSize(step.maptasks),
+        name: "step: " + step.step_number + " | " + step.map_tasks + " mappers",
+        group: mapStepColor(step.step_number),
+        radius: setNodeSize(step.map_tasks),
         parent_id: flow.flow_id,
-        txt: step.maptasks + " mappers",
+        txt: step.map_tasks + " mappers",
       });
 
-      if (step.reducetasks > 0) {
+      if (step.reduce_tasks > 0) {
         load.nodes.push({
-          name: "step: " + step.stepnumber + " | " + step.reducetasks + " reducers",
-          group: reduceStepColor(step.stepnumber),
-          radius: setNodeSize(step.reducetasks),
+          name: "step: " + step.step_number + " | " + step.reduce_tasks + " reducers",
+          group: reduceStepColor(step.step_number),
+          radius: setNodeSize(step.reduce_tasks),
           parent_id: flow.flow_id,
-          txt: step.reducetasks + " reducers"
+          txt: step.reduce_tasks + " reducers"
         });
       }
     }

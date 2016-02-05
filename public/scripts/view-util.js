@@ -25,24 +25,24 @@ var ViewUtil = (function($) {
     var html = '<div height="550px">' +
       '<div style="text-align:center" class="alert alert-info" id="no-step" role="alert">Select A Node</div>';
     for (key in stepMap) {
-
       var step = stepMap[key];
-      html += '<div id="step-' + step.stepnumber + '">';
+
+      html += '<div id="step-' + step.step_number + '">';
       html += renderMapReduceProgress(step);
-      html += renderTabHeader(step.stepnumber);
-      html += '<div id="the-content-' + step.stepnumber + '" class="tab-content push-it-down">';
-      html += '<div id="jobstats-' + step.stepnumber + '" class="tab-pane active">';
+      html += renderTabHeader(step.step_number);
+      html += '<div id="the-content-' + step.step_number + '" class="tab-content push-it-down">';
+      html += '<div id="jobstats-' + step.step_number + '" class="tab-pane active">';
       html += renderMapReduceLocalityAndCounts(step);
       html += renderIo(step);
       html += '</div>';
-      html += '<div id="sourcessinks-' + step.stepnumber + '" class="tab-pane">';
-      html += renderTapsAndFields("danger", "Sources and Fields", step.sources, step.sourcesfields);
-      html += renderTapsAndFields("info", "Sink and Fields", step.sink, step.sinkfields);
+      html += '<div id="sourcessinks-' + step.step_number + '" class="tab-pane">';
+      html += renderTapsAndFields("danger", "Sources and Fields", step.sources);
+      html += renderTapsAndFields("info", "Sink and Fields", step.sink);
       html += '</div>';
-      html += '<div id="hadoopcounters-' + step.stepnumber + '" class="tab-pane">';
+      html += '<div id="hadoopcounters-' + step.step_number + '" class="tab-pane">';
       html += renderHadoopCounters(step);
       html += '</div>';
-      html += '<div id="links-' + step.stepnumber + '" class="tab-pane">';
+      html += '<div id="links-' + step.step_number + '" class="tab-pane">';
       html += renderLinks(step, flow);
       html += '</div>';
       html += '</div>';
@@ -54,7 +54,7 @@ var ViewUtil = (function($) {
 
   view.getColorByStepStatus = function(step) {
     var color;
-    switch(step.stepstatus) {
+    switch(step.step_status) {
       case "RUNNING": case "SUBMITTED":
         color = "orange";
         break;
@@ -73,8 +73,8 @@ var ViewUtil = (function($) {
 
   view.renderStepStatus = function(step) {
     var color = view.getColorByStepStatus(step);
-    return 'Step ' + step.stepnumber + ':<span style="padding-left:8px;color:' + color + '">' +
-      step.stepstatus + '</span>';
+    return 'Step ' + step.step_number + ':<span style="padding-left:8px;color:' + color + '">' +
+      step.step_status + '</span>';
   }
 
   view.prettyPrintBytes = function(bytes) {
@@ -104,7 +104,9 @@ var ViewUtil = (function($) {
     for (var i = 0; i < flows.length; ++i) {
       var f = flows[i];
       if (clusterFilter === undefined || f.cluster_name === clusterFilter) {
-        var fp = function(f) { if (f.flow_status === "SUCCESSFUL") return "100.00"; else return f.flow_progress; }(f);
+        var fp = function(f) {
+          return f.flow_status === "SUCCESSFUL" ? 100.0 : f['aggregated']['flow_progress'];
+        }(f);
         rows += '<tr>' +
           '<td>' + prettyLinkedJobName(f) + '</td>' +
           '<td>' + f.user_name + '</td>' + // removed link to Staff page for OSS version
@@ -179,16 +181,16 @@ var ViewUtil = (function($) {
   }
 
   function renderMapReduceLocalityAndCounts(step) {
-    var local = step.maptasks > 0 ? Math.round(100 * (step.datalocalmaptasks / step.maptasks), 4) : "Unknown";
-    var rack = step.maptasks > 0 ? Math.round(100 * (step.racklocalmaptasks / step.maptasks), 4) : "Unknown";
+    var local = step.map_tasks > 0 ? Math.round(100 * (step.data_local_map_tasks / step.map_tasks), 4) : "Unknown";
+    var rack = step.map_tasks > 0 ? Math.round(100 * (step.rack_local_map_tasks / step.map_tasks), 4) : "Unknown";
     return '<table style="font-size:10px" class="table table-centered">' +
       '<tr>' +
       '<th>Data Local Mappers:</th><td>' + local + '%</td>' +
       '<th>Rack Local Mappers:</th><td>' + rack + '%</td>' +
       '</tr>' +
       '<tr>' +
-      '<th>Map Tasks:</th><td class="mr-count-red">' + step.maptasks + '</td>' +
-      '<th>Reduce Tasks:</th><td class="mr-count-blue">' + step.reducetasks + '</td>' +
+      '<th>Map Tasks:</th><td class="mr-count-red">' + step.map_tasks + '</td>' +
+      '<th>Reduce Tasks:</th><td class="mr-count-blue">' + step.reduce_tasks + '</td>' +
       '</tr>' +
       '<tr>' +
       '<th>Map Vcore-Seconds:</th><td class="mr-count-red">' + step.map_vcore_secs + '</td>' +
@@ -198,21 +200,21 @@ var ViewUtil = (function($) {
   }
 
   function renderMapReduceProgress(step) {
-    var m = Math.round(step.mapprogress / 2, 2);
-    var r = Math.round(step.reduceprogress / 2, 2);
+    var m = Math.round(step.map_progress / 2, 2);
+    var r = Math.round(step.reduce_progress / 2, 2);
     return '<div class="progress">' +
       '<div class="progress-bar progress-bar-danger progress-bar-striped active" ' +
       'role="progressbar" aria-valuemin="0" aria-valuemax="50" aria-valuenow="' +
-      Math.floor(m) + '" style="width:' + Math.floor(m) + '%">' + step.mapprogress + '% Map</div>' +
+      Math.floor(m) + '" style="width:' + Math.floor(m) + '%">' + step.map_progress + '% Map</div>' +
       '<div class="progress-bar progress-bar-info progress-bar-striped active" ' +
       'role="progressbar" aria-valuemin="0" aria-valuemax="50" aria-valuenow="' +
-      Math.floor(r) + '" style="width:' + Math.floor(r) + '%">' + step.reduceprogress + '% Reduce</div>' +
+      Math.floor(r) + '" style="width:' + Math.floor(r) + '%">' + step.reduce_progress + '% Reduce</div>' +
       '</div>';
   }
 
   function makeYarnUrl(flow, step) {
-    var yarn_id = step.jobid.slice(4, step.jobid.length);
-    switch(step.stepstatus) {
+    var yarn_id = step.job_id.slice(4, step.job_id.length);
+    switch(step.step_status) {
     case "SUCCESSFUL":
     case "FAILED":
     case "SKIPPED":
@@ -242,33 +244,32 @@ var ViewUtil = (function($) {
       '<table class="table table-centered table-striped">' +
       '<tr> <th>I/O Type</th> <th>Read</th> <th>Written</th> </tr>' +
       '<tr> <td>HDFS</td> ' +
-      '<td>' + view.prettyPrintBytes(step.hdfsbytesread) + '</td>' +
-      '<td>' + view.prettyPrintBytes(step.hdfsbyteswritten) + '</td>' +
+      '<td>' + view.prettyPrintBytes(step.hdfs_bytes_read) + '</td>' +
+      '<td>' + view.prettyPrintBytes(step.hdfs_bytes_written) + '</td>' +
       '</tr>' +
       '<tr> <td>Tuples</td> ' +
-      '<td>' + step.tuplesread + '</td>' +
-      '<td>' + step.tupleswritten + '</td>' +
+      '<td>' + step.tuples_read + '</td>' +
+      '<td>' + step.tuples_written + '</td>' +
       '</tr>' +
       '<tr> <td>Cluster Disk</td> ' +
-      '<td>' + view.prettyPrintBytes(step.filebytesread) + '</td>' +
-      '<td>' + view.prettyPrintBytes(step.filebyteswritten) + '</td>' +
+      '<td>' + view.prettyPrintBytes(step.file_bytes_read) + '</td>' +
+      '<td>' + view.prettyPrintBytes(step.file_bytes_written) + '</td>' +
       '</tr>' +
       '</table>' +
       '</div>';
   }
 
-  function renderTapsAndFields(style, title, tapsEntry, fieldsEntry) {
-    var taps = tapsEntry.split(',');
-    var fields = fieldsEntry.split(';');
+  function renderTapsAndFields(style, title, data) {
     var html = '<div class="panel panel-' + style + '" style="font-size:10px">' +
-      '<div class="panel-heading" style="text-align:center">' +
-      title + '</div><div class="panel-body">';
-    var addSeparator = taps.length - 1;
-    for (var i = 0; i < taps.length; ++i) {
-      if (fields[i] === undefined) { fields[i] = "UNKNOWN"; }
+               '<div class="panel-heading" style="text-align:center">' +
+               title + '</div><div class="panel-body">';
+    var addSeparator = Object.keys(data).length - 1;
+    for (var tap in data) {
+      var fields = data[tap];
+      if (fields === undefined) { fields = "UNKNOWN"; }
       html += '<div style="overflow-x:auto">';
-      html += '<strong style="margin-left:4px;margin-top:8px">' + taps[i] + '</strong>';
-      html += '<div style="margin-left:4px">' + fields[i].replace(/,/g, ', ') + '</div>';
+      html += '<strong style="margin-left:4px;margin-top:8px">' + tap + '</strong>';
+      html += '<div style="margin-left:4px">' + fields.join(', ') + '</div>';
       html += '</div>';
       if (i < addSeparator) {
         html += '<div class="tapline" />';
@@ -296,68 +297,62 @@ var ViewUtil = (function($) {
     return html;
   }
 
-    function renderDate(epoch_ms_str) {
-  if (epoch_ms_str !== "0") {
-      var date = new Date(parseInt(epoch_ms_str));
-      return moment(date).utc().format('MM-DD-YYYY HH:mm:ss z');
-  } else {
-      return "";
+  function renderDate(epochms) {
+    return epochms !== 0 ?
+      moment(new Date(epochms)).utc().format('MM-DD-YYYY HH:mm:ss z') : "";
   }
-  
-    }
 
-    function renderLinks(step, flow) {
-  var html = '<div style="font-size:10px">';
-  var interpolationData = {
-    user: flow.user_name,
-    job_name: flow.truncated_name.replace(/\./g, '-'),
-    flow_id: flow.flow_id,
-    stage: step.stepnumber
-  };
-  var additionalLinks = step.configuration_properties['sahale.additional.links'];
-  var logLinks = [];
-  if (step.jobid !== null && step.jobid !== 'NO_JOB_ID') {
+  function renderLinks(step, flow) {
+    var html = '<div style="font-size:10px">';
+    var interpolationData = {
+      user: flow.user_name,
+      job_name: flow.truncated_name.replace(/\./g, '-'),
+      flow_id: flow.flow_id,
+      stage: step.step_number
+    };
+    var additionalLinks = step.config_props['sahale.additional.links'];
+    var logLinks = [];
+    if (step.job_id !== undefined && step.job_id !== null && step.job_id !== 'NO_JOB_ID') {
       if (flow.yarn_job_history !== "false") {
-    var jobLink = makeYarnUrl(flow, step);
-    logLinks.push({name: 'View Hadoop Logs', url: jobLink});
-    if (step.stepstatus == 'FAILED') {
-        // We know this is a History Server link at this point, so this replacement should be valid
-        var failedMapTasks = jobLink.replace("/job/", "/attempts/") + "/m/FAILED"
-        var failedReduceTasks = jobLink.replace("/job/", "/attempts/") + "/r/FAILED"
-        if (step.failedmaptasks > 0) {
-      logLinks.push({name: 'Failed Map Tasks', url: failedMapTasks});
+        var jobLink = makeYarnUrl(flow, step);
+        logLinks.push({name: 'View Hadoop Logs', url: jobLink});
+        if (step.step_status == 'FAILED') {
+          // We know this is a History Server link at this point, so this replacement should be valid
+          var failedMapTasks = jobLink.replace("/job/", "/attempts/") + "/m/FAILED"
+          var failedReduceTasks = jobLink.replace("/job/", "/attempts/") + "/r/FAILED"
+          if (step.failed_map_tasks > 0) {
+            logLinks.push({name: 'Failed Map Tasks', url: failedMapTasks});
+          }
+          if (step.failed_reduce_tasks > 0) {
+             logLinks.push({name: 'Failed Reduce Tasks', url: failedReduceTasks});
+          }
         }
-        if (step.failedreducetasks > 0) {
-      logLinks.push({name: 'Failed Reduce Tasks', url: failedReduceTasks});
-        }
-    }
-    logLinks.push({name: 'ApplicationMaster', url: flow.jt_url + '/cluster/app/' + step.jobid.replace('job_', 'application_')});
+        logLinks.push({name: 'ApplicationMaster', url: flow.jt_url + '/cluster/app/' + step.job_id.replace('job_', 'application_')});
       } else {
-    logLinks.push({name: 'View Hadoop Logs', url: 'http://' + flow.jt_url + ':50030/jobdetails.jsp?jobid=' + step.jobid + '&refresh=0'});
+        logLinks.push({name: 'View Hadoop Logs', url: 'http://' + flow.jt_url + ':50030/jobdetails.jsp?jobid=' + step.job_id + '&refresh=0'});
       }
-      
-  }
-  for(i = 0; i < logLinks.length; ++i) {
+    }
+    for(i = 0; i < logLinks.length; ++i) {
       var link = logLinks[i];
       html += '<div class="steplink"><a href="//' + link.url + '" target=_blank><b>'+ link.name +'</b></a></div>';
-  }
-  
-  if (additionalLinks !== undefined) {
+    }
+
+    if (additionalLinks !== undefined) {
       var links = additionalLinks.split(';');
       for (i = 0; i < links.length; ++i) {
         var link = links[i];
         var tokens = link.split('|');
         if (tokens.length == 2) {
-            var name = tokens[0].replace(/\+/g, ' ');
+          var name = tokens[0].replace(/\+/g, ' ');
         var url = Kiwi.compose(tokens[1], interpolationData);
         html += '<div class=steplink><a href=//' + url + ' target=_blank>' + name + '</a></div>';
         }
       }
-  }
-
-  html += '</div>';
-  return html;
     }
+
+    html += '</div>';
+    return html;
+  }
 
   return view;
 

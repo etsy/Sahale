@@ -94,6 +94,20 @@ exports.step_group = function(req, res) {
   );
 }
 
+exports.agg_by_flow = function(req, res) {
+  sqlutil.getAggByFlowId(
+      req.param('flow_id'),
+      function(data) { res.json(data); }
+  );
+}
+
+exports.agg_by_epoch_start_end = function(req, res) {
+  sqlutil.getAggByEpochMsStartEnd(
+      req.param('flow_id'),
+      function(data) { res.json(data); }
+  );
+}
+
 exports.insert_or_update_flow = function(req, res) {
   sqlutil.upsertFlow(req.param('flow_id'), req.body);
   res.end();
@@ -108,3 +122,9 @@ exports.insert_or_update_edge = function(req, res) {
   sqlutil.upsertEdges(req.param('flow_id'), req.body);
   res.end();
 }
+
+exports.insert_flow_agg = function(req, res) {
+   sqlutil.insertAggregation(req.body);
+   res.end();
+}
+

@@ -20,8 +20,25 @@ block content
         div.chartbox#hdfswrites
           img(class='waitforrender', src='/images/pleasewait.gif', alt='Loading, please wait...')
           svg.rrchart
-        h4 Cluster Disk Used
+        h4 Cluster Disk (Temp) Used
         div.chartbox#diskwrites
+          img(class='waitforrender', src='/images/pleasewait.gif', alt='Loading, please wait...')
+          svg.rrchart
+
+        h4 HDFS Total Reads
+        div.chartbox#hdfsread
+          img(class='waitforrender', src='/images/pleasewait.gif', alt='Loading, please wait...')
+          svg.rrchart
+        h4 Cluster Disk Total Reads
+        div.chartbox#diskread
+          img(class='waitforrender', src='/images/pleasewait.gif', alt='Loading, please wait...')
+          svg.rrchart
+        h4 Total VCore-Seconds
+        div.chartbox#vcoresecs
+          img(class='waitforrender', src='/images/pleasewait.gif', alt='Loading, please wait...')
+          svg.rrchart
+        h4 CPU Total Seconds
+        div.chartbox#cpusecs
           img(class='waitforrender', src='/images/pleasewait.gif', alt='Loading, please wait...')
           svg.rrchart
       div.panel.panel-default

@@ -43,6 +43,7 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
 
   /////////////////// private utility methods //////////////////////
   function addAllEdges(graph_data, step_map, rows) {
+    //console.log(JSON.stringify(step_map)); // DEBUG
     rows.forEach(function(item, ndx, arr) {
       var step = step_map[item.src_stage];
       graph_data.addEdge(
@@ -50,8 +51,8 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
         item.src_stage.toString(),
         item.dest_stage.toString(),
         {
-          label: '<span style="font-size:14px;color:' + ChartUtil.getColorForNumBytes(step.hdfsbyteswritten) + '">' +
-            ViewUtil.prettyPrintBytes(step.hdfsbyteswritten) + '</span>'
+          label: '<span style="font-size:14px;color:' + ChartUtil.getColorForNumBytes(step.hdfs_bytes_written) + '">' +
+            ViewUtil.prettyPrintBytes(step.hdfs_bytes_written) + '</span>'
         }
       );
     });
@@ -72,12 +73,12 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
 
   function addElephant(item) {
     return '<img width="40px" height="40px" ' +
-      'title="MapReduce Job (Step ' + item.stepnumber + ' of Flow)" ' +
+      'title="MapReduce Job (Step ' + item.step_number + ' of Flow)" ' +
       'style="width:40px;height:40px;background-color:' +
       ViewUtil.getColorByStepStatus(item) + '" ' +
       'src="' + getImageByStepStatus(item) + '" ' +
       'class="img-rounded" ' +
-      'id="step-image-' + item.stepnumber + '" />';
+      'id="step-image-' + item.step_number + '" />';
   }
 
   function getImageByStepStatus(item) {
@@ -125,7 +126,7 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
   }
 
   function registerHover(step) {
-    $("#step-image-" + step.stepnumber).hover(
+    $("#step-image-" + step.step_number).hover(
       function(e) {
         var state = StateUtil.getFlowState(flow_id);
         if (state.curid !== 0) {
@@ -134,7 +135,7 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
         }
         $("#no-step").hide();
 
-        StateUtil.updateCurrentId(step.stepnumber);
+        StateUtil.updateCurrentId(step.step_number);
         $(this).addClass("hi-lite").focus();
         $("#mrdetail-title").html(ViewUtil.renderStepStatus(step)).show().focus();
         $("#step-" + StateUtil.getFlowState(flow_id).curid).fadeIn(200);
@@ -143,7 +144,7 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
         e.stopPropagation();
       }
     );
-    $("#step-" + step.stepnumber).hide();
+    $("#step-" + step.step_number).hide();
   }
 
   function zoomFunction() {

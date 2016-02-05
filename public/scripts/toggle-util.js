@@ -9,31 +9,30 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
   toggle.maxValues   = [];
   toggle.titles      = [];
 
-  toggle.renderCharts = function(step_map) {
-    buildDatasets(step_map);
+  toggle.renderCharts = function(sm) {
+    step_map = sm
+    buildDatasets();
     renderAndRegisterEvent();
   }
 
-  function buildDatasets(sm) {
-    step_map = sm;
-
+  function buildDatasets() {
     assignData(
-      [numTasksMapFunc, hdfsReadsMapFunc, clusterReadsMapFunc, localityMapFunc, ioSecsMapFunc, vcoreSecsMapFunc],
+      [numTasksMapFunc, hdfsReadsMapFunc, clusterReadsMapFunc, localityMapFunc, ioSecsMapFunc, vcoreSecsMapFunc, cpuSecsFunc],
       "mapData"
     );
 
     assignData(
-      [numTasksReduceFunc, hdfsWritesReduceFunc, clusterWritesReduceFunc, localityReduceFunc, ioSecsReduceFunc, vcoreSecsReduceFunc],
+      [numTasksReduceFunc, hdfsWritesReduceFunc, clusterWritesReduceFunc, localityReduceFunc, ioSecsReduceFunc, vcoreSecsReduceFunc, gcSecsFunc],
       "reduceData"
     );
 
     assignData(
-      [numTasksTipFunc, hdfsTipFunc, clusterTipFunc, localityTipFunc, ioSecsTipFunc, vcoreSecsTipFunc],
+      [numTasksTipFunc, hdfsTipFunc, clusterTipFunc, localityTipFunc, ioSecsTipFunc, vcoreSecsTipFunc, cpuGcTipFunc],
       "tipData"
     );
 
     assignData(
-      [numTasksMaxValueFunc, hdfsMaxValueFunc, clusterMaxValueFunc, localityMaxValueFunc, ioSecsMaxValueFunc, vcoreSecsMaxValueFunc],
+      [numTasksMaxValueFunc, hdfsMaxValueFunc, clusterMaxValueFunc, localityMaxValueFunc, ioSecsMaxValueFunc, vcoreSecsMaxValueFunc, cpuGcMaxValueFunc],
       "maxValues"
     );
 
@@ -43,16 +42,17 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
       "GB Read/Written (Cluster Disk) per Step",
       "% of Node and Rack Locality per Step",
       "Cascading Total R/W Durations (all Tasks) per Step",
-      "Vcore-Seconds per Step"	
+      "Vcore-Seconds per Step",
+      "Total CPU and GC Seconds per Step"
     ]);
   }
 
   function renderAndRegisterEvent() {
-      var ndx = parseInt(StateUtil.getChartState());
+    var ndx = StateUtil.getChartState();
     var actitle = $("#actitle");
-      actitle.text(toggle.titles[ndx]);
-      actitle.append('<button class="glyphicon glyphicon-arrow-right" style="float:right" id="actoggle_right"></button>');
-      actitle.append('<button class="glyphicon glyphicon-arrow-left" style="float:right" id="actoggle_left"></button>');
+    actitle.text(toggle.titles[ndx]);
+    actitle.append('<button class="glyphicon glyphicon-arrow-right" style="float:right" id="actoggle_right"></button>');
+    actitle.append('<button class="glyphicon glyphicon-arrow-left" style="float:right" id="actoggle_left"></button>');
 
     $("#actoggle_right").on("click", function(evt) {
       StateUtil.incrementChartState(toggle.mapData.length);
@@ -95,7 +95,7 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
       var step = step_map[key];
       arr.push({
         x: key,
-        y: step.maptasks
+        y: step.map_tasks
       });
     }
     return arr;
@@ -107,7 +107,7 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
       var step = step_map[key];
       arr.push({
         x: key,
-        y: step.reducetasks
+        y: step.reduce_tasks
       });
     }
     return arr;
@@ -117,8 +117,8 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     var arr = [];
     for (key in step_map) {
       var step = step_map[key];
-      arr.push('<span style="color:Pink">' + step.maptasks + '</span> Map Tasks<br>' +
-        '<span style="color:LightBlue">' + step.reducetasks + '</span> Reduce Tasks<p>' +
+      arr.push('<span style="color:Pink">' + step.map_tasks + '</span> Map Tasks<br>' +
+        '<span style="color:LightBlue">' + step.reduce_tasks + '</span> Reduce Tasks<p>' +
         ' used in Job Step ' + key
       );
     }
@@ -129,10 +129,10 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     var max = 0;
     for (key in step_map) {
       var step = step_map[key];
-      if (parseInt(step.maptasks) > parseInt(max)) { max = step.maptasks; }
-      if (parseInt(step.reducetasks) > parseInt(max)) { max = step.reducetasks; }
+      if (step.map_tasks > max) { max = step.map_tasks; }
+      if (step.reduce_tasks > max) { max = step.reduce_tasks; }
     }
-    return parseInt(max);
+    return max;
   }
 
   //////// hdfs* functions  ////////
@@ -142,7 +142,7 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
       var step = step_map[key];
       arr.push({
         x: key,
-        y: Math.round(step.hdfsbytesread / GIGABYTES)
+        y: Math.round(step.hdfs_bytes_read / GIGABYTES)
       });
     }
     return arr;
@@ -154,7 +154,7 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
       var step = step_map[key];
       arr.push({
         x: key,
-        y: Math.round(step.hdfsbyteswritten / GIGABYTES)
+        y: Math.round(step.hdfs_bytes_written / GIGABYTES)
       });
     }
     return arr;
@@ -164,8 +164,8 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     var arr = [];
     for (key in step_map) {
       var step = step_map[key];
-      arr.push('<span style="color:Pink">' + ViewUtil.prettyPrintBytes(step.hdfsbytesread) + '</span> Read<br>' +
-        '<span style="color:LightBlue">' + ViewUtil.prettyPrintBytes(step.hdfsbyteswritten) + '</span> Written<p>' +
+      arr.push('<span style="color:Pink">' + ViewUtil.prettyPrintBytes(step.hdfs_bytes_read) + '</span> Read<br>' +
+        '<span style="color:LightBlue">' + ViewUtil.prettyPrintBytes(step.hdfs_bytes_written) + '</span> Written<p>' +
         ' in Job Step ' + key
       );
     }
@@ -176,8 +176,8 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     var max = 0;
     for (key in step_map) {
       var step = step_map[key];
-      if (parseInt(step.hdfsbytesread) > parseInt(max)) { max = step.hdfsbytesread; }
-      if (parseInt(step.hdfsbyteswritten) > parseInt(max)) { max = step.hdfsbyteswritten; }
+      if (step.hdfs_bytes_read > max) { max = step.hdfs_bytes_read; }
+      if (step.hdfs_bytes_written > max) { max = step.hdfs_bytes_written; }
     }
     return parseInt(max / GIGABYTES);
   }
@@ -189,7 +189,7 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
       var step = step_map[key];
       arr.push({
         x: key,
-        y: Math.round(step.filebytesread / GIGABYTES)
+        y: Math.round(step.file_bytes_read / GIGABYTES)
       });
     }
     return arr;
@@ -201,7 +201,7 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
       var step = step_map[key];
       arr.push({
         x: key,
-        y: Math.round(step.filebyteswritten / GIGABYTES)
+        y: Math.round(step.file_bytes_written / GIGABYTES)
       });
     }
     return arr;
@@ -211,8 +211,8 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     var arr = [];
     for (key in step_map) {
       var step = step_map[key];
-      arr.push('<span style="color:Pink">' + ViewUtil.prettyPrintBytes(step.filebytesread) + '</span> Read<br>' +
-        '<span style="color:LightBlue">' + ViewUtil.prettyPrintBytes(step.filebyteswritten) + '</span> Written<p>' +
+      arr.push('<span style="color:Pink">' + ViewUtil.prettyPrintBytes(step.file_bytes_read) + '</span> Read<br>' +
+        '<span style="color:LightBlue">' + ViewUtil.prettyPrintBytes(step.file_bytes_written) + '</span> Written<p>' +
         ' in Job Step ' + key
       );
     }
@@ -223,8 +223,8 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     var max = 0;
     for (key in step_map) {
       var step = step_map[key];
-      if (parseInt(step.filebytesread) > parseInt(max)) { max = step.filebytesread; }
-      if (parseInt(step.filebyteswritten) > parseInt(max)) { max = step.filebyteswritten; }
+      if (step.file_bytes_read > max) { max = step.file_bytes_read; }
+      if (step.file_bytes_written > max) { max = step.file_bytes_written; }
     }
     return parseInt(max / GIGABYTES);
   }
@@ -234,11 +234,8 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     var arr = [];
     for (key in step_map) {
       var step = step_map[key];
-      var value = step.maptasks > 0 ? Math.round(100 * (step.datalocalmaptasks / step.maptasks), 4) : 0;
-      arr.push({
-        x: key,
-        y: value
-      });
+      var value = step.map_tasks > 0 ? Math.round(100 * (step.data_local_map_tasks / step.map_tasks), 4) : 0;
+      arr.push({x: key, y: value});
     }
     return arr;
   }
@@ -247,11 +244,8 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     var arr = [];
     for (key in step_map) {
       var step = step_map[key];
-      var value = step.maptasks > 0 ? Math.round(100 * (step.racklocalmaptasks / step.maptasks), 4) : 0;
-      arr.push({
-        x: key,
-        y: value
-      });
+      var value = step.map_tasks > 0 ? Math.round(100 * (step.rack_local_map_tasks / step.map_tasks), 4) : 0;
+      arr.push({x: key, y: value});
     }
     return arr;
   }
@@ -260,8 +254,8 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     var arr = [];
     for (key in step_map) {
       var step = step_map[key];
-      var local = step.maptasks > 0 ? Math.round(100 * (step.datalocalmaptasks / step.maptasks), 4) : "?";
-      var rack = step.maptasks > 0 ? Math.round(100 * (step.racklocalmaptasks / step.maptasks), 4) : "?";
+      var local = step.map_tasks > 0 ? Math.round(100 * (step.data_local_map_tasks / step.map_tasks), 4) : "?";
+      var rack = step.map_tasks > 0 ? Math.round(100 * (step.rack_local_map_tasks / step.map_tasks), 4) : "?";
       arr.push('<span style="color:Pink">' + local + '%</span> Node Local Mappers<br>' +
         '<span style="color:LightBlue">' + rack + '%</span> Rack Local Mappers<p>' +
         ' in Job Step ' + key
@@ -276,56 +270,49 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
 
     //////// vcoreSecs* functions  ////////
     function vcoreSecsMapFunc(step_map) {
-	var arr = [];
-	for (key in step_map) {
-	    var step = step_map[key];
-	    var value = step.map_vcore_secs;
-	    arr.push({
-		x: key,
-		y: value
-	    });
-	}
-	return arr;
+      var arr = [];
+      for (key in step_map) {
+          var step = step_map[key];
+          var value = step.map_vcore_secs;
+          arr.push({x: key, y: value});
+      }
+      return arr;
     }
 
     function vcoreSecsReduceFunc(step_map) {
-	var arr = [];
-	for (key in step_map) {
-	    var step = step_map[key];
-	    var value = step.reduce_vcore_secs;
-	    arr.push({
-		x: key,
-		y: value
-	    });
-	}
-	return arr;
+      var arr = [];
+      for (key in step_map) {
+        var step = step_map[key];
+        var value = step.reduce_vcore_secs;
+        arr.push({x: key, y: value});
+      }
+      return arr;
     }
 
     function vcoreSecsTipFunc(step_map) {
-	var arr = [];
-	for (key in step_map) {
-	    var step  = step_map[key];
-	    var map = step.map_vcore_secs;
-	    var reduce = step.reduce_vcore_secs;
-	    arr.push('<span style="color:Pink">' + map + ' Vcore-Seconds</span> Map Tasks<br>' +
-		     '<span style="color:LightBlue">' + reduce + ' Vcore-Seconds</span> Reduce Tasks<p>' +
-		     ' in Job Step ' + key
-		    );
-	}
-	return arr;
+      var arr = [];
+      for (key in step_map) {
+        var step  = step_map[key];
+        var map = step.map_vcore_secs;
+        var reduce = step.reduce_vcore_secs;
+        arr.push('<span style="color:Pink">' + map + ' Vcore-Seconds</span> Map Tasks<br>' +
+           '<span style="color:LightBlue">' + reduce + ' Vcore-Seconds</span> Reduce Tasks<p>' +
+           ' in Job Step ' + key);
+      }
+      return arr;
     }
 
-    function vcoreSecsMaxValueFunc(step_map) {
-	var max = 0;
-	for (key in step_map) {
-	    var step = step_map[key];
-	    var map = step.map_vcore_secs;
-	    var reduce = step.reduce_vcore_secs;
-	    if (parseInt(map) > parseInt(max)) { max = map; }
-	    if (parseInt(reduce) > parseInt(max)) { max = reduce; }
-	}
-	return max;
+  function vcoreSecsMaxValueFunc(step_map) {
+    var max = 0;
+    for (key in step_map) {
+        var step = step_map[key];
+        var map = step.map_vcore_secs;
+        var reduce = step.reduce_vcore_secs;
+        if (map > max) { max = map; }
+        if (reduce > max) { max = reduce; }
     }
+    return max;
+  }
 
 
   //////// ioSecs* functions  ////////
@@ -333,11 +320,8 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     var arr = [];
     for (key in step_map) {
       var step = step_map[key];
-      var value = step.ioreadmillis > 0 ? Math.round(step.ioreadmillis / 1000) : 0;
-      arr.push({
-        x: key,
-        y: value
-      });
+      var value = step.io_read_millis > 0 ? Math.round(step.io_read_millis / 1000) : 0;
+      arr.push({x: key, y: value});
     }
     return arr;
   }
@@ -346,11 +330,8 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     var arr = [];
     for (key in step_map) {
       var step = step_map[key];
-      var value = step.iowritemillis > 0 ? Math.round(step.iowritemillis / 1000) : 0;
-      arr.push({
-        x: key,
-        y: value
-      });
+      var value = step.io_write_millis > 0 ? Math.round(step.io_write_millis / 1000) : 0;
+      arr.push({x: key, y: value});
     }
     return arr;
   }
@@ -359,8 +340,8 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     var arr = [];
     for (key in step_map) {
       var step  = step_map[key];
-      var read  = step.ioreadmillis > 0 ? Math.round(step.ioreadmillis / 1000) : 0.0;
-      var write = step.iowritemillis > 0 ? Math.round(step.iowritemillis / 1000) : 0.0;
+      var read  = step.io_read_millis > 0 ? Math.round(step.io_read_millis / 1000) : 0.0;
+      var write = step.io_write_millis > 0 ? Math.round(step.io_write_millis / 1000) : 0.0;
       arr.push('<span style="color:Pink">' + read + ' secs</span> IO Read Duration<br>' +
         '<span style="color:LightBlue">' + write + ' secs</span> IO Write Duration<p>' +
         ' in Job Step ' + key
@@ -373,12 +354,55 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     var max = 0;
     for (key in step_map) {
       var step = step_map[key];
-      if (parseInt(step.ioreadmillis) > parseInt(max)) { max = step.ioreadmillis; }
-      if (parseInt(step.iowritemillis) > parseInt(max)) { max = step.iowritemillis; }
+      if (step.io_read_millis > max) { max = step.io_read_millis; }
+      if (step.io_write_millis > max) { max = step.io_write_millis; }
     }
     return Math.round(max / 1000);
   }
 
+  //// CPU & GC funcs ////
+  function cpuSecsFunc(step_map) {
+    var arr = [];
+    for (key in step_map) {
+      var step = step_map[key];
+      var value = step.cpu_millis > 0 ? Math.round(step.cpu_millis / 1000) : 0;
+      arr.push({x: key, y: value});
+    }
+    return arr;
+  }
+
+  function gcSecsFunc(step_map) {
+    var arr = [];
+    for (key in step_map) {
+      var step = step_map[key];
+      var value = step.gc_millis > 0 ? Math.round(step.gc_millis / 1000) : 0;
+      arr.push({x: key, y: value});
+    }
+    return arr;
+  }
+
+  function cpuGcTipFunc(step_map) {
+    var arr = [];
+    for (key in step_map) {
+      var step = step_map[key]; 
+      var cpu_secs = step.cpu_millis > 0 ? Math.round(step.cpu_millis / 1000.0, 2) : 0.0;
+      var gc_secs = step.gc_millis > 0 ? Math.round(step.gc_millis / 1000.0, 2) : 0.0;
+      arr.push('<span style="color:Pink">' + cpu_secs + ' secs</span> CPU time<br>' +
+        '<span style="color:LightBlue">' + gc_secs + ' secs</span> GC time<p>' +
+        ' in Job Step ' + key);
+    }
+    return arr;
+  }
+
+  function cpuGcMaxValueFunc(step_map) {
+    var max = 0;
+    for (key in step_map) {
+      var step = step_map[key];
+      if (step.cpu_millis > max) { max = step.cpu_millis; }
+      if (step.gc_millis > max) { max = step.gc_millis; }
+    }
+    return Math.round(max / 1000);
+  }
 
   return toggle;
 

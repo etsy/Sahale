@@ -43,7 +43,7 @@ var StackedBarUtil = (function($, StateUtil) {
 
   function renderJobArgs(flow) {
     var html = '<div class="logbox" style="overflow-y:auto;height:110px;">';
-    var args = flow['scalding.job.args'];
+    var args = flow['config_props']['scalding.job.args'];
     if (args !== undefined) {
       for (var i = 0; i < args.length; ++i) {
         html += '<div style="text-align:center">' + args[i] + '</div>';
@@ -104,13 +104,13 @@ var StackedBarUtil = (function($, StateUtil) {
       var barWidth = width_map[key + "-scaled"];
       var tip = formatTipMessage(step);
       var color = setColorCycle(step);
-      html += '<span id="stack-step-' + step.stepnumber + '" class="time-block ' +
+      html += '<span id="stack-step-' + step.step_number + '" class="time-block ' +
         color + '" style="width:' + barWidth + '%;"></span>';
       html += '<script>';
-      html += '  $("#stack-step-' + step.stepnumber + '")';
+      html += '  $("#stack-step-' + step.step_number + '")';
       html += '    .tipsy({ title: function() { return "' + tip + '" } })';
       html += '    .on("mouseover", function(e) { $("#step-image-' +
-        step.stepnumber + '").trigger("mouseover"); return true; });';
+        step.step_number + '").trigger("mouseover"); return true; });';
       html += '</script>';
     }
 
@@ -118,10 +118,10 @@ var StackedBarUtil = (function($, StateUtil) {
   }
 
   function setColorCycle(step) {
-    var variant = (step.stepnumber % 3) + 1;
+    var variant = (step.step_number % 3) + 1;
     var color = "grey";
 
-    switch(step.stepstatus) {
+    switch(step.step_status) {
       case "RUNNING":
         color = "orange";
         break;
@@ -139,11 +139,11 @@ var StackedBarUtil = (function($, StateUtil) {
   }
 
   function formatTipMessage(step) {
-    if (["PENDING", "SUBMITTED", "STARTED", "NOT_LAUNCHED"].indexOf(step.stepstatus) !== -1) {
-      return 'Step ' + step.stepnumber + ': Unknown';
+    if (["PENDING", "SUBMITTED", "STARTED", "NOT_LAUNCHED"].indexOf(step.step_status) !== -1) {
+      return 'Step ' + step.step_number + ': Unknown';
     }
 
-    return 'Step ' + step.stepnumber + ': ' + step.steprunningtime + ' secs';
+    return 'Step ' + step.step_number + ': ' + step.step_running_time + ' secs';
   }
 
   function generateWidthMap(step_map) {
@@ -169,10 +169,10 @@ var StackedBarUtil = (function($, StateUtil) {
   }
 
   function getBarWidth(step) {
-    if (step.stepstatus === "RUNNING") {
+    if (step.step_status === "RUNNING") {
       return 2;
     } else {
-      return step.steprunningtime;
+      return step.step_running_time;
     }
   }
 

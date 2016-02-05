@@ -3,8 +3,8 @@
  */
 var ChartUtil = (function($, d3, ViewUtil) {
 
-  // quick hack to control the label text length for bar labels
   var chartutil = {},
+      // quick hack to control the label text length for bar labels
       months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
   ;
 
@@ -79,17 +79,8 @@ var ChartUtil = (function($, d3, ViewUtil) {
         html: true,
         title: function() { return this.__data__.tip + "<p style=\"color:Yellow;font-size:8px;\">Click Bar For Details</p>"; }
       });
-  }
 
-  chartutil.aggregateStepData = function(agg, steps) {
-    steps.forEach(function(step, ndx, arr) {
-      var flow = agg[step['flow_id']];
-      flow.maptasks = parseInt(step.maptasks, 10) + parseInt(flow.maptasks, 10);
-      flow.reducetasks = parseInt(step.reducetasks, 10) + parseInt(flow.reducetasks, 10);
-      flow.hdfswrites = parseInt(step.hdfsbyteswritten, 10) + parseInt(flow.hdfswrites, 10);
-      flow.diskwrites = parseInt(step.filebyteswritten, 10) + parseInt(flow.diskwrites, 10);
-    });
-    return agg;
+      $(element_id + ' .waitforrender').remove();
   }
 
   chartutil.getRunningTimeData = function(flows) {
@@ -112,12 +103,12 @@ var ChartUtil = (function($, d3, ViewUtil) {
     return list;
   }
 
-  chartutil.getMapReduceSlotData = function(flows, rollup) {
+  chartutil.getMapReduceSlotData = function(flows) {
     var list = [];
     for (key in flows) {
       var flow = flows[key];
-      var m = rollup[flow['flow_id']].maptasks;
-      var r = rollup[flow['flow_id']].reducetasks;
+      var m = flow.aggregated.flow_total_map_tasks;
+      var r = flow.aggregated.flow_total_reduce_tasks;
       var slots = m + r;
       if (slots < 1) { slots = 1; }
       list.push({
@@ -132,11 +123,11 @@ var ChartUtil = (function($, d3, ViewUtil) {
     return list;
   }
 
-  chartutil.getHdfsWriteData = function(flows, rollup) {
+  chartutil.getHdfsWriteData = function(flows) {
     var list = [];
     for (key in flows) {
       var flow = flows[key];
-      var raw = rollup[flow['flow_id']].hdfswrites;
+      var raw = flow.aggregated.flow_hdfs_bytes_written;
       var val = Math.round(raw / (1024 * 1024 * 1024), 3);
       if (val < 1) { val = 1; }
       list.push({
@@ -150,11 +141,11 @@ var ChartUtil = (function($, d3, ViewUtil) {
     return list;
   }
 
-  chartutil.getDiskWriteData = function(flows, rollup) {
+  chartutil.getDiskWriteData = function(flows) {
     var list = [];
     for (key in flows) {
       var flow = flows[key];
-      var raw = rollup[flow['flow_id']].diskwrites;
+      var raw = flow.aggregated.flow_file_bytes_written;
       var val = Math.round(raw / (1024 * 1024 * 1024), 3);
       if (val < 1) { val = 1; }
       list.push({
@@ -162,6 +153,83 @@ var ChartUtil = (function($, d3, ViewUtil) {
         value: val,
         tip: "Cluster Disk Writes: " + ViewUtil.prettyPrintBytes(raw),
         barcolor: this.getColorForNumBytes(raw),
+        flowid: flow['flow_id']
+      })
+    }
+    return list;
+  }
+
+  chartutil.getHdfsReadData = function(flows) {
+    var list = [];
+    for (key in flows) {
+      var flow = flows[key];
+      var raw = flow.aggregated.flow_hdfs_bytes_read;
+      var val = Math.round(raw / (1024 * 1024 * 1024), 3);
+      if (val < 1) { val = 1; }
+      list.push({
+        name: formatEpochMs(flow['create_date'] * 1000),
+        value: val,
+        tip: "Total HDFS Reads: " + ViewUtil.prettyPrintBytes(raw),
+        barcolor: this.getColorForNumBytes(raw),
+        flowid: flow['flow_id']
+      })
+    }
+    return list;
+  }
+
+  chartutil.getDiskReadData = function(flows) {
+    var list = [];
+    for (key in flows) {
+      var flow = flows[key];
+      var raw = flow.aggregated.flow_file_bytes_read;
+      var val = Math.round(raw / (1024 * 1024 * 1024), 3);
+      if (val < 1) { val = 1; }
+      list.push({
+        name: formatEpochMs(flow['create_date'] * 1000),
+        value: val,
+        tip: "Cluster Disk Reads: " + ViewUtil.prettyPrintBytes(raw),
+        barcolor: this.getColorForNumBytes(raw),
+        flowid: flow['flow_id']
+      })
+    }
+    return list;
+  }
+
+  chartutil.getCpuSecs = function(flows) {
+    var list = [];
+    for (key in flows) {
+      var flow = flows[key];
+      var raw = flow.aggregated.flow_cpu_millis;
+      var val = Math.round(raw / 1000, 3);
+      if (val < 1) { val = 1; }
+      list.push({
+        name: formatEpochMs(flow['create_date'] * 1000),
+        value: val,
+        tip: 'Flow CPU time<br>all tasks/cores:<br>' +
+          ViewUtil.prettyFlowTimeFromMillis(raw) + '<br>' +
+          '(' + val + ' secs)',
+        barcolor: ViewUtil.getFlowStatusColor(flow['flow_status']),
+        flowid: flow['flow_id']
+      })
+    }
+    return list;
+  }
+
+  chartutil.getVcoreSecs = function(flows) {
+    var list = [];
+    for (key in flows) {
+      var flow = flows[key];
+      var raw = flow.aggregated.flow_map_vcore_millis +
+        flow.aggregated.flow_reduce_vcore_millis;
+      var val = Math.round(raw / 1000, 3);
+      if (val < 1) { val = 1; }
+      list.push({
+        name: formatEpochMs(flow['create_date'] * 1000),
+        value: val,
+        tip: 'Flow VCore time<br>all tasks/cores:<br>' +
+          ViewUtil.prettyFlowTimeFromMillis(raw) + '<br>' +
+          '(' + val + ' secs)',
+        barcolor: ViewUtil.getFlowStatusColor(flow['flow_status']),
         flowid: flow['flow_id']
       })
     }

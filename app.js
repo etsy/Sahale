@@ -49,14 +49,19 @@ app.get('/edges/:flow_id', routes.edges);
 app.get('/flow_history/:flow_name', routes.flow_history);
 app.post('/step_group', routes.step_group); // read only but uses POST due to param size
 app.get('/sahale_config_data', routes.sahale_config_data);
+app.get('/agg/flow/:flow_id', routes.agg_by_flow);
+app.get('/agg/time/:start/:end', routes.agg_by_epoch_start_end);
 
 // JSON API routes & handlers for POSTed data from running Cascading jobs
 app.post('/flow/update/:flow_id', routes.insert_or_update_flow);
 app.post('/steps/update/:flow_id', routes.insert_or_update_steps);
 app.post('/edges/update/:flow_id', routes.insert_or_update_edge);
+app.post('/agg/update/:flow_id', routes.insert_flow_agg);
 
-process.title = "sahale" // for output in "ps"
+// set the running binary's console display name
+process.title = "sahale"
+
 http.createServer(app).listen(app.get('port'), function() {
-  console.log("Cascading Job Visualizer has started successfully.");
+  console.log("Sahale has started successfully.");
   console.log("Express server listening on port " + app.get('port'));
 });

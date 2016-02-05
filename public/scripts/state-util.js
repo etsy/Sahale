@@ -62,20 +62,20 @@ var StateUtil = (function() {
   // just track clicks for use in toggle-utils
   // This will keep chart_state in the range 0 to max-1
   state.incrementChartState = function(max) {
-      sahale_state.chart_state += 1;
-      if (sahale_state.chart_state == max) {
-	  sahale_state.chart_state = 0;
-      }
+    sahale_state.chart_state += 1;
+    if (sahale_state.chart_state == max) {
+      sahale_state.chart_state = 0;
+    }
   }
 
   // just track clicks for use in toggle-utils
   // This will keep chart_state in the range 0 to max-1
   state.decrementChartState = function(max) {
-      if (sahale_state.chart_state == 0) {
-	  sahale_state.chart_state = max - 1;
-      } else {
-	  sahale_state.chart_state -= 1;
-      }
+    if (sahale_state.chart_state == 0) {
+      sahale_state.chart_state = max - 1;
+    } else {
+      sahale_state.chart_state -= 1;
+    }
   }
 
   state.getChartState = function() {
@@ -85,23 +85,23 @@ var StateUtil = (function() {
   state.incrementRightToggleState = function(max) {
     sahale_state.right_toggle_state += 1;
     if (sahale_state.right_toggle_state == max) {
-        sahale_state.right_toggle_state = 0;
+      sahale_state.right_toggle_state = 0;
     }
   }
 
   state.decrementRightToggleState = function(max) {
     if (sahale_state.right_toggle_state == 0) {
-        sahale_state.right_toggle_state = max - 1;
+      sahale_state.right_toggle_state = max - 1;
     } else {
-        sahale_state.right_toggle_state -= 1;
+      sahale_state.right_toggle_state -= 1;
     }
   }
 
   state.getRightToggleState = function() {
     if (sahale_state.right_toggle_state === null) {
-        sahale_state.right_toggle_state = 0;
+      sahale_state.right_toggle_state = 0;
     }
-	  return sahale_state.right_toggle_state;
+    return sahale_state.right_toggle_state;
   }
 
   // called from graph-util just before setFlowState is called on page refresh
@@ -113,4 +113,5 @@ var StateUtil = (function() {
   }
 
   return state;
+
 }());
