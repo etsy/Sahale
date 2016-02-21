@@ -14,7 +14,13 @@ Step Two: [Install Node Package Manager](https://www.npmjs.com), `cd` into Sahal
 
 Step Three: [Install Maven3](http://maven.apache.org). Update the `pom.xml` file with the correct Hadoop and Scala/Scalding versions for your Hadoop installation. Update `src/main/resources/flow-tracker.properties` with the hostname you plan to run the NodeJS server on. Keep the port number here in sync with the NodeJS port (see Step Two.) Execute `mvn install`.
 
-*Note:* Sahale and FlowTracker have moved from 0.5 to 0.6 versions (both tagged) to mark incompatible changes between older and newer versions of Scala/Scalding. If your org still uses older versions of Scala/Scalding, please see [this](https://github.com/etsy/Sahale/commit/238794f33ba17326a156c396f3dc1dede2b0c743) commit. All other changes and feature upgrades in the 0.6 line will work as expected with this commit reverted and your own choice of versions applied to the `pom.xml`.
+Upgrading
+===
+Sahale server (NodeJS app) and FlowTracker (Scala client jar) must always maintain parity between clients and server versions. An upgrade deployment must coordinate the distribution of the new client jar and restart of the updated server. In rare cases (tagged in the Git repo) Sahale will make breaking changes that will require addition steps. The two notable cases are listed below:
+
+*Upgrade from 0.7 to 0.8*: The data model has changed. Please recreate your backing MySQL tables using the script in `src/main/sql` before using the new client jar or restarting the NodeJS app. The old tables and data will remain, the new tables will be suffixed with `_new` unless you opt to alias them. No additional change is required.
+ 
+*Upgrade from 0.5 to 0.6*: Mark incompatible changes between older and newer versions of Scala/Scalding. If your org still uses older versions of Scala/Scalding, please see [this](https://github.com/etsy/Sahale/commit/238794f33ba17326a156c396f3dc1dede2b0c743) commit. All other changes and feature upgrades in the 0.6 line will work as expected with this commit reverted and your own choice of versions applied to the `pom.xml`.
 
 User Workflow
 ===
