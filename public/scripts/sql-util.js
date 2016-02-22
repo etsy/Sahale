@@ -145,7 +145,7 @@ var emptyCallback = function(x) { };
 
 exports.upsertFlow = function(flow_id, data) {
   var epoch_now = getNowEpoch();
-  inspect("[FLOW UPSERT]", data); // DEBUG
+  //inspect("[FLOW UPSERT]", data); // DEBUG
   var flow_name = data['flow_name'];
   var flow_status = data['flow_status'];
   // don't record old-data-model updates (shim for transition to FT 0.8.x)
@@ -201,7 +201,7 @@ exports.upsertEdges = function(flow_id, data) {
 }
 
 exports.insertAggregation = function(data) {
-  inspect("[AGG UPSERT]", data); // DEBUG
+  //inspect("[AGG UPSERT]", data); // DEBUG
   var json = JSON.stringify(data); // re-encode for storage
   var flow_id = data.flow_id;
   var epoch_ms = data.epoch_ms;
