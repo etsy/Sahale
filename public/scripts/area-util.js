@@ -8,8 +8,8 @@ var AreaChart = (function($, d3) {
     margin = 22,
     xFn = null,
     yFn = null,
-    mapData = [],
-    reduceData = [],
+    redData = [],
+    blueData = [],
     tipData = [],
     svg = null,
     maxValue = 0,
@@ -18,11 +18,11 @@ var AreaChart = (function($, d3) {
   ;
 
   area.renderAreaChart = function(md, rd, td, mv) {
-    mapData = md;
-    reduceData = rd;
+    redData = md;
+    blueData = rd;
     tipData = td;
     maxValue = mv;
-    dataPoints = mapData.length;
+    dataPoints = redData.length;
     width =  spacing * (dataPoints + 2);
 
     xFn = d3.scale.ordinal()
@@ -52,8 +52,8 @@ var AreaChart = (function($, d3) {
 
     renderAxes();
 
-    render(mapData, "mapLine", "mapArea", "mapDot");
-    render(reduceData, "reduceLine", "reduceArea", "reduceDot");
+    render(redData, "mapLine", "mapArea", "mapDot");
+    render(blueData, "reduceLine", "reduceArea", "reduceDot");
   }
 
 

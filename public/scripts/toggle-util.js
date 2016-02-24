@@ -3,8 +3,8 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
   var toggle = {};
   var GIGABYTES = parseInt(1024 * 1024 * 1024);
 
-  toggle.mapData     = [];
-  toggle.reduceData  = [];
+  toggle.redData     = [];
+  toggle.blueData  = [];
   toggle.tipData     = [];
   toggle.maxValues   = [];
   toggle.titles      = [];
@@ -18,12 +18,12 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
   function buildDatasets() {
     assignData(
       [numTasksMapFunc, hdfsReadsMapFunc, clusterReadsMapFunc, localityMapFunc, ioSecsMapFunc, vcoreSecsMapFunc, cpuSecsFunc],
-      "mapData"
+      "redData"
     );
 
     assignData(
       [numTasksReduceFunc, hdfsWritesReduceFunc, clusterWritesReduceFunc, localityReduceFunc, ioSecsReduceFunc, vcoreSecsReduceFunc, gcSecsFunc],
-      "reduceData"
+      "blueData"
     );
 
     assignData(
@@ -55,18 +55,18 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     actitle.append('<button class="glyphicon glyphicon-arrow-left" style="float:right" id="actoggle_left"></button>');
 
     $("#actoggle_right").on("click", function(evt) {
-      StateUtil.incrementChartState(toggle.mapData.length);
+      StateUtil.incrementChartState(toggle.redData.length);
       renderAndRegisterEvent();
     });
 
     $("#actoggle_left").on("click", function(evt) {
-      StateUtil.decrementChartState(toggle.mapData.length);
+      StateUtil.decrementChartState(toggle.redData.length);
       renderAndRegisterEvent();
     });
 
     AreaChart.renderAreaChart(
-      toggle.mapData[ndx],
-      toggle.reduceData[ndx],
+      toggle.redData[ndx],
+      toggle.blueData[ndx],
       toggle.tipData[ndx],
       toggle.maxValues[ndx]
     );
