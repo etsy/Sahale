@@ -4,7 +4,7 @@
 
   <groupId>com.etsy.sahale</groupId>
   <artifactId>flowtracker</artifactId>
-  <version>0.8.0-SNAPSHOT</version>
+  <version>0.9.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>flowtracker</name>
@@ -242,15 +242,12 @@
       <version>3.0.1</version>
     </dependency>
 
-    <!-- Updated to support Scala 2.10.x ; use old dep if still on Scala 2.9.x:
-        "com.twitter" % "scalding-core_2.9.2" % "0.8.5" -->
     <dependency>
       <groupId>com.twitter</groupId>
       <artifactId>scalding-core_2.10</artifactId>
-      <version>0.12.0</version>
+      <version>0.16.0</version>
     </dependency>
 
-    <!-- Test dependencies. subject to change/still under construction -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -258,8 +255,6 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- Updated for Scala 2.10 ; use old dependency if still on Scala 2.9.x
-         "org.scalatest" % "scalatest_2.9.3" % "2.0.M5b" -->
     <dependency>
       <groupId>org.scalatest</groupId>
       <artifactId>scalatest_2.10</artifactId>
