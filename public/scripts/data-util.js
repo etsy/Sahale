@@ -144,12 +144,14 @@ var DataUtil = (function() {
 	var name = cnm[out_flow.jt_url] || 'Unknown';
 	if (name === 'Unknown') {
 	    var regexes = server_config['cluster_name_regexes'];
-	    Object.keys(regexes).forEach(function (regex) {
-	        var pattern = new RegExp(regex);
-		if (pattern.test(out_flow.jt_url)) {
-		    name = regexes[regex];
-		}
-	    });
+	    if (regexes !== undefined) {
+		Object.keys(regexes).forEach(function (regex) {
+	            var pattern = new RegExp(regex);
+		    if (pattern.test(out_flow.jt_url)) {
+			name = regexes[regex];
+		    }
+		});
+	    }
 	}
 
 	return name;
