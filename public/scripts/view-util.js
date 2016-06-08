@@ -327,7 +327,7 @@ var ViewUtil = (function($) {
              logLinks.push({name: 'Failed Reduce Tasks', url: failedReduceTasks});
           }
         }
-        logLinks.push({name: 'ApplicationMaster', url: flow.jt_url + '/cluster/app/' + step.job_id.replace('job_', 'application_')});
+        logLinks.push({name: 'ApplicationMaster', url: flow.jt_url + ':8088/cluster/app/' + step.job_id.replace('job_', 'application_')});
       } else {
         logLinks.push({name: 'View Hadoop Logs', url: 'http://' + flow.jt_url + ':50030/jobdetails.jsp?jobid=' + step.job_id + '&refresh=0'});
       }
