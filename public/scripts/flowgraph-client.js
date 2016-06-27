@@ -36,7 +36,7 @@ $(document).ready(function() {
 		// render metrics views
 		ViewUtil.renderMapReducePanels(step_map, flow);
 
-		//
+		// rending input/output paths
 		ViewUtil.renderInputsAndOutputs(step_map, flow);
 
 		// render toggle-able area charts
