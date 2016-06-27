@@ -25,6 +25,12 @@ block content
               div.panel-body
                 div.subpanel#timechart
                   img(class='waitforrender', src='/images/pleasewait.gif', style='top:15%;', alt='Loading, please wait...')
+    div.row.row-centered.hidden#fail_links_parent
+      div.col-md-12.col-centered
+        div.panel.panel-default
+          div.panel-heading Failure Log Links
+          div.panel-body
+            div.logbox#fail_links
     div.row.row-centered
       div.col-md-8.col-centered
         div.panel.panel-default
@@ -36,6 +42,15 @@ block content
         div.panel.panel-default
           div.panel-heading(id='mrdetail-title') MapReduce Details
           div.panel-body#flowdetails
+    div.row.row-centered
+      div.col-md-6.col-centered
+        div.panel.panel-default
+          div.panel-heading All Job Inputs
+          div.panel-body.word-wrap#all_inputs
+      div.col-md-6.col-centered
+        div.panel.panel-default
+          div.panel-heading All Job Outputs
+          div.panel-body.word-wrap#all_outputs    
 
   script.
     var flow_id = '#{flow_id}';
