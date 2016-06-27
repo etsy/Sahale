@@ -371,7 +371,7 @@ var ViewUtil = (function($) {
 		    if (step.failed_reduce_tasks > 0) {
 			logLinks.push({name: 'Failed Reduce Tasks', url: failedReduceTasks});
 			var globalFailLinkHtml = $('#fail_links').html();
-			globalFailLinkHtml += '<div class=steplink><a href=//' + failedMapTasks + ' target=_blank>' + 'Failed Reduce Tasks for Step ' + step.step_number  + '</a></div>';
+			globalFailLinkHtml += '<div class=steplink><a href=//' + failedReduceTasks + ' target=_blank>' + 'Failed Reduce Tasks for Step ' + step.step_number  + '</a></div>';
 			$('#fail_links').html(globalFailLinkHtml);
 		    }
 		}
