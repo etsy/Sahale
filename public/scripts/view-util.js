@@ -62,13 +62,13 @@ var ViewUtil = (function($) {
 	    var step = stepMap[key]
 
 	    for (tap in step.sources) {
-		if (!tap.startsWith("/tmp")) {
+		if (!tap.startsWith("/tmp") && input_html.indexOf(tap) == -1) {
 		    input_html += '<div class="steplink"><p class=wordwrap>' + tap + '</p></div>';
 		}
 	    }
 
 	    for (tap in step.sink) {
-		if (!tap.startsWith("/tmp")) {
+		if (!tap.startsWith("/tmp") && output_html.indexOf(tap) == -1) {
 		    output_html += '<div class=steplink wordwrap><p class=wordwrap>' + tap + '</p></div>';
 		}
 	    }
