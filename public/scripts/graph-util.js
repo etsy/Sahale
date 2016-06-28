@@ -181,12 +181,13 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
     // as it could have been updated during page refresh.
     function setPreviouslySelectedVertex(step_map) {
 	var state = StateUtil.getFlowState(flow_id);
-	if (state.curid !== 0) {
+	var curId = state.curid === 0 ? 1 : state.curid
+	if (curId !== 0) {
 	    $("#no-step").remove();
-	    var curImg = $("#step-image-" + state.curid);
+	    var curImg = $("#step-image-" + curId);
 	    curImg.removeClass("hi-lite");
-	    $("#mrdetails-title").html(ViewUtil.renderStepStatus(step_map[state.curid])).show();
-	    $("#step-" + state.curid).show();
+	    $("#mrdetails-title").html(ViewUtil.renderStepStatus(step_map[curId])).show();
+	    $("#step-" + curId).show();
 	    curImg.trigger('mouseover');
 	}
     }
