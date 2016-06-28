@@ -3,21 +3,21 @@ var ViewUtil = (function($) {
     var view = {};
 
     ////////// public ViewUtil functions ////////////////
-    view.renderRunningJobs = function(flows, clusterFilter) {
+    view.renderRunningJobs = function(flows, clusterFilter, isCompletedJobs = false) {
 	$("#running").hide().html(
-            renderJobsTable(flows, "progress-bar-warning progress-bar-striped active", clusterFilter)
+            renderJobsTable(flows, "progress-bar-warning progress-bar-striped active", clusterFilter, isCompletedJobs)
 	).fadeIn(500);
     }
 
     view.renderCompletedJobs = function(flows, clusterFilter) {
 	$("#completed").hide().html(
-            renderJobsTable(flows, "progress-bar-info", clusterFilter)
+            renderJobsTable(flows, "progress-bar-info", clusterFilter, true)
 	).fadeIn(500);
     }
 
     view.renderMatchedJobs = function(flows, clusterFilter) {
 	$("#matched").hide().html(
-            renderJobsTable(flows, "progress-bar-info", clusterFilter)
+            renderJobsTable(flows, "progress-bar-info", clusterFilter, true)
 	).fadeIn(500);
     }
 
@@ -131,17 +131,17 @@ var ViewUtil = (function($) {
     }
 
     ///////////////// private utility functions ////////////////
-    function renderJobsTable(flows, barStylez, clusterFilter) {
+    function renderJobsTable(flows, barStylez, clusterFilter, isCompletedJobs) {
 	var rows = '<tr>' +
 	    '<th>Job Name</th>' +
 	    '<th>User</th>' +
 	    '<th>Cluster</th>' +
 	    '<th>Status</th>' +
 	    '<th># of Steps</th>' +
+	    '<th>Job Date</th>' +
 	    '<th>Running Time</th>' +
 	    '<th>Start Time</th>' +
-	    '<th>End Time</th>' +
-	    '<th>Progress</th>' +
+	    (isCompletedJobs ? '<th>End Time</th>' : '<th>Progress</th>') +
 	    '</tr>';
 	for (var i = 0; i < flows.length; ++i) {
 	    var f = flows[i];
@@ -155,14 +155,40 @@ var ViewUtil = (function($) {
 		    '<td>' + renderClusterFilterLink(f.cluster_name) + '</td>' +
 		    '<td>' + prettyFlowStatus(f.flow_status) + '</td>' +
 		    '<td>' + f.total_stages + '</td>' +
+		    '<td>' + renderJobDate(f) + '</td>' +
 		    '<td>' + view.prettyFlowTimeFromMillis(f.flow_duration) + '</td>' +
 		    '<td>' + renderDate(f.flow_start_epoch_ms) + '</td>' +
-		    '<td>' + renderDate(f.flow_end_epoch_ms) + '</td>' +
-		    '<td>' + prettyProgress(fp, barStylez) + '</td>' +
+		    (isCompletedJobs ? '<td>' + renderDate(f.flow_end_epoch_ms) + '</td>' : '<td>' + prettyProgress(fp, barStylez) + '</td>') +
 		    '</tr>';
 	    }
 	}
 	return rows;
+    }
+
+    function renderJobDate(flow) {
+	var args = flow['config_props']['scalding.job.args'];
+	if (args !== undefined) {
+	    var dateIndex = args.indexOf('--date');
+	    if (dateIndex === -1) {
+		return 'None';
+	    }
+	    var firstDate = args[dateIndex + 1].replace(/_/g, '-');
+	    if (dateIndex + 2 <= args.length - 1 && args[dateIndex + 2].indexOf('--') === -1) {
+		var secondDate = args[dateIndex + 2].replace(/_/g, '-');
+	    }
+	    
+	    if (args.indexOf('--daily') != -1) {
+		return firstDate;
+	    } else {
+		if (secondDate === undefined) {
+		    return firstDate
+		} else {
+		    return firstDate + ' - ' + secondDate;
+		}
+	    }
+	} else {
+	    return 'Unknown';
+	}
     }
 
     function renderClusterFilterLink(clusterName) {

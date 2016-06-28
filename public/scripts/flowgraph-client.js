@@ -17,7 +17,7 @@ $(document).ready(function() {
 	GraphUtil.setNavigationLinks(flow);
 
 	// render the table of aggregated Flow metrics at top of page
-	ViewUtil.renderRunningJobs([flow]);
+	ViewUtil.renderRunningJobs([flow], undefined, flow.flow_end_epoch_ms!==0);
 
 	// API call to get individual MapReduce jobs associated with one Flow ID
 	$.get('/steps/' + flow.flow_id, function(step_data) {
