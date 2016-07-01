@@ -8,6 +8,7 @@
   <packaging>jar</packaging>
 
   <name>flowtracker</name>
+  <description>A Cascading Workflow Visualizer</description>
   <url>https://github.com/etsy/Sahale</url>
 
   <properties>
