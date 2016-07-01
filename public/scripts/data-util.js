@@ -13,6 +13,7 @@ var DataUtil = (function() {
 	out_flow.create_date = flow.create_date;
 	out_flow.update_date = flow.update_date;
 	out_flow.cluster_name = getClusterNameMapping(out_flow);
+	out_flow.username_link = getUsernameLink(out_flow);
 	out_flow.truncated_name = getTruncatedName(out_flow);
 
 	var sja = out_flow['config_props']['scalding.job.args']
@@ -155,6 +156,16 @@ var DataUtil = (function() {
 	}
 
 	return name;
+    }
+
+    function getUsernameLink(out_flow) {
+	var usernameLinkFormat = server_config['username_link_format'];
+	var username = out_flow.user_name;
+	var link = undefined;
+	if (usernameLinkFormat !== undefined) {
+	    link = usernameLinkFormat.replace(/\${username}/g, username);
+	}
+	return link;
     }
 
     return data;

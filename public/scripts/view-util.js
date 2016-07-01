@@ -151,7 +151,7 @@ var ViewUtil = (function($) {
 		}(f);
 		rows += '<tr>' +
 		    '<td>' + prettyLinkedJobName(f) + '</td>' +
-		    '<td>' + f.user_name + '</td>' + // removed link to Staff page for OSS version
+		    '<td>' + renderUsernameLink(f) + '</td>' +
 		    '<td>' + renderClusterFilterLink(f.cluster_name) + '</td>' +
 		    '<td>' + prettyFlowStatus(f.flow_status) + '</td>' +
 		    '<td>' + f.total_stages + '</td>' +
@@ -163,6 +163,14 @@ var ViewUtil = (function($) {
 	    }
 	}
 	return rows;
+    }
+
+    function renderUsernameLink(flow) {
+	if (flow.username_link) {
+	    return '<a href=' + flow.username_link + ' target=_blank>' + flow.user_name + '</a>';
+	} else {
+	    return flow.user_name;
+	}
     }
 
     function renderJobDate(flow) {
