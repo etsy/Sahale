@@ -61,9 +61,17 @@ Now you can run `node app` to start the Sahale dashboard.  It will be running on
 
 Sahale server (NodeJS app) and FlowTracker (Scala client jar) must always maintain parity between clients and server versions. An upgrade deployment must coordinate the distribution of the new client jar and restart of the updated server. In rare cases (tagged in the Git repo) Sahale will make breaking changes that will require addition steps. The two notable cases are listed below:
 
-*Upgrade from 0.7 to 0.8*: The data model has changed. Please recreate your backing MySQL tables using the script in `src/main/sql` before using the new client jar or restarting the NodeJS app. The old tables and data will remain, the new tables will be suffixed with `_new` unless you opt to alias them. No additional change is required.
+### Upgrade to 1.0.0
+
+There were no data model or other incompatibility changes, but the `flowtracker` JAR is now being published to Maven Central.  It is no longer required to manually build this JAR; see the above instructions for its use and configuration.
+
+### Upgrade from 0.7 to 0.8 
+
+The data model has changed. Please recreate your backing MySQL tables using the script in `src/main/sql` before using the new client jar or restarting the NodeJS app. The old tables and data will remain, the new tables will be suffixed with `_new` unless you opt to alias them. No additional change is required.
  
-*Upgrade from 0.5 to 0.6*: Mark incompatible changes between older and newer versions of Scala/Scalding. If your org still uses older versions of Scala/Scalding, please see [this](https://github.com/etsy/Sahale/commit/238794f33ba17326a156c396f3dc1dede2b0c743) commit. All other changes and feature upgrades in the 0.6 line will work as expected with this commit reverted and your own choice of versions applied to the `pom.xml`.
+### Upgrade from 0.5 to 0.6 
+
+Mark incompatible changes between older and newer versions of Scala/Scalding. If your org still uses older versions of Scala/Scalding, please see [this](https://github.com/etsy/Sahale/commit/238794f33ba17326a156c396f3dc1dede2b0c743) commit. All other changes and feature upgrades in the 0.6 line will work as expected with this commit reverted and your own choice of versions applied to the `pom.xml`.
 
 ## The Name
 
