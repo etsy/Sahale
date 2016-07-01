@@ -12,7 +12,15 @@ There are two components to Sahale, a `flowtracker` JAR that contains the code t
 
 ### Flowtracker
 
-The `flowtracker` JAR is published to Maven Central for easy inclusion in your projects.
+The `flowtracker` JAR is published to Maven Central for easy inclusion in your projects:
+
+```xml
+<dependency>
+  <groupId>com.etsy.sahale</groupId>
+  <artifactId>flowtracker_2.10</artifactId>
+  <version>1.0.0</version>
+</dependency>
+```
 
 #### Configuration
 
