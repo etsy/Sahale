@@ -4,7 +4,7 @@
 
   <groupId>com.etsy.sahale</groupId>
   <artifactId>flowtracker_${scala.shortversion}</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>1.0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>flowtracker</name>
