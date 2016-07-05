@@ -3,15 +3,13 @@ package com.etsy.sahale
 
 import org.apache.hadoop.mapred.JobConf
 import org.apache.log4j.Logger
-
 import org.jgrapht.ext.{IntegerNameProvider, VertexNameProvider}
-
 import cascading.flow.{Flow, FlowStep}
 import cascading.flow.hadoop.HadoopFlow
 import cascading.flow.planner.BaseFlowStep
 import cascading.stats.{CascadingStats, FlowStepStats}
 import cascading.stats.hadoop.HadoopStepStats
-import cascading.tap.Tap
+import cascading.tap.{CompositeTap, Tap}
 import cascading.tuple.Fields
 import cascading.util.Util
 
@@ -112,11 +110,17 @@ class FlowGraphBuilder(flow: Flow[_],
       sinkToStageMap(sink) = stepNum
 
       // capture (multiple) sources and source fields data
-      val sources = fs.getSources.toSet.map { tap: Tap[_, _, _] =>
-        val sourceId = sanitizePathName(tap.getIdentifier)
-        val sourceFields = extractFields(tap.getSourceFields)
-        sourcesToStageMap(sourceId) = sourcesToStageMap.getOrElse(sourceId, Seq.empty[Int]) ++ Seq[Int](stepNum)
-        (sourceId -> sourceFields)
+      val sources = fs.getSources.toSet.flatMap { tap: Tap[_, _, _] =>
+        tap match {
+          case t: CompositeTap[Tap[_, _, _]] => t.getChildTaps map { innerTap: Tap[_, _, _] =>
+            val (sourceId, sourceFields) = getSourceInfoFromTap(innerTap)
+            sourcesToStageMap(sourceId) = sourcesToStageMap.getOrElse(sourceId, Seq.empty[Int]) ++ Seq[Int](stepNum)
+            (sourceId -> sourceFields)
+          }
+          case t => val (sourceId, sourceFields) = getSourceInfoFromTap(t)
+            sourcesToStageMap(sourceId) = sourcesToStageMap.getOrElse(sourceId, Seq.empty[Int]) ++ Seq[Int](stepNum)
+            Seq(sourceId -> sourceFields)
+        }
       }.toMap[String, Seq[String]]
 
       // these are updated only once per workflow step, here before the job runs
@@ -131,6 +135,12 @@ class FlowGraphBuilder(flow: Flow[_],
         case None       =>
       }
     }
+  }
+
+  def getSourceInfoFromTap(tap: Tap[_, _, _]): (String, Seq[String]) = {
+    val sourceId = sanitizePathName(tap.getIdentifier)
+    val sourceFields = extractFields(tap.getSourceFields)
+    (sourceId, sourceFields)
   }
 
   def updateEdgeMap(key: String, value: Int): Unit = {
