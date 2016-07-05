@@ -6,7 +6,7 @@ $(document).ready(function() {
 
   // populate and render tables
   $.get('/flows/running', function(data) {
-      ViewUtil.renderRunningJobs(DataUtil.unpackFlows(data), params.cluster);
+      ViewUtil.renderRunningJobs(DataUtil.unpackFlows(data), params.cluster, false);
   });
 
   $.get('/flows/completed', function(data) {

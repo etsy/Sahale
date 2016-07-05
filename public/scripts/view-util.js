@@ -3,7 +3,7 @@ var ViewUtil = (function($) {
     var view = {};
 
     ////////// public ViewUtil functions ////////////////
-    view.renderRunningJobs = function(flows, clusterFilter, isCompletedJobs = false) {
+    view.renderRunningJobs = function(flows, clusterFilter, isCompletedJobs) {
 	$("#running").hide().html(
             renderJobsTable(flows, "progress-bar-warning progress-bar-striped active", clusterFilter, isCompletedJobs)
 	).fadeIn(500);
