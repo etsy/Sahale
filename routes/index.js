@@ -40,11 +40,21 @@ exports.flows_running = function(req, res) {
   );
 };
 
+/**
+ * DEPRECATED
+ * Use flows_completed_all_ids and the individual flow API.
+ */
 exports.flows_completed = function(req, res) {
   sqlutil.getCompletedFlows(
     function(data) { res.json(data); }
   );
 };
+
+exports.flows_completed_all_ids = function(req, res) {
+  sqlutil.getAllCompletedFlowIds(
+    function(data) { res.json(data); }
+  );
+}
 
 exports.flows_completed_all = function(req, res) {
   sqlutil.getAllCompletedFlows(
