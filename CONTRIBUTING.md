@@ -14,3 +14,4 @@ Every pull request will be built and tested with [Travis CI](https://travis-ci.o
 # Contributors
 - Eli Reisman [initialcontext](https://github.com/initialcontext)
 - Andrew Johnson [ajsquared](https://github.com/ajsquared)
+- Nikki Thean [nixsticks](https://github.com/nixsticks)
