@@ -64,14 +64,26 @@ exports.getCompletedFlows = function(call_back) {
   );
 }
 
+exports.getAllCompletedFlowIds = function(call_back) {
+  executeQuery(
+    'SELECT flow_id FROM ' + flowTable + ' ' +
+    "WHERE flow_status IN ('STOPPED', 'FAILED', 'SUCCESSFUL', 'SKIPPED') " +
+    'ORDER BY create_date DESC',
+    [],
+    call_back
+  );
+}
+
+/**
+ * DEPRECATED
+ * Use getAllCompletedFlowIds and the individual flow API.
+ */
 exports.getAllCompletedFlows = function(call_back) {
-  var now       = getNowEpoch();
-  var completed = 0;
   executeQuery(
     'SELECT * FROM ' + flowTable + ' ' +
-    "WHERE update_date > ? AND flow_status IN ('STOPPED', 'FAILED', 'SUCCESSFUL', 'SKIPPED') " +
+    "WHERE flow_status IN ('STOPPED', 'FAILED', 'SUCCESSFUL', 'SKIPPED') " +
     'ORDER BY create_date DESC ',
-    [completed],
+    [],
     call_back
   );
 }

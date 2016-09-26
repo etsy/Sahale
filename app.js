@@ -41,7 +41,7 @@ app.get('/search', routes.search);
 // JSON API for db reads
 app.get('/flows/running', routes.flows_running);
 app.get('/flows/completed', routes.flows_completed);
-app.get('/flows/completed/all', routes.flows_completed_all);
+app.get('/flows/completed/all/ids', routes.flows_completed_all_ids);
 app.get('/flows/search/:searchterm', routes.flow_search);
 app.get('/flow/:flow_id', routes.flow);
 app.get('/steps/:flow_id', routes.steps);
@@ -51,6 +51,12 @@ app.post('/step_group', routes.step_group); // read only but uses POST due to pa
 app.get('/sahale_config_data', routes.sahale_config_data);
 app.get('/agg/flow/:flow_id', routes.agg_by_flow);
 app.get('/agg/time/:start/:end', routes.agg_by_epoch_start_end);
+
+/**
+ * DEPRECATED
+ * Use '/flows/completed/all/ids' and the individual flow API.
+ */
+ app.get('/flows/completed/all', routes.flows_completed_all);
 
 // JSON API routes & handlers for POSTed data from running Cascading jobs
 app.post('/flow/update/:flow_id', routes.insert_or_update_flow);
