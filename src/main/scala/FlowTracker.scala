@@ -268,7 +268,9 @@ class FlowTracker(val flow: Flow[_],
           code
         } finally {
           if (null != request) {
-            request.getResponseBodyAsStream.close
+            if (request.getResponseBodyAsStream != null) {
+              request.getResponseBodyAsStream.close
+            }
             request.releaseConnection
           }
         }
