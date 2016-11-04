@@ -19,5 +19,5 @@ div.navbar.navbar-inverse.navbar-fixed-top(role='navigation')
         li
           a(href='/help') Help
       div(class='col-sm-3 col-md-3 pull-right')
-        form(class='navbar-form', role='search')
-          input(type='text', class='form-control', placeholder='Search By Job Name', formaction='/search', name='searchterm', id='searchterm')
+        form(class='navbar-form', role='search', action='/search')
+          input(type='text', class='form-control', placeholder='Search By Job Name', name='searchterm', id='searchterm')
