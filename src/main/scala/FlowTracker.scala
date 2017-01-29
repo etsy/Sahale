@@ -209,7 +209,7 @@ class FlowTracker(val flow: Flow[_],
     pushFlowReport                      // sent every update
     updateAggregates                    // sent every update
 
-    println(Console.REVERSED + "Follow your running job's progress from your browser: " + sahaleUrl() + Console.RESET)
+    println(Console.REVERSED + "Follow your running job's progress from your browser: " + sahaleUrl(s"flowgraph/${flow.getID}") + Console.RESET)
   }
 
   def sleep(millis: Long): Unit = try { Thread.sleep(millis) } catch { case _: Exception => }
