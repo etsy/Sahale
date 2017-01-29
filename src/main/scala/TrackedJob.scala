@@ -35,7 +35,7 @@ class TrackedJob(args: Args) extends com.twitter.scalding.Job(args) {
     var done: AtomicBoolean = null
     var thread: Thread = null
 
-    try {
+    val flow = try {
       val flow = buildFlow
       val serverHostPort: String = args.optional("server").getOrElse("")
       val disableProgressBar = args.boolean("disable-progress-bar")
@@ -43,7 +43,7 @@ class TrackedJob(args: Args) extends com.twitter.scalding.Job(args) {
       thread = new Thread(new FlowTracker(flow, done, serverHostPort, disableProgressBar))
       thread.start
       flow.complete
-      flow.getFlowStats.isSuccessful // return Boolean
+      flow
     } catch {
       case t: Throwable => throw t
     } finally {
@@ -55,6 +55,9 @@ class TrackedJob(args: Args) extends com.twitter.scalding.Job(args) {
         }
       }
     }
+    val statsData = flow.getFlowStats
+    handleStats(statsData)
+    statsData.isSuccessful
   }
 
 }
