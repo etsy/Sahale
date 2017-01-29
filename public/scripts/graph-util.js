@@ -82,7 +82,7 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
     }
 
     function getImageByStepStatus(item) {
-	switch(item.stepstatus) {
+	switch(item.step_status) {
 	case "RUNNING": case "SUMBITTED": case "SUCCESSFUL":
             return "/images/happy_elephant.png";
 	case "FAILED":
