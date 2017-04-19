@@ -1,5 +1,5 @@
 # Contribute
-These are the basic steps for contributing to statsd-jvm-profiler:
+These are the basic steps for contributing to Sahale:
 
 1. Fork from [the master branch](https://github.com/etsy/Sahale)
 2. Make your changes
@@ -15,3 +15,5 @@ Every pull request will be built and tested with [Travis CI](https://travis-ci.o
 - Eli Reisman [initialcontext](https://github.com/initialcontext)
 - Andrew Johnson [ajsquared](https://github.com/ajsquared)
 - Nikki Thean [nixsticks](https://github.com/nixsticks)
+- Oleksandr Pryimak [trams](https://github.com/trams)
+- Aaron Niskode-Dossett [dossett](https://github.com/dossett)
