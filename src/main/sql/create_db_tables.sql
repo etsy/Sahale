@@ -24,6 +24,8 @@ CREATE TABLE `cascading_job_flows_new` (
   PRIMARY KEY (`flow_id`)
 );
 
+CREATE INDEX idx_create_date_cascading_job_flows_new ON cascading_job_flows_new (create_date);
+
 CREATE TABLE `cascading_job_steps_new` (
   `step_id` char(32) NOT NULL,
   `flow_id` char(32) NOT NULL,
@@ -33,6 +35,8 @@ CREATE TABLE `cascading_job_steps_new` (
   PRIMARY KEY (`step_id`)
 );
 
+CREATE INDEX idx_flow_id_cascading_job_steps_new ON cascading_job_steps_new (flow_id);
+
 CREATE TABLE `cascading_job_edges_new` (
   `flow_id` char(32) NOT NULL,
   `src_stage` int(11) NOT NULL,
@@ -41,6 +45,8 @@ CREATE TABLE `cascading_job_edges_new` (
   `create_date` int(11) unsigned NOT NULL,
   PRIMARY KEY (`flow_id`, `src_stage`, `dest_stage`)
 );
+
+CREATE INDEX idx_flow_id_cascading_job_edges_new ON cascading_job_edges_new (flow_id);
 
 CREATE TABLE `cascading_job_aggregated_new` (
   `flow_id` char(32) NOT NULL,
