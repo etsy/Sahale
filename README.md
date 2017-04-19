@@ -17,8 +17,8 @@ The `flowtracker` JAR is published to Maven Central for easy inclusion in your p
 ```xml
 <dependency>
   <groupId>com.etsy.sahale</groupId>
-  <artifactId>flowtracker_2.10</artifactId>
-  <version>1.0.1</version>
+  <artifactId>flowtracker_2.11</artifactId>
+  <version>1.1.0</version>
 </dependency>
 ```
 
