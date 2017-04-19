@@ -73,7 +73,7 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
 
     function addElephant(item) {
 	return '<img width="40px" height="40px" ' +
-	    'title="MapReduce Job (Step ' + item.step_number + ' of Flow)" ' +
+	    'title="MapReduce Job (Step ' + item.step_number + ' of Flow)\n' + getStepDescription(item) +  '" ' +
 	    'style="width:40px;height:40px;background-color:' +
 	    ViewUtil.getColorByStepStatus(item) + '" ' +
 	    'src="' + getImageByStepStatus(item) + '" ' +
@@ -90,6 +90,10 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
 	default:
             return "/images/skeptical_elephant.png";
 	}
+    }
+
+    function getStepDescription(step) {
+	return step.config_props["scalding.step.descriptions"] || ""
     }
 
     function renderViewLayout(graph_data) {

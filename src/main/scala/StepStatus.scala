@@ -144,7 +144,7 @@ class StepStatus(val flow: Flow[_], val stepNumber: Int, val stepId: String, pro
 
   // if users want to track additional JobConf values, put the chosen keys in a CSV
   // list in flow-tracker.properties entry "sahale.step.selected.configs" at build time
-  private val propertiesToExtract = Seq("sahale.additional.links") ++ {
+  private val propertiesToExtract = Seq("sahale.additional.links", "scalding.step.descriptions") ++ {
     props.getProperty("sahale.step.selected.configs", "")
       .split(""",""").map { _.trim }.filter { _ != "" }.toSeq
   }
