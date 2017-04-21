@@ -61,6 +61,11 @@ Now you can run `node app` to start the Sahale dashboard.  It will be running on
 
 Sahale server (NodeJS app) and FlowTracker (Scala client jar) must always maintain parity between clients and server versions. An upgrade deployment must coordinate the distribution of the new client jar and restart of the updated server. In rare cases (tagged in the Git repo) Sahale will make breaking changes that will require addition steps. The two notable cases are listed below:
 
+### Upgrade to 1.1.0
+
+There were no data model or other incompatibility changes, but Sahale jar is now built with Scala 2.11 and published as `flowtracker_2.11`. 
+
+
 ### Upgrade to 1.0.0
 
 There were no data model or other incompatibility changes, but the `flowtracker` JAR is now being published to Maven Central.  It is no longer required to manually build this JAR; see the above instructions for its use and configuration.
