@@ -132,7 +132,7 @@ var ViewUtil = (function($) {
 
     ///////////////// private utility functions ////////////////
     function renderJobsTable(flows, barStylez, clusterFilter, isCompletedJobs) {
-	var rows = '<tr>' +
+	var rows = '<thead><tr>' +
 	    '<th>Job Name</th>' +
 	    '<th>User</th>' +
 	    '<th>Cluster</th>' +
@@ -142,7 +142,7 @@ var ViewUtil = (function($) {
 	    '<th>Running Time</th>' +
 	    '<th>Start Time</th>' +
 	    (isCompletedJobs ? '<th>End Time</th>' : '<th>Progress</th>') +
-	    '</tr>';
+	    '</tr></thead><tbody>';
 	for (var i = 0; i < flows.length; ++i) {
 	    var f = flows[i];
 	    if (clusterFilter === undefined || f.cluster_name === clusterFilter) {
@@ -162,6 +162,7 @@ var ViewUtil = (function($) {
 		    '</tr>';
 	    }
 	}
+      rows += '</tbody>'
 	return rows;
     }
 
