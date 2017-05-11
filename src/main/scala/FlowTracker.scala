@@ -268,7 +268,13 @@ class FlowTracker(val flow: Flow[_],
           code
         } finally {
           if (null != request) {
-            request.getResponseBodyAsStream.close
+            try {
+              val asStream = request.getResponseBodyAsStream
+              if (asStream != null)
+                asStream.close()
+            } catch {
+              case e: IOException => LOG.warn("Could not close response stream for [" + url + "]", e)
+            }
             request.releaseConnection
           }
         }
