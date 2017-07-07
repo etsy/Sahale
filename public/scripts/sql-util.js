@@ -39,7 +39,7 @@ exports.getSahaleConfigData = function(call_back) {
   for (i in removeFromDsn) {
     sahaleConfigData[removeFromDsn[i]] = '';
   }
-  call_back(sahaleConfigData);
+  call_back(null, sahaleConfigData);
 }
 
 exports.getRunningFlows = function(call_back) {
@@ -153,7 +153,7 @@ function inspect(str, obj) {
 }
 
 ///////////// REST API to update db via POST requests from running Cascading jobs //////////////
-var emptyCallback = function(x) { };
+var emptyCallback = function(error, x) { };
 
 exports.upsertFlow = function(flow_id, data) {
   var epoch_now = getNowEpoch();
@@ -238,14 +238,14 @@ function executeQuery(query, param_array, call_back) {
     conn.query(query, param_array, function(err, rows) {
       if (err) {
         console.log("Error during query in sql-utils. Stack trace: " + err.stack);
-        // Ignore from here, we don't want the server to crash, just let this get messy and move on!
+        call_back(err, null);
       }
       //console.log(rows); // DEBUG
-      call_back(rows);
+      call_back(null, rows);
     });
   } catch(err) {
     console.log("Connection error in sql-utils. Stack trace: " + err.stack);
-    // Ignore from here, we don't want the server to crash, just let this get messy and move on!
+    call_back(err, null);
   } finally {
     if (conn) { conn.end(); }
   }
