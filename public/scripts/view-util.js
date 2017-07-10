@@ -52,7 +52,7 @@ var ViewUtil = (function($) {
 	$("#flowdetails").html(html);
     }
 
-    view.renderInputsAndOutputs = function(stepMap, flow) {	
+    view.renderInputsAndOutputs = function(stepMap, flow) {
 	var input_html = '<div class="logbox">';
 	input_html += '<div style="font-size:10px">';
 	var output_html = '<div class="logbox">';
@@ -107,7 +107,7 @@ var ViewUtil = (function($) {
 	switch(flow.flow_status) {
 	case "RUNNING": case "SUBMITTED": case "SUCCESSFUL": case "PENDING": case "STARTED": case "SKIPPED":
             break;
-	default: 
+	default:
 	    $("#fail_links_parent").removeClass('hidden');
             break;
 	}
@@ -185,7 +185,7 @@ var ViewUtil = (function($) {
 	    if (dateIndex + 2 <= args.length - 1 && args[dateIndex + 2].indexOf('--') === -1) {
 		var secondDate = args[dateIndex + 2].replace(/_/g, '-');
 	    }
-	    
+
 	    if (args.indexOf('--daily') != -1) {
 		return firstDate;
 	    } else {
