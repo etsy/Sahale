@@ -1,0 +1,17 @@
+.tablesorter-header-inner {
+  cursor: pointer;
+}
+
+.tablesorter-headerDesc .tablesorter-header-inner::before {
+  content:"\e114";
+  font-family:"Glyphicons Halflings";
+  line-height:1;
+  margin: 2px;
+}
+
+.tablesorter-headerAsc .tablesorter-header-inner::before {
+  content:"\e113";
+  font-family:"Glyphicons Halflings";
+  line-height:1;
+  margin: 2px;
+}
