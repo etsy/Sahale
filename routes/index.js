@@ -57,10 +57,8 @@ exports.flows_completed = function(req, res) {
 };
 
 exports.flows_completed_all_ids = function(req, res) {
-  sqlutil.getAllCompletedFlowIds(
-    function(data) { res.json(data); }
-  );
-}
+  sqlutil.getAllCompletedFlowIds(json_callback(req, res));
+};
 
 exports.flows_completed_all = function(req, res) {
   sqlutil.getAllCompletedFlows(json_callback(req, res));
