@@ -26,7 +26,7 @@ import DefaultJsonProtocol._
 
 object FlowTracker {
   type AggFunc = () => Any
-  
+
   val PROPSFILE = "flow-tracker.properties"
 
   val NOT_LAUNCHED = "NOT_LAUNCHED"
@@ -121,6 +121,9 @@ class FlowTracker(val flow: Flow[_],
   flow.setFlowStepStrategy(
     FlowStepStrategies.plus(flow.getFlowStepStrategy, new FlowTrackerStepStrategy(stepStatusMap))
   )
+
+  // Store the server's host:port so that subclasses have access to it
+  val serverHostPort = if(hostPort.trim.isEmpty) getDefaultHostPort else hostPort.trim
 
   // Constructors below are for easy Java interop with FlowTracker
   def this(flow: Flow[_], runCompleted: AtomicBoolean, hostPort: String) = this(flow, runCompleted, hostPort, false)
@@ -254,6 +257,11 @@ class FlowTracker(val flow: Flow[_],
       pushReport(sahaleUrl(UPDATE_STEPS), steps.map { case(k, v) => v.send }.toJson.compactPrint)
   }
 
+  def setAdditionalHeaders: Map[String, String] = {
+    // To be overridden by child classes, e.g. to set authentication headers
+    Map.empty
+  }
+
   def pushReport(uri: String, json: String): Int = {
     flow.getID match {
       case CheckIsCascadingFlowId(id) => {
@@ -263,6 +271,9 @@ class FlowTracker(val flow: Flow[_],
         val entity  = new StringRequestEntity(json, "application/json", "UTF-8")
         try {
           request.setRequestEntity(entity)
+          setAdditionalHeaders.foreach { case (headerName, headerValue) =>
+            request.addRequestHeader(headerName, headerValue)
+          }
           val code = getHttpClient.executeMethod(request)
           //logRequestResponse(url, request, json) // for debugging
           code
@@ -294,13 +305,7 @@ class FlowTracker(val flow: Flow[_],
     LOG.info(s"Response x-error-detail: ${response.getResponseHeader("x-error-detail")}")
   }
 
-  def sahaleUrl(suffix: String = ""): String = {
-    val path = "/" + suffix
-    hostPort match {
-      case ""         => getDefaultHostPort + path
-      case hp: String => hp.trim + path
-    }
-  }
+  def sahaleUrl(suffix: String = ""): String = s"${serverHostPort}/${suffix}"
 
   /////////////////// Utility functions for console progress bar /////////////////
   def logFlowStatus: Unit = {
