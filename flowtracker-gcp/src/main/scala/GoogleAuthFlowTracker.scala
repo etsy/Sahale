@@ -6,10 +6,12 @@ import java.net.URI
 import cascading.flow.Flow
 import scala.util.{Try, Success}
 import java.io.FileInputStream
+import java.util.Collections
 
 object GoogleAuthFlowTracker {
   // When should we refresh our credentials?
   val CREDENTIALS_REFRESH_AGE_SECONDS = 100
+  val USERINFO_SCOPE = "https://www.googleapis.com/auth/userinfo.email"
 
   def refreshCredentialToken(credentials: GoogleCredential) {
     if(!credentials.refreshToken) {
@@ -20,7 +22,7 @@ object GoogleAuthFlowTracker {
   def getCredentials(serviceAccountJsonFilename: Option[String]): GoogleCredential = {
     serviceAccountJsonFilename.map { filename =>
         val stream = new FileInputStream(filename)
-        val credential = GoogleCredential.fromStream(stream)
+        val credential = GoogleCredential.fromStream(stream).createScoped(Collections.singleton(USERINFO_SCOPE))
         stream.close
         credential
       }.getOrElse(GoogleCredential.getApplicationDefault)
@@ -32,7 +34,20 @@ class GoogleAuthFlowTracker(
   runCompleted: AtomicBoolean,
   hostPort: String,
   disableProgressBar: Boolean,
-  serviceAccountJsonFilename: Option[String] = None) extends FlowTracker(flow, runCompleted, hostPort, disableProgressBar) {
+  serviceAccountJsonFilename: String) extends FlowTracker(flow, runCompleted, hostPort, disableProgressBar) {
+
+  // More java-compatibility constructors
+  def this(flow: Flow[_], runCompleted: AtomicBoolean, hostPort: String, disableProgressBar: java.lang.Boolean) = {
+    this(flow, runCompleted, hostPort, disableProgressBar, null)
+  }
+
+  def this(flow: Flow[_], runCompleted: AtomicBoolean, hostPort: String) = {
+    this(flow, runCompleted, hostPort, false, null)
+  }
+
+  def this(flow: Flow[_], runCompleted: AtomicBoolean) = {
+    this(flow, runCompleted, "", false, null)
+  }
 
   // Refuse to run if the server host is not using HTTPS
   Try(new URI(this.serverHostPort).getScheme) match {
@@ -42,7 +57,7 @@ class GoogleAuthFlowTracker(
   }
 
   @transient // should not generally happen, but do not allow credentials to be serialized
-  private lazy val credentials = GoogleAuthFlowTracker.getCredentials(serviceAccountJsonFilename)
+  private lazy val credentials = GoogleAuthFlowTracker.getCredentials(Option(serviceAccountJsonFilename))
 
   private def getToken: String = {
     // credentials.getExpiresInSeconds() returns a java boxed Long, and sets
