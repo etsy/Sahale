@@ -11,10 +11,19 @@ object GoogleAuthFlowTracker {
   // When should we refresh our credentials?
   val CREDENTIALS_REFRESH_AGE_SECONDS = 100
 
-  def refreshCredentials(credentials: GoogleCredentials) {
+  def refreshCredentialToken(credentials: GoogleCredential) {
     if(!credentials.refreshToken) {
       FlowTracker.LOG.warn("Could not refresh Google Auth token!")
     }
+  }
+
+  def getCredentials(serviceAccountJsonFilename: Option[String]): GoogleCredential = {
+    serviceAccountJsonFilename.map { filename =>
+        val stream = new FileInputStream(filename)
+        val credential = GoogleCredential.fromStream(stream)
+        stream.close
+        credential
+      }.getOrElse(GoogleCredential.getApplicationDefault)
   }
 }
 
@@ -33,13 +42,7 @@ class GoogleAuthFlowTracker(
   }
 
   @transient // should not generally happen, but do not allow credentials to be serialized
-  private lazy val credentials: GoogleCredential =
-    serviceAccountJsonFilename.map { filename =>
-        val stream = new FileInputStream(filename)
-        val credential = GoogleCredential.fromStream(stream)
-        stream.close
-        credential
-      }.getOrElse(GoogleCredential.getApplicationDefault)
+  private lazy val credentials = GoogleAuthFlowTracker.getCredentials(serviceAccountJsonFilename)
 
   private def getToken: String = {
     // credentials.getExpiresInSeconds() returns a java boxed Long, and sets
