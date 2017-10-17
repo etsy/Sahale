@@ -18,7 +18,16 @@ The `flowtracker` JAR is published to Maven Central for easy inclusion in your p
 <dependency>
   <groupId>com.etsy.sahale</groupId>
   <artifactId>flowtracker_2.11</artifactId>
-  <version>1.1.0</version>
+  <version>1.2.0</version>
+</dependency>
+```
+
+or, for the Google-Auth-enabled variant,
+```xml
+<dependency>
+  <groupId>com.etsy.sahale</groupId>
+  <artifactId>flowtracker-gcp_2.11</artifactId>
+  <version>1.2.0</version>
 </dependency>
 ```
 
@@ -57,14 +66,23 @@ If this configuration step is not performed job tracking will fail.
 
 Now you can run `node app` to start the Sahale dashboard.  It will be running on port 5735, so go to `<hostname>:5735` in your browser to see the dashboard.
 
+#### Enabling Google Authentication
+
+Sahale FlowTracker can be configured to send Google-Auth bearer tokens along with its requests to the Sahale server.  This is used when the Sahale server is running in Google Cloud Platform, for example under Google App Engine with authentication enabled. To use this feature, include `flowtracker-gcp` in your Cascading project, and use the [com.etsy.sahale.GoogleAuthFlowTracker](flowtracker-gcp/src/main/scala/com/etsy/GoogleAuthFlowTracker.scala) class instead of the ordinary [com.etsy.sahale.FlowTracker](flowtracker/src/main/scala/com/etsy/FlowTracker.scala).  `GoogleAuthFlowTracker` works on Hadoop clusters running in Google Compute Engine or Dataproc without any configuration, generating tokens using the application default service account credentials.  For clusters not running in GCE/Dataproc, it also accepts a service account JSON file as an optiona argument.
+
+Sahale server does not yet support Google authentication directly; our approach has been to run Sahale server behind an authenticating proxy server, for which there are several open source options.
+
 ## Upgrading
 
 Sahale server (NodeJS app) and FlowTracker (Scala client jar) must always maintain parity between clients and server versions. An upgrade deployment must coordinate the distribution of the new client jar and restart of the updated server. In rare cases (tagged in the Git repo) Sahale will make breaking changes that will require addition steps. The two notable cases are listed below:
 
+### Upgrade to 1.2.0
+
+We added a new FlowTracker module, `flowtracker-gcp`, which adds a new FlowTracker subclass, `GoogleAuthFlowTracker`.  This subclass adds `Authorization` headers to its requests to Sahale server, passing OAuth bearer tokens generated from Google service accounts.  This class is meant to be used with a Sahale server running in an environment employing service-to-service authentication via, for example, Google App Engine.
+
 ### Upgrade to 1.1.0
 
 There were no data model or other incompatibility changes, but Sahale jar is now built with Scala 2.11 and published as `flowtracker_2.11`. 
-
 
 ### Upgrade to 1.0.0
 
