@@ -22,14 +22,22 @@ The `flowtracker` JAR is published to Maven Central for easy inclusion in your p
 </dependency>
 ```
 
-or, for the Google-Auth-enabled variant,
+or, for the Google-Auth-enabled variant:
 ```xml
 <dependency>
   <groupId>com.etsy.sahale</groupId>
   <artifactId>flowtracker-gcp_2.11</artifactId>
   <version>1.2.0</version>
+  <exclusions>
+    <exclusion>
+      <groupId>com.google.api-client</groupId>
+      <artifactId>google-api-client</artifactId>
+    </exclusion>
+  </exclusions>
 </dependency>
 ```
+
+Note that we recommend excluding the transitive dependency `google-api-client` when running on Google Compute Engine / Dataproc, because the Dataproc clusters already have versions of `google-api-client` preinstalled.  We have run into errors when including our own copy of `google-api-client`, despite our attempts to match the packaged version with the preinstalled version.
 
 #### Configuration
 
