@@ -184,7 +184,8 @@
     <dependency>
       <groupId>com.google.api-client</groupId>
       <artifactId>google-api-client</artifactId>
-      <version>1.23.0</version>
+      <version>1.20.0</version> <!-- set to version used in GCS connector -->
+      <scope>provided</scope> <!-- should also be marked as provided in downstream deps -->
     </dependency>
     </dependencies>
   </dependencyManagement>
