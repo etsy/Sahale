@@ -72,7 +72,7 @@ class FlowStatus(val flow: Flow[_], props: Properties, jobArgs: Array[String], i
   def update: Unit = state += (
     "flow_id"              -> flow.getID,
     "flow_name"            -> flow.getName,
-    "jt_url"               -> getJobTracker,
+    "jt_url"               -> getResourceManager,
     "user_name"            -> getUsername,
     "flow_status"          -> flow.getFlowStats.getStatus.toString,
     "total_stages"         -> flow.getFlowStats.getStepsCount, // Int
@@ -128,10 +128,14 @@ class FlowStatus(val flow: Flow[_], props: Properties, jobArgs: Array[String], i
     case _         => System.getProperty("user.name")
   }
 
-  private def getJobTracker: String = flow.getProperty("mapred.job.tracker") match {
-    case jt: String if null != jt =>
-      if (jt.indexOf(":") > 0) { jt.substring(0, jt.indexOf(":")) } else { jt }
-    case _                        => UNKNOWN
+  private def getResourceManager: String = {
+    def parseAddress(rm: String): String = if (rm.indexOf(":") > 0) { rm.substring(0, rm.indexOf(":")) } else { rm }
+
+    (flow.getProperty("yarn.resourcemanager.webapp.address"), flow.getProperty("mapred.job.tracker")) match {
+      case (rm: String, _) if null != rm => parseAddress(rm)
+      case (_, jt: String) if null != jt => parseAddress(jt)
+      case (_, _)                        => UNKNOWN
+    }
   }
 
   private def getHistoryServer: String = {
