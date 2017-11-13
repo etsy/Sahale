@@ -210,18 +210,6 @@
     </dependency>
 
     <dependency>
-      <groupId>com.esotericsoftware.kryo</groupId>
-      <artifactId>kryo</artifactId>
-      <version>2.21</version>
-    </dependency>
-
-    <dependency>
-      <groupId>cascading.kryo</groupId>
-      <artifactId>cascading.kryo</artifactId>
-      <version>0.4.7</version>
-    </dependency>
-
-    <dependency>
       <groupId>io.spray</groupId>
       <artifactId>spray-json_2.11</artifactId>
       <version>1.3.2</version>
@@ -242,18 +230,6 @@
     <dependency>
       <groupId>cascading</groupId>
       <artifactId>cascading-core</artifactId>
-      <version>${cascading.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>cascading</groupId>
-      <artifactId>cascading-platform</artifactId>
-      <version>${cascading.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>cascading</groupId>
-      <artifactId>cascading-hadoop</artifactId>
       <version>${cascading.version}</version>
     </dependency>
 
