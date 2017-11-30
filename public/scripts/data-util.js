@@ -140,22 +140,48 @@ var DataUtil = (function() {
 	return out_flow.flow_name;
     }
 
-    function getClusterNameMapping(out_flow) {
-	var cnm = server_config['cluster_name_mapping'];
-	var name = cnm[out_flow.jt_url] || 'Unknown';
-	if (name === 'Unknown') {
-	    var regexes = server_config['cluster_name_regexes'];
-	    if (regexes !== undefined) {
-		Object.keys(regexes).forEach(function (regex) {
-	            var pattern = new RegExp(regex);
-		    if (pattern.test(out_flow.jt_url)) {
-			name = regexes[regex];
-		    }
-		});
-	    }
-	}
+    function insertCaptureGroups(str, matches) {
+        // This method lets us support regexp capture groups in the regex
+        // mapping string.  For example, we might define a regex mapping
+        //   'gcp-(.*)-[0-9]+': '$1'
+        // which would map the jobtracker name 'gcp-my-cluster-12345' to 'my-cluster'
+        for(group = 0; group < matches.length; group++) {
+            target = (group == 0) ? '$&' : ('$' + group);
 
-	return name;
+            str = str.replace(target, matches[group]);
+        }
+
+        return str;
+    }
+
+    function doRegexReplacement(jt_url, regexes) {
+        var name = null;
+
+        if(!regexes) {
+            return name;
+        }
+
+        Object.keys(regexes).forEach(function(regex) {
+            var pattern = new RegExp(regex);
+            var matches = pattern.exec(jt_url);
+            if (matches) {
+                // We should probably really return upon first hit, but we will
+                // leave this as it originally was to avoid altering existing
+                // behavior
+                name = insertCaptureGroups(regexes[regex], matches);
+            }
+        });
+
+        return name;
+    }
+
+    function getClusterNameMapping(out_flow) {
+	var cnm = server_config['cluster_name_mapping'] || {};
+	var name = cnm[out_flow.jt_url] ||
+        doRegexReplacement(out_flow.jt_url, server_config['cluster_name_regexes']) ||
+        'Unknown';
+
+    return name;
     }
 
     function getUsernameLink(out_flow) {
