@@ -298,10 +298,7 @@ var ViewUtil = (function($, DataUtil) {
         return { host: split[0], port: (split.length < 2) ? null : split[1] };
     }
 
-    function buildHref(schemeWithSlashes, rawHost, port, path) {
-        // schemeWithSlashes is what it sounds like, e.g.
-        //  `http://` or `https://` (or `//`, ie inherit the current scheme)
-        //
+    function buildHref(rawHost, port, path, schemeWithSlashes) {
         // rawHost is the host name that we received from the FlowTracker.
         // To build the host used in assembling the outgoing links, we make
         // any pre-configured tranformations (defined in the db-config.json
@@ -311,6 +308,12 @@ var ViewUtil = (function($, DataUtil) {
         //
         // path is the full path, including any querystring or fragment
         // components.
+        //
+        // schemeWithSlashes is what it sounds like, e.g.
+        //  `http://` or `https://`
+        //  Note: schemeWithSlashes is optional; if missing, it defaults to `//`,
+        //  ie inherit the current scheme)
+
         var defaultLinkTemplate = '%{schemeWithSlashes}%{host}:%{port}%{path}';
         var defaultHostRegexes = {}; // by default do not change host name
 
@@ -320,7 +323,7 @@ var ViewUtil = (function($, DataUtil) {
         var template = config['cluster_link_template'] || defaultLinkTemplate;
 
         return Kiwi.compose(template, {
-                schemeWithSlashes: schemeWithSlashes,
+                schemeWithSlashes: schemeWithSlashes || '//',
                 host: DataUtil.doRegexReplacement(rawHost, hostRegexes, rawHost),
                 port: port,
                 path: path
@@ -335,10 +338,10 @@ var ViewUtil = (function($, DataUtil) {
 	case "FAILED":
 	case "SKIPPED":
 	case "STOPPED":
-        var link = buildHref('//', yarn_host, '19888', '/jobhistory/job/job_' + yarn_id);
+        var link = buildHref(yarn_host, '19888', '/jobhistory/job/job_' + yarn_id);
 	    break;
 	default:
-        var link = buildHref('//', yarn_host, '8088', '/proxy/application_' + yarn_id);
+        var link = buildHref(yarn_host, '8088', '/proxy/application_' + yarn_id);
 	    break;
 	}
 	return link;
@@ -451,9 +454,9 @@ var ViewUtil = (function($, DataUtil) {
                     insertGlobalFailLink('Reduce', failedReduceTasks, step);
                 }
             }
-            logLinks.push({name: 'ApplicationMaster', url: buildHref('//', jt_host, '8088', '/cluster/app/' + step.job_id.replace('job_', 'application_'))});
+            logLinks.push({name: 'ApplicationMaster', url: buildHref(jt_host, '8088', '/cluster/app/' + step.job_id.replace('job_', 'application_'))});
         } else {
-            logLinks.push({name: 'View Hadoop Logs', url: buildHref('http://', jt_host, '50030', '/jobdetails.jsp?jobid=' + step.job_id + '&refresh=0')});
+            logLinks.push({name: 'View Hadoop Logs', url: buildHref(jt_host, '50030', '/jobdetails.jsp?jobid=' + step.job_id + '&refresh=0', schemeWithSlashes='http://')});
         }
     }
     for(i = 0; i < logLinks.length; ++i) {
