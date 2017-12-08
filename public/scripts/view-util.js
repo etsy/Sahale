@@ -298,8 +298,20 @@ var ViewUtil = (function($, DataUtil) {
         return { host: split[0], port: (split.length < 2) ? null : split[1] };
     }
 
-    function buildHref(defaultScheme, rawHost, port, path) {
-        var defaultLinkTemplate = '%{defaultScheme}%{host}:%{port}%{path}';
+    function buildHref(schemeWithSlashes, rawHost, port, path) {
+        // schemeWithSlashes is what it sounds like, e.g.
+        //  `http://` or `https://` (or `//`, ie inherit the current scheme)
+        //
+        // rawHost is the host name that we received from the FlowTracker.
+        // To build the host used in assembling the outgoing links, we make
+        // any pre-configured tranformations (defined in the db-config.json
+        // file as cluster_link_host_regexes).
+        //
+        // port is, uh, the port
+        //
+        // path is the full path, including any querystring or fragment
+        // components.
+        var defaultLinkTemplate = '%{schemeWithSlashes}%{host}:%{port}%{path}';
         var defaultHostRegexes = {}; // by default do not change host name
 
         var config = DataUtil.getConfigState();
@@ -308,7 +320,7 @@ var ViewUtil = (function($, DataUtil) {
         var template = config['cluster_link_template'] || defaultLinkTemplate;
 
         return Kiwi.compose(template, {
-                defaultScheme: defaultScheme,
+                schemeWithSlashes: schemeWithSlashes,
                 host: DataUtil.doRegexReplacement(rawHost, hostRegexes, rawHost),
                 port: port,
                 path: path
