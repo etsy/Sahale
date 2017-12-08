@@ -106,6 +106,36 @@ var DataUtil = (function() {
 	return step;
     }
 
+    data.doRegexReplacement = function (jt_url, regexes, default_value) {
+        // A utility function for rewriting cluster host names according to the
+        // config options cluster_name_regexes and cluster_link_regexes.
+        // The `regexes` arg is a mapping from regex => replacement string;
+        // if you put capture groups in the regex, then you can reference them
+        // in the capture group using javascript standard notation, e.g.
+        // the regex-to-replacement mapping
+        //    "cluster-([0-9]+)-master": "cluster-number-$1"
+        // will remap the cluster "cluster-123-master" to "cluster-number-123"
+        var name = default_value;
+
+        if(!regexes) {
+            return name;
+        }
+
+        Object.keys(regexes).forEach(function(regex) {
+            var pattern = new RegExp(regex);
+            var matches = pattern.exec(jt_url);
+            if (matches) {
+                // We should probably really return upon first hit, but we will
+                // leave this as it originally was to avoid altering existing
+                // behavior
+                name = insertCaptureGroups(regexes[regex], matches);
+            }
+        });
+
+        return name;
+    }
+
+
     function checkedStepUnpack(step, group, counter, defaultValue) {
 	if (!step || !group || !counter) {
 	    console.log("Invalid value found in step['counters'][group][counter]");
@@ -152,27 +182,6 @@ var DataUtil = (function() {
         }
 
         return str;
-    }
-
-    data.doRegexReplacement = function (jt_url, regexes, default_value) {
-        var name = default_value;
-
-        if(!regexes) {
-            return name;
-        }
-
-        Object.keys(regexes).forEach(function(regex) {
-            var pattern = new RegExp(regex);
-            var matches = pattern.exec(jt_url);
-            if (matches) {
-                // We should probably really return upon first hit, but we will
-                // leave this as it originally was to avoid altering existing
-                // behavior
-                name = insertCaptureGroups(regexes[regex], matches);
-            }
-        });
-
-        return name;
     }
 
     function getClusterNameMapping(out_flow) {
