@@ -298,20 +298,18 @@ var ViewUtil = (function($, DataUtil) {
         return { host: split[0], port: (split.length < 2) ? null : split[1] };
     }
 
-    function buildHref(defaultScheme, raw_host, port, path) {
+    function buildHref(defaultScheme, rawHost, port, path) {
         var defaultLinkTemplate = '%{defaultScheme}%{host}:%{port}%{path}';
-        defaultLinkTemplate = 'https://dataproc-logs-dot-etsy-dataeng-hadoop-sandbox.appspot.com/proxy/%{host}/%{port}%{path}';
+        var defaultHostRegexes = {}; // by default do not change host name
 
-        var host_regexes = DataUtil.getConfigState()['cluster_link_regexes'] || {};
+        var config = DataUtil.getConfigState();
 
-        host_regexes = { '(.*)-(m|w-[0-9]+)': '$1/$2' };
-        var host = DataUtil.doRegexReplacement(raw_host, host_regexes);
+        var hostRegexes = config['cluster_link_regexes'] || defaultHostRegexes;
+        var template = config['custom_link_template'] || defaultLinkTemplate;
 
-        return Kiwi.compose(
-            DataUtil.getConfigState()['custom_link_template'] || defaultLinkTemplate,
-            {
+        return Kiwi.compose(template, {
                 defaultScheme: defaultScheme,
-                host: host,
+                host: DataUtil.doRegexReplacement(rawHost, hostRegexes),
                 port: port,
                 path: path
             });
