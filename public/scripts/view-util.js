@@ -288,11 +288,18 @@ var ViewUtil = (function($) {
 	    '</div>';
     }
 
-    function replacePort(hostWithPort, port) {
+    function splitHostWithPort(hostWithPort) {
+        // the yarn_job_history and jt_url variables (usually?) are not full URIs,
+        // so we cannot parse them directly as such.  This parsing approach
+        // here assumes hostWithPort is _not_ a URI, as it would fail otherwise.
+        // However this is consistent with the historical behavior of Sahale
         var split = hostWithPort.split(':');
-        assert(0 < split.length && split.length < 3);
 
-        return [ split[0], port ].join(':');
+        return { host: split[0], port: (split.length < 2) ? null : split[1] };
+    }
+
+    function replacePort(hostWithPort, port) {
+        return [ splitHostWithPort.host, port ].join(':');
     }
 
     function makeYarnUrl(flow, step) {
@@ -302,12 +309,12 @@ var ViewUtil = (function($) {
 	case "FAILED":
 	case "SKIPPED":
 	case "STOPPED":
-	    var yarn_history = replacePort(flow.yarn_job_history, '19888');
-	    var link = yarn_history + '/jobhistory/job/job_' + yarn_id;
+	    var base_link = '//' + replacePort(flow.yarn_job_history, '19888');
+	    var link = base_link + '/jobhistory/job/job_' + yarn_id;
 	    break;
 	default:
-	    var yarn_history = replacePort(flow.yarn_job_history, '8088');
-	    var link = yarn_history + '/proxy/application_' + yarn_id;
+	    var base_link = '//' + replacePort(flow.yarn_job_history, '8088');
+	    var link = base_link + '/proxy/application_' + yarn_id;
 	    break;
 	}
 	return link;
@@ -388,7 +395,7 @@ var ViewUtil = (function($) {
     function insertGlobalFailLink(mapOrReduce, failedTaskLink, step) {
         var globalFailLinkHtml = $('#fail_links').html();
         globalFailLinkHtml +=
-            '<div class=steplink><a href=//' +
+            '<div class=steplink><a href=' +
             failedTaskLink +
             ' target=_blank>' +
             'Failed ' + mapOrReduce +
@@ -418,14 +425,14 @@ var ViewUtil = (function($) {
                         insertGlobalFailLink('Reduce', failedReduceTasks);
                     }
                 }
-                logLinks.push({name: 'ApplicationMaster', url: replacePort(flow.jt_url, '8088') + '/cluster/app/' + step.job_id.replace('job_', 'application_')});
+                logLinks.push({name: 'ApplicationMaster', url: '//' + replacePort(flow.jt_url, '8088') + '/cluster/app/' + step.job_id.replace('job_', 'application_')});
             } else {
                 logLinks.push({name: 'View Hadoop Logs', url: 'http://' + replacePort(flow.jt_url, '50030') + '/jobdetails.jsp?jobid=' + step.job_id + '&refresh=0'});
             }
         }
         for(i = 0; i < logLinks.length; ++i) {
             var link = logLinks[i];
-            html += '<div class="steplink"><a href="//' + link.url + '" target=_blank><b>'+ link.name +'</b></a></div>';
+            html += '<div class="steplink"><a href="' + link.url + '" target=_blank><b>'+ link.name +'</b></a></div>';
         }
 
 	if (additionalLinks !== undefined) {
