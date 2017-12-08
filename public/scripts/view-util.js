@@ -1,5 +1,5 @@
 // Table-style views are generated with these helpers
-var ViewUtil = (function($) {
+var ViewUtil = (function($, DataUtil) {
     var view = {};
 
     ////////// public ViewUtil functions ////////////////
@@ -298,14 +298,23 @@ var ViewUtil = (function($) {
         return { host: split[0], port: (split.length < 2) ? null : split[1] };
     }
 
-    function buildHref(defaultScheme, host, port, path) {
-        var format = '%{defaultScheme}%{host}:%{port}%{path}'
-        return Kiwi.compose(format, {
-            defaultScheme: defaultScheme,
-            host: host,
-            port: port,
-            path: path
-        });
+    function buildHref(defaultScheme, raw_host, port, path) {
+        var defaultLinkTemplate = '%{defaultScheme}%{host}:%{port}%{path}';
+        defaultLinkTemplate = 'https://dataproc-logs-dot-etsy-dataeng-hadoop-sandbox.appspot.com/proxy/%{host}/%{port}%{path}';
+
+        var host_regexes = DataUtil.getConfigState()['cluster_link_regexes'] || {};
+
+        host_regexes = { '(.*)-(m|w-[0-9]+)': '$1/$2' };
+        var host = DataUtil.doRegexReplacement(raw_host, host_regexes);
+
+        return Kiwi.compose(
+            DataUtil.getConfigState()['custom_link_template'] || defaultLinkTemplate,
+            {
+                defaultScheme: defaultScheme,
+                host: host,
+                port: port,
+                path: path
+            });
     }
 
     function makeYarnUrl(flow, step) {
@@ -460,4 +469,4 @@ var ViewUtil = (function($) {
 
     return view;
 
-}(jQuery));
+}(jQuery, DataUtil));

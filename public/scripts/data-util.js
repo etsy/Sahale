@@ -154,7 +154,7 @@ var DataUtil = (function() {
         return str;
     }
 
-    function doRegexReplacement(jt_url, regexes) {
+    data.doRegexReplacement = function (jt_url, regexes) {
         var name = null;
 
         if(!regexes) {
@@ -178,7 +178,7 @@ var DataUtil = (function() {
     function getClusterNameMapping(out_flow) {
 	var cnm = server_config['cluster_name_mapping'] || {};
 	var name = cnm[out_flow.jt_url] ||
-        doRegexReplacement(out_flow.jt_url, server_config['cluster_name_regexes']) ||
+        data.doRegexReplacement(out_flow.jt_url, server_config['cluster_name_regexes']) ||
         'Unknown';
 
     return name;
