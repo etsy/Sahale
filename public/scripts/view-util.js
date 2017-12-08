@@ -299,7 +299,13 @@ var ViewUtil = (function($) {
     }
 
     function buildHref(defaultScheme, host, port, path) {
-        return defaultScheme + host + port + path;
+        var format = '%{defaultScheme}%{host}:%{port}%{path}'
+        return Kiwi.compose(format, {
+            defaultScheme: defaultScheme,
+            host: host,
+            port: port,
+            path: path
+        });
     }
 
     function makeYarnUrl(flow, step) {
