@@ -304,12 +304,12 @@ var ViewUtil = (function($, DataUtil) {
 
         var config = DataUtil.getConfigState();
 
-        var hostRegexes = config['cluster_link_regexes'] || defaultHostRegexes;
-        var template = config['custom_link_template'] || defaultLinkTemplate;
+        var hostRegexes = config['cluster_link_host_regexes'] || defaultHostRegexes;
+        var template = config['cluster_link_template'] || defaultLinkTemplate;
 
         return Kiwi.compose(template, {
                 defaultScheme: defaultScheme,
-                host: DataUtil.doRegexReplacement(rawHost, hostRegexes),
+                host: DataUtil.doRegexReplacement(rawHost, hostRegexes, rawHost),
                 port: port,
                 path: path
             });

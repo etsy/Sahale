@@ -154,8 +154,8 @@ var DataUtil = (function() {
         return str;
     }
 
-    data.doRegexReplacement = function (jt_url, regexes) {
-        var name = null;
+    data.doRegexReplacement = function (jt_url, regexes, default_value) {
+        var name = default_value;
 
         if(!regexes) {
             return name;
@@ -178,8 +178,7 @@ var DataUtil = (function() {
     function getClusterNameMapping(out_flow) {
 	var cnm = server_config['cluster_name_mapping'] || {};
 	var name = cnm[out_flow.jt_url] ||
-        data.doRegexReplacement(out_flow.jt_url, server_config['cluster_name_regexes']) ||
-        'Unknown';
+        data.doRegexReplacement(out_flow.jt_url, server_config['cluster_name_regexes'], 'Unknown');
 
     return name;
     }
