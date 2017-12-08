@@ -298,23 +298,22 @@ var ViewUtil = (function($) {
         return { host: split[0], port: (split.length < 2) ? null : split[1] };
     }
 
-    function replacePort(hostWithPort, port) {
-        return [ splitHostWithPort.host, port ].join(':');
+    function buildHref(defaultScheme, host, port, path) {
+        return defaultScheme + host + port + path;
     }
 
     function makeYarnUrl(flow, step) {
 	var yarn_id = step.job_id.slice(4, step.job_id.length);
+    var yarn_host = splitHostWithPort(flow.yarn_job_history).host;
 	switch(step.step_status) {
 	case "SUCCESSFUL":
 	case "FAILED":
 	case "SKIPPED":
 	case "STOPPED":
-	    var base_link = '//' + replacePort(flow.yarn_job_history, '19888');
-	    var link = base_link + '/jobhistory/job/job_' + yarn_id;
+        var link = buildHref('//', yarn_host, '19888', '/jobhistory/job/job_' + yarn_id);
 	    break;
 	default:
-	    var base_link = '//' + replacePort(flow.yarn_job_history, '8088');
-	    var link = base_link + '/proxy/application_' + yarn_id;
+        var link = buildHref('//', yarn_host, '8088', '/proxy/application_' + yarn_id);
 	    break;
 	}
 	return link;
@@ -408,32 +407,33 @@ var ViewUtil = (function($) {
 
 	var additionalLinks = step.config_props['sahale.additional.links'];
 	var logLinks = [];
-        if (step.job_id !== undefined && step.job_id !== null && step.job_id !== 'NO_JOB_ID') {
-            if (flow.yarn_job_history !== "false") {
-                var jobLink = makeYarnUrl(flow, step);
-                logLinks.push({name: 'View Hadoop Logs', url: jobLink});
-                if (step.step_status == 'FAILED') {
-                    // We know this is a History Server link at this point, so this replacement should be valid
-                    if (step.failed_map_tasks > 0) {
-                        var failedMapTasks = jobLink.replace("/job/", "/attempts/") + "/m/FAILED"
-                        logLinks.push({name: 'Failed Map Tasks', url: failedMapTasks});
-                        insertGlobalFailLink('Map', failedMapTasks);
-                    }
-                    if (step.failed_reduce_tasks > 0) {
-                        var failedReduceTasks = jobLink.replace("/job/", "/attempts/") + "/r/FAILED"
-                        logLinks.push({name: 'Failed Reduce Tasks', url: failedReduceTasks});
-                        insertGlobalFailLink('Reduce', failedReduceTasks);
-                    }
+    var jt_host = splitHostWithPort(flow.jt_url).host;
+    if (step.job_id !== undefined && step.job_id !== null && step.job_id !== 'NO_JOB_ID') {
+        if (flow.yarn_job_history !== "false") {
+            var jobLink = makeYarnUrl(flow, step);
+            logLinks.push({name: 'View Hadoop Logs', url: jobLink});
+            if (step.step_status == 'FAILED') {
+                // We know this is a History Server link at this point, so this replacement should be valid
+                if (step.failed_map_tasks > 0) {
+                    var failedMapTasks = jobLink.replace("/job/", "/attempts/") + "/m/FAILED"
+                    logLinks.push({name: 'Failed Map Tasks', url: failedMapTasks});
+                    insertGlobalFailLink('Map', failedMapTasks);
                 }
-                logLinks.push({name: 'ApplicationMaster', url: '//' + replacePort(flow.jt_url, '8088') + '/cluster/app/' + step.job_id.replace('job_', 'application_')});
-            } else {
-                logLinks.push({name: 'View Hadoop Logs', url: 'http://' + replacePort(flow.jt_url, '50030') + '/jobdetails.jsp?jobid=' + step.job_id + '&refresh=0'});
+                if (step.failed_reduce_tasks > 0) {
+                    var failedReduceTasks = jobLink.replace("/job/", "/attempts/") + "/r/FAILED"
+                    logLinks.push({name: 'Failed Reduce Tasks', url: failedReduceTasks});
+                    insertGlobalFailLink('Reduce', failedReduceTasks);
+                }
             }
+            logLinks.push({name: 'ApplicationMaster', url: buildHref('//', jt_host, '8088', '/cluster/app/' + step.job_id.replace('job_', 'application_'))});
+        } else {
+            logLinks.push({name: 'View Hadoop Logs', url: buildHref('http://', jt_host, '50030', '/jobdetails.jsp?jobid=' + step.job_id + '&refresh=0')});
         }
-        for(i = 0; i < logLinks.length; ++i) {
-            var link = logLinks[i];
-            html += '<div class="steplink"><a href="' + link.url + '" target=_blank><b>'+ link.name +'</b></a></div>';
-        }
+    }
+    for(i = 0; i < logLinks.length; ++i) {
+        var link = logLinks[i];
+        html += '<div class="steplink"><a href="' + link.url + '" target=_blank><b>'+ link.name +'</b></a></div>';
+    }
 
 	if (additionalLinks !== undefined) {
 	    var links = additionalLinks.split(';');
