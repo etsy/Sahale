@@ -1,5 +1,5 @@
 // Table-style views are generated with these helpers
-var ViewUtil = (function($) {
+var ViewUtil = (function($, DataUtil) {
     var view = {};
 
     ////////// public ViewUtil functions ////////////////
@@ -52,7 +52,7 @@ var ViewUtil = (function($) {
 	$("#flowdetails").html(html);
     }
 
-    view.renderInputsAndOutputs = function(stepMap, flow) {	
+    view.renderInputsAndOutputs = function(stepMap, flow) {
 	var input_html = '<div class="logbox">';
 	input_html += '<div style="font-size:10px">';
 	var output_html = '<div class="logbox">';
@@ -107,7 +107,7 @@ var ViewUtil = (function($) {
 	switch(flow.flow_status) {
 	case "RUNNING": case "SUBMITTED": case "SUCCESSFUL": case "PENDING": case "STARTED": case "SKIPPED":
             break;
-	default: 
+	default:
 	    $("#fail_links_parent").removeClass('hidden');
             break;
 	}
@@ -184,7 +184,7 @@ var ViewUtil = (function($) {
 	    if (dateIndex + 2 <= args.length - 1 && args[dateIndex + 2].indexOf('--') === -1) {
 		var secondDate = args[dateIndex + 2].replace(/_/g, '-');
 	    }
-	    
+
 	    if (args.indexOf('--daily') != -1) {
 		return firstDate;
 	    } else {
@@ -288,31 +288,63 @@ var ViewUtil = (function($) {
 	    '</div>';
     }
 
+    function splitHostWithPort(hostWithPort) {
+        // the yarn_job_history and jt_url variables (usually?) are not full URIs,
+        // so we cannot parse them directly as such.  This parsing approach
+        // here assumes hostWithPort is _not_ a URI, as it would fail otherwise.
+        // However this is consistent with the historical behavior of Sahale
+        var split = hostWithPort.split(':');
+
+        return { host: split[0], port: (split.length < 2) ? null : split[1] };
+    }
+
+    function buildHref(rawHost, port, path, schemeWithSlashes) {
+        // rawHost is the host name that we received from the FlowTracker.
+        // To build the host used in assembling the outgoing links, we make
+        // any pre-configured tranformations (defined in the db-config.json
+        // file as cluster_link_host_regexes).
+        //
+        // port is, uh, the port
+        //
+        // path is the full path, including any querystring or fragment
+        // components.
+        //
+        // schemeWithSlashes is what it sounds like, e.g.
+        //  `http://` or `https://`
+        //  Note: schemeWithSlashes is optional; if missing, it defaults to `//`,
+        //  ie inherit the current scheme)
+
+        var defaultLinkTemplate = '%{schemeWithSlashes}%{host}:%{port}%{path}';
+        var defaultHostRegexes = {}; // by default do not change host name
+
+        var config = DataUtil.getConfigState();
+
+        var hostRegexes = config['cluster_link_host_regexes'] || defaultHostRegexes;
+        var template = config['cluster_link_template'] || defaultLinkTemplate;
+
+        return Kiwi.compose(template, {
+                schemeWithSlashes: schemeWithSlashes || '//',
+                host: DataUtil.doRegexReplacement(rawHost, hostRegexes, rawHost),
+                port: port,
+                path: path
+            });
+    }
+
     function makeYarnUrl(flow, step) {
 	var yarn_id = step.job_id.slice(4, step.job_id.length);
+    var yarn_host = splitHostWithPort(flow.yarn_job_history).host;
 	switch(step.step_status) {
 	case "SUCCESSFUL":
 	case "FAILED":
 	case "SKIPPED":
 	case "STOPPED":
-	    var yarn_history = makeHistoryUrl(flow, '19888');
-	    var link = yarn_history + '/jobhistory/job/job_' + yarn_id;
+        var link = buildHref(yarn_host, '19888', '/jobhistory/job/job_' + yarn_id);
 	    break;
 	default:
-	    var yarn_history = makeHistoryUrl(flow, '8088');
-	    var link = yarn_history + '/proxy/application_' + yarn_id;
+        var link = buildHref(yarn_host, '8088', '/proxy/application_' + yarn_id);
 	    break;
 	}
 	return link;
-    }
-
-    function makeHistoryUrl(flow, port) {
-	var clip_port = flow.yarn_job_history.indexOf(':');
-	var host = flow.yarn_job_history;
-	if (clip_port > -1) {
-	    host = host.slice(0, clip_port);
-	}
-	return host + ':' + port;
     }
 
     function renderIo(step) {
@@ -386,38 +418,51 @@ var ViewUtil = (function($) {
 	    flow_id: flow.flow_id,
 	    stage: step.step_number
 	};
+
+    function insertGlobalFailLink(mapOrReduce, failedTaskLink, step) {
+        var globalFailLinkHtml = $('#fail_links').html();
+        globalFailLinkHtml +=
+            '<div class=steplink><a href=' +
+            failedTaskLink +
+            ' target=_blank>' +
+            'Failed ' + mapOrReduce +
+            ' Tasks for Step ' +
+            step.step_number  +
+            '</a></div>';
+
+        $('#fail_links').html(globalFailLinkHtml);
+    };
+
 	var additionalLinks = step.config_props['sahale.additional.links'];
 	var logLinks = [];
-	if (step.job_id !== undefined && step.job_id !== null && step.job_id !== 'NO_JOB_ID') {
-	    if (flow.yarn_job_history !== "false") {
-		var jobLink = makeYarnUrl(flow, step);
-		logLinks.push({name: 'View Hadoop Logs', url: jobLink});
-		if (step.step_status == 'FAILED') {
-		    // We know this is a History Server link at this point, so this replacement should be valid
-		    var failedMapTasks = jobLink.replace("/job/", "/attempts/") + "/m/FAILED"
-		    var failedReduceTasks = jobLink.replace("/job/", "/attempts/") + "/r/FAILED"
-		    if (step.failed_map_tasks > 0) {
-			logLinks.push({name: 'Failed Map Tasks', url: failedMapTasks});
-			var globalFailLinkHtml = $('#fail_links').html();
-			globalFailLinkHtml += '<div class=steplink><a href=//' + failedMapTasks + ' target=_blank>' + 'Failed Map Tasks for Step ' + step.step_number  + '</a></div>';
-			$('#fail_links').html(globalFailLinkHtml);
-		    }
-		    if (step.failed_reduce_tasks > 0) {
-			logLinks.push({name: 'Failed Reduce Tasks', url: failedReduceTasks});
-			var globalFailLinkHtml = $('#fail_links').html();
-			globalFailLinkHtml += '<div class=steplink><a href=//' + failedReduceTasks + ' target=_blank>' + 'Failed Reduce Tasks for Step ' + step.step_number  + '</a></div>';
-			$('#fail_links').html(globalFailLinkHtml);
-		    }
-		}
-		logLinks.push({name: 'ApplicationMaster', url: flow.jt_url + ':8088/cluster/app/' + step.job_id.replace('job_', 'application_')});
-	    } else {
-		logLinks.push({name: 'View Hadoop Logs', url: 'http://' + flow.jt_url + ':50030/jobdetails.jsp?jobid=' + step.job_id + '&refresh=0'});
-	    }
-	}
-	for(i = 0; i < logLinks.length; ++i) {
-	    var link = logLinks[i];
-	    html += '<div class="steplink"><a href="//' + link.url + '" target=_blank><b>'+ link.name +'</b></a></div>';
-	}
+    var jt_host = splitHostWithPort(flow.jt_url).host;
+    if (step.job_id !== undefined && step.job_id !== null && step.job_id !== 'NO_JOB_ID') {
+        if (flow.yarn_job_history !== "false") {
+            var jobLink = makeYarnUrl(flow, step);
+            logLinks.push({name: 'View Hadoop Logs', url: jobLink});
+            if (step.step_status == 'FAILED') {
+                if (step.failed_map_tasks > 0) {
+                    // We know this is a History Server link at this point, so this replacement should be valid
+                    var failedMapTasks = jobLink.replace("/job/", "/attempts/") + "/m/FAILED"
+                    logLinks.push({name: 'Failed Map Tasks', url: failedMapTasks});
+                    insertGlobalFailLink('Map', failedMapTasks, step);
+                }
+                if (step.failed_reduce_tasks > 0) {
+                    // We know this is a History Server link at this point, so this replacement should be valid
+                    var failedReduceTasks = jobLink.replace("/job/", "/attempts/") + "/r/FAILED"
+                    logLinks.push({name: 'Failed Reduce Tasks', url: failedReduceTasks});
+                    insertGlobalFailLink('Reduce', failedReduceTasks, step);
+                }
+            }
+            logLinks.push({name: 'ApplicationMaster', url: buildHref(jt_host, '8088', '/cluster/app/' + step.job_id.replace('job_', 'application_'))});
+        } else {
+            logLinks.push({name: 'View Hadoop Logs', url: buildHref(jt_host, '50030', '/jobdetails.jsp?jobid=' + step.job_id + '&refresh=0', schemeWithSlashes='http://')});
+        }
+    }
+    for(i = 0; i < logLinks.length; ++i) {
+        var link = logLinks[i];
+        html += '<div class="steplink"><a href="' + link.url + '" target=_blank><b>'+ link.name +'</b></a></div>';
+    }
 
 	if (additionalLinks !== undefined) {
 	    var links = additionalLinks.split(';');
@@ -438,4 +483,4 @@ var ViewUtil = (function($) {
 
     return view;
 
-}(jQuery));
+}(jQuery, DataUtil));
