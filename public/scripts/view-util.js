@@ -438,13 +438,14 @@ var ViewUtil = (function($, DataUtil) {
             var jobLink = makeYarnUrl(flow, step);
             logLinks.push({name: 'View Hadoop Logs', url: jobLink});
             if (step.step_status == 'FAILED') {
-                // We know this is a History Server link at this point, so this replacement should be valid
                 if (step.failed_map_tasks > 0) {
+                    // We know this is a History Server link at this point, so this replacement should be valid
                     var failedMapTasks = jobLink.replace("/job/", "/attempts/") + "/m/FAILED"
                     logLinks.push({name: 'Failed Map Tasks', url: failedMapTasks});
                     insertGlobalFailLink('Map', failedMapTasks, step);
                 }
                 if (step.failed_reduce_tasks > 0) {
+                    // We know this is a History Server link at this point, so this replacement should be valid
                     var failedReduceTasks = jobLink.replace("/job/", "/attempts/") + "/r/FAILED"
                     logLinks.push({name: 'Failed Reduce Tasks', url: failedReduceTasks});
                     insertGlobalFailLink('Reduce', failedReduceTasks, step);
