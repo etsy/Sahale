@@ -119,7 +119,6 @@ object IdToken {
     val header = new JsonWebSignature.Header
     header.setType("JWT")
     header.setAlgorithm("RS256")
-    //header.setKeyId(creds.getServiceAccountPrivateKeyId)
 
     val nowSeconds = System.currentTimeMillis / 1000
     val payload = new JsonWebToken.Payload
