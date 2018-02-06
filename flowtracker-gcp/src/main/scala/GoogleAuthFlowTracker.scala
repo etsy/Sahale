@@ -67,12 +67,12 @@ object IdToken {
       val code = transport.executeMethod(request)
 
       if(code != HttpStatus.SC_OK) {
-        //LOG.warn(s"Metadata server returned failure code on identity-token request: $code")
+        FlowTracker.LOG.warn(s"Metadata server returned failure code on identity-token request: $code")
       }
 
       token = Some(new String(request.getResponseBody, "UTF-8"))
     } catch { case e: Throwable =>
-        //LOG.warn(s"Failed to refresh identity token from metadata server: $e")
+        FlowTracker.LOG.warn(s"Failed to refresh identity token from metadata server: $e")
     } finally {
       request.releaseConnection
     }
@@ -173,7 +173,7 @@ object IdToken {
 
       idToken = Some(parser.getText)
     } catch { case e: Throwable =>
-        //LOG.warn(s"Failed to refresh identity token from metadata server: $e")
+        FlowTracker.LOG.warn(s"Failed to refresh identity token from metadata server: $e")
     } finally {
       request.releaseConnection
     }
