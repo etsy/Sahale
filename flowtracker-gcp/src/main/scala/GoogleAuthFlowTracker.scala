@@ -213,7 +213,7 @@ class GoogleAuthFlowTracker(
 
   @transient // should not generally happen, but do not allow credentials to be serialized
   private val idToken: IdToken = IdToken(
-    audience = this.serverHostPort,
+    audience = this.serverHostPort.split(":").head, // Do not send the port as part of the audience
     transport = FlowTracker.getHttpClient,
     serviceAccountJsonFile = Option(serviceAccountJsonFilename))
 
