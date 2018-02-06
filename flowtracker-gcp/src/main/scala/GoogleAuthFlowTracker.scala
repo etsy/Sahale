@@ -36,7 +36,7 @@ case class IdToken(audience: String, transport: HttpClient, serviceAccountJsonFi
     // Returns true if the token has not yet been retrieved, or if the token
     // has expired
     _expiresAtSeconds.forall { expSeconds =>
-      System.currentTimeMillis / 1000 <= expSeconds
+      expSeconds <= System.currentTimeMillis / 1000
     }
   }
 
@@ -145,9 +145,7 @@ object IdToken {
 
   private def exchangeToken(token: String, transport: HttpClient): String = {
     // see: https://cloud.google.com/compute/docs/instances/verifying-instance-identity
-    val uri = GOOGLE_TOKEN_ENDPOINT
-
-    val request = new PostMethod(uri)
+    val request = new PostMethod(GOOGLE_TOKEN_ENDPOINT)
 
     val params = Array(
       new NameValuePair("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer"),
