@@ -137,8 +137,10 @@ class FlowTracker(val flow: Flow[_],
       registerShutdownHook
     }.recover {
       case t: Throwable =>
-        LOG.warn("Failed to initialize FlowTracker.  This is NOT a fatal error. " +
-          "The job will run as normal, but it will not be tracked by Sahale.", t)
+        LOG.warn("""
+          Failed to initialize FlowTracker.  This is NOT a fatal error.
+          The job will run as normal, but it will not be tracked by Sahale.
+          """.stripMargin.trim, t)
         runCompleted.set(true)
     }
 
@@ -154,17 +156,20 @@ class FlowTracker(val flow: Flow[_],
           }
         }.recover {
           case t: Throwable if 1 + numFailures < maxFailures=>
-            LOG.warn("FlowTracker has thrown an exception because an update iteration failed. " +
-              "This is NOT a fatal error. " +
-              "We will skip this update iteration and then try again. " +
-              s"${maxFailures - numFailures} attempts remain", t)
+            LOG.warn(s"""
+              FlowTracker has thrown an exception because an update iteration
+              failed. This is NOT a fatal error. We will skip this update
+              iteration. ${maxFailures - numFailures} attempts remain.
+              """.stripMargin.trim, t)
 
             numFailures += 1
 
           case t: Throwable =>
-            LOG.warn("FlowTracker for this run has thrown an exception. " +
-              "This is NOT a fatal error. " +
-              "The run will complete as normal, but the remainder will not be tracked by Sahale.", t)
+            LOG.warn("""
+              FlowTracker for this run has thrown an exception. This is NOT a
+              fatal error. The run will complete as normal, but the remainder
+              will not be tracked by Sahale.
+              """.stripMargin.trim, t)
             runCompleted.set(true)
         }
 
