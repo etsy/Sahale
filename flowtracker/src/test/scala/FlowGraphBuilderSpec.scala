@@ -10,7 +10,7 @@ import scala.collection.mutable
 
 
 @RunWith(classOf[JUnitRunner])
-class FlowGraphBuilderSpec extends FlatSpec with ShouldMatchers {
+class FlowGraphBuilderSpec extends FlatSpec with Matchers {
 
   val graphDotString = {
     scala.io.Source.fromInputStream(
