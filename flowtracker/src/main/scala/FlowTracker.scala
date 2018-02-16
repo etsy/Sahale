@@ -18,6 +18,7 @@ import java.net.SocketException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.Properties
 
+import scala.util.Try
 import scala.collection.mutable
 import scala.collection.JavaConversions._
 
@@ -131,29 +132,57 @@ class FlowTracker(val flow: Flow[_],
   def this(flow: Flow[_], runCompleted: AtomicBoolean) = this(flow, runCompleted, "", false)
 
   override def run(): Unit = {
-    try {
+    Try {
       initializeTrackedJobState
       registerShutdownHook
+    }.recover {
+      case t: Throwable =>
+        LOG.warn("""
+          Failed to initialize FlowTracker.  This is NOT a fatal error.
+          The job will run as normal, but it will not be tracked by Sahale.
+          """.stripMargin.trim, t)
+        runCompleted.set(true)
+    }
 
-      while (!runCompleted.get) {
+    val maxFailures = 10
+    var numFailures = 0
+    while(!runCompleted.get) {
+      Try {
+          updateSteps
+          updateFlow
+          updateAggregates
+          if (!disableProgressBar) {
+            logFlowStatus
+          }
+        }.recover {
+          case t: Throwable if 1 + numFailures < maxFailures=>
+            LOG.warn(s"""
+              FlowTracker has thrown an exception because an update iteration
+              failed. This is NOT a fatal error. We will skip this update
+              iteration. ${maxFailures - numFailures} attempts remain.
+              """.stripMargin.trim, t)
+
+            numFailures += 1
+
+          case t: Throwable =>
+            LOG.warn("""
+              FlowTracker for this run has thrown an exception. This is NOT a
+              fatal error. The run will complete as normal, but the remainder
+              will not be tracked by Sahale.
+              """.stripMargin.trim, t)
+            runCompleted.set(true)
+        }
+
+        sleep(REFRESH_INTERVAL_MS)
+    }
+
+    // Push the final updates, but only if we have not hit our failure limit
+    if(numFailures < maxFailures) {
+      Try {
         updateSteps
         updateFlow
         updateAggregates
-        if (!disableProgressBar) {
-          logFlowStatus
-        }
-        sleep(REFRESH_INTERVAL_MS)
       }
-    } catch {
-      case t: Throwable => {
-        LOG.warn("FlowTracker for this run has thrown an exception. " +
-          "The run will complete as normal, but the remainder will not be tracked.", t)
-        runCompleted.set(true);
-      }
-    } finally {
-      updateSteps
-      updateFlow
-      updateAggregates
     }
   }
 
