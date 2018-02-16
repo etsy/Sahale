@@ -8,7 +8,7 @@ import org.scalatest._
 import org.scalatest.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
-class FlowStatusSpec extends FlatSpec with ShouldMatchers {
+class FlowStatusSpec extends FlatSpec with Matchers {
 
   "A FlowStatus" should "provide a default initial state before the job launches" in {
     val fs = getTestFlowStatus

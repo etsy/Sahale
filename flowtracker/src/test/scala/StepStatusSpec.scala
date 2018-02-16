@@ -6,7 +6,7 @@ import org.scalatest._
 import org.scalatest.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
-class StepStatusSpec extends FlatSpec with ShouldMatchers {
+class StepStatusSpec extends FlatSpec with Matchers {
   val stepNumber = 27
   val stepId = "F00DCAFE"
 
