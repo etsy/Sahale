@@ -84,7 +84,7 @@ Sahale server does not yet support Google authentication directly; our approach 
 
 Sahale server (NodeJS app) and FlowTracker (Scala client jar) must always maintain parity between clients and server versions. An upgrade deployment must coordinate the distribution of the new client jar and restart of the updated server. In rare cases (tagged in the Git repo) Sahale will make breaking changes that will require addition steps. The two notable cases are listed below:
 
-### Upgrade to 2.0.0
+### Upgrade to 2.0.1
 In addition to some minor fixes, we upgrade to scalding 0.17.4. We are alo publishing scala 2.11 and 2.12 artifacts for the first time. We will drop scala 2.11 support in a future version.
 
 ### Upgrade to 1.2.0
