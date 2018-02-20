@@ -18,7 +18,7 @@ The `flowtracker` JAR is published to Maven Central for easy inclusion in your p
 <dependency>
   <groupId>com.etsy.sahale</groupId>
   <artifactId>flowtracker_2.11</artifactId>
-  <version>1.2.0</version>
+  <version>2.0.0</version>
 </dependency>
 ```
 
@@ -27,7 +27,7 @@ or, for the Google-Auth-enabled variant:
 <dependency>
   <groupId>com.etsy.sahale</groupId>
   <artifactId>flowtracker-gcp_2.11</artifactId>
-  <version>1.2.0</version>
+  <version>2.0.0</version>
   <exclusions>
     <exclusion>
       <groupId>com.google.api-client</groupId>
@@ -83,6 +83,9 @@ Sahale server does not yet support Google authentication directly; our approach 
 ## Upgrading
 
 Sahale server (NodeJS app) and FlowTracker (Scala client jar) must always maintain parity between clients and server versions. An upgrade deployment must coordinate the distribution of the new client jar and restart of the updated server. In rare cases (tagged in the Git repo) Sahale will make breaking changes that will require addition steps. The two notable cases are listed below:
+
+### Upgrade to 2.0.0
+In addition to some minor fixes, we upgrade to scalding 0.17.4. We are alo publishing scala 2.11 and 2.12 artifacts for the first time. We will drop scala 2.11 support in a future version.
 
 ### Upgrade to 1.2.0
 
