@@ -74,6 +74,7 @@ class FlowStatus(val flow: Flow[_], props: Properties, jobArgs: Array[String], i
     "flow_name"            -> flow.getName,
     "jt_url"               -> getResourceManager,
     "user_name"            -> getUsername,
+    "tmp_dir"              -> getTempDirectory,
     "flow_status"          -> flow.getFlowStats.getStatus.toString,
     "total_stages"         -> flow.getFlowStats.getStepsCount, // Int
     "flow_duration"        -> updateFlowDuration, // Long (milliseconds)
@@ -142,6 +143,13 @@ class FlowStatus(val flow: Flow[_], props: Properties, jobArgs: Array[String], i
     flow.getProperty("mapreduce.jobhistory.webapp.address") match {
       case historyServer: String => historyServer
       case _                     => NOT_YARN_JOB
+    }
+  }
+
+  private def getTempDirectory: String = {
+    flow.getProperty("hadoop.tmp.dir") match {
+      case dir: String => dir
+      case _           => "/tmp/cache"
     }
   }
 
