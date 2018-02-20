@@ -242,7 +242,7 @@
     <dependency>
       <groupId>com.twitter</groupId>
       <artifactId>scalding-core_2.11</artifactId>
-      <version>0.16.0</version>
+      <version>0.17.4</version>
       <exclusions>
         <exclusion>
           <groupId>org.scala-lang</groupId>
