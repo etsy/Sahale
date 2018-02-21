@@ -58,20 +58,25 @@ var ViewUtil = (function($, DataUtil) {
 	var output_html = '<div class="logbox">';
 	output_html += '<div style="font-size:10px">';
 
+	var input_taps = new Set();
+	var output_taps = new Set();
+
 	var tmp_dir = flow.tmp_dir;
 
 	for (key in stepMap) {
 	    var step = stepMap[key]
 
 	    for (tap in step.sources) {
-		if (!tap.startsWith(tmp_dir) && input_html.indexOf(tap) == -1) {
-		    input_html += '<div class="steplink"><p class=wordwrap>' + tap + '</p></div>';
+		if (!tap.startsWith(tmp_dir) && !input_taps.has(tap)) {
+			input_html += '<div class="steplink"><p class=wordwrap>' + tap + '</p></div>';
+			input_taps.add(tap);
 		}
 	    }
 
 	    for (tap in step.sink) {
-		if (!tap.startsWith(tmp_dir) && output_html.indexOf(tap) == -1) {
-		    output_html += '<div class=steplink wordwrap><p class=wordwrap>' + tap + '</p></div>';
+		if (!tap.startsWith(tmp_dir) && !output_taps.has(tap)) {
+			output_html += '<div class=steplink wordwrap><p class=wordwrap>' + tap + '</p></div>';
+			output_taps.add(tap);
 		}
 	    }
 	}
