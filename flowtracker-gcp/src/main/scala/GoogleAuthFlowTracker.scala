@@ -179,6 +179,13 @@ object IdToken {
       sys.error("Failed to retrieve google-signed identity token")
     }
   }
+
+  def getAudience(hostPort: String) = {
+    val uri = new URI(hostPort)
+
+    // Do not send the port as part of the audience, only the scheme and host
+    new URI(uri.getScheme, uri.getHost, null, null).toString
+  }
 }
 
 class GoogleAuthFlowTracker(
@@ -210,7 +217,7 @@ class GoogleAuthFlowTracker(
 
   @transient // should not generally happen, but do not allow credentials to be serialized
   private val idToken: IdToken = IdToken(
-    audience = this.serverHostPort.split(":").head, // Do not send the port as part of the audience
+    audience = IdToken.getAudience(this.serverHostPort),
     transport = FlowTracker.getHttpClient,
     serviceAccountJsonFile = Option(serviceAccountJsonFilename))
 
