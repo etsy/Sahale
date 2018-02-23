@@ -36,7 +36,10 @@ case class IdToken(audience: String, transport: HttpClient, serviceAccountJsonFi
     // Returns true if the token has not yet been retrieved, or if the token
     // has expired
     _expiresAtSeconds.forall { expSeconds =>
-      expSeconds <= System.currentTimeMillis / 1000
+      // Indicate expiry 1 minute before the token has actually expired,
+      // to prevent us from using a token that will expire by the time it is
+      // processed by the server
+      expSeconds <= 60 + System.currentTimeMillis / 1000
     }
   }
 
@@ -179,6 +182,13 @@ object IdToken {
       sys.error("Failed to retrieve google-signed identity token")
     }
   }
+
+  def getAudience(hostPort: String) = {
+    val uri = new URI(hostPort)
+
+    // Do not send the port as part of the audience, only the scheme and host
+    new URI(uri.getScheme, uri.getHost, null, null).toString
+  }
 }
 
 class GoogleAuthFlowTracker(
@@ -210,7 +220,7 @@ class GoogleAuthFlowTracker(
 
   @transient // should not generally happen, but do not allow credentials to be serialized
   private val idToken: IdToken = IdToken(
-    audience = this.serverHostPort.split(":").head, // Do not send the port as part of the audience
+    audience = IdToken.getAudience(this.serverHostPort),
     transport = FlowTracker.getHttpClient,
     serviceAccountJsonFile = Option(serviceAccountJsonFilename))
 
