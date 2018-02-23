@@ -36,7 +36,10 @@ case class IdToken(audience: String, transport: HttpClient, serviceAccountJsonFi
     // Returns true if the token has not yet been retrieved, or if the token
     // has expired
     _expiresAtSeconds.forall { expSeconds =>
-      expSeconds <= System.currentTimeMillis / 1000
+      // Indicate expiry 1 minute before the token has actually expired,
+      // to prevent us from using a token that will expire by the time it is
+      // processed by the server
+      expSeconds <= 60 + System.currentTimeMillis / 1000
     }
   }
 
