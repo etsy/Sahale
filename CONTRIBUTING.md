@@ -17,3 +17,5 @@ Every pull request will be built and tested with [Travis CI](https://travis-ci.o
 - Nikki Thean [nixsticks](https://github.com/nixsticks)
 - Oleksandr Pryimak [trams](https://github.com/trams)
 - Aaron Niskode-Dossett [dossett](https://github.com/dossett)
+- Kevin McHale [mchalek](https://github.com/mchalek)
+- Andrey Polyakov [andpol](https://github.com/andpol)
