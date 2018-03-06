@@ -207,7 +207,7 @@ var ViewUtil = (function($, DataUtil) {
     }
 
     function renderClusterFilterLink(clusterName) {
-	return '<a href=?cluster=' + clusterName + '>' + clusterName + '</a>';
+	return '<a href="/?cluster=' + clusterName + '">' + clusterName + '</a>';
     }
 
     function renderTabHeader(idnum) {
