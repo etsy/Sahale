@@ -17,28 +17,29 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
 
   function buildDatasets() {
     assignData(
-      [numTasksMapFunc, hdfsReadsMapFunc, clusterReadsMapFunc, localityMapFunc, ioSecsMapFunc, vcoreSecsMapFunc, cpuSecsFunc],
+      [numTasksMapFunc, gsReadsMapFunc, hdfsReadsMapFunc, clusterReadsMapFunc, localityMapFunc, ioSecsMapFunc, vcoreSecsMapFunc, cpuSecsFunc],
       "redData"
     );
 
     assignData(
-      [numTasksReduceFunc, hdfsWritesReduceFunc, clusterWritesReduceFunc, localityReduceFunc, ioSecsReduceFunc, vcoreSecsReduceFunc, gcSecsFunc],
+      [numTasksReduceFunc, gsWritesMapFunc, hdfsWritesReduceFunc, clusterWritesReduceFunc, localityReduceFunc, ioSecsReduceFunc, vcoreSecsReduceFunc, gcSecsFunc],
       "blueData"
     );
 
     assignData(
-      [numTasksTipFunc, hdfsTipFunc, clusterTipFunc, localityTipFunc, ioSecsTipFunc, vcoreSecsTipFunc, cpuGcTipFunc],
+      [numTasksTipFunc, hdfsTipFunc, gsTipFunc, clusterTipFunc, localityTipFunc, ioSecsTipFunc, vcoreSecsTipFunc, cpuGcTipFunc],
       "tipData"
     );
 
     assignData(
-      [numTasksMaxValueFunc, hdfsMaxValueFunc, clusterMaxValueFunc, localityMaxValueFunc, ioSecsMaxValueFunc, vcoreSecsMaxValueFunc, cpuGcMaxValueFunc],
+      [numTasksMaxValueFunc, hdfsMaxValueFunc, gsMaxValueFunc, clusterMaxValueFunc, localityMaxValueFunc, ioSecsMaxValueFunc, vcoreSecsMaxValueFunc, cpuGcMaxValueFunc],
       "maxValues"
     );
 
     assignTitles([
       "Map and Reduce tasks per Step",
       "GB Read/Written (HDFS) per Step",
+      "GB Read/Written (GCS) per Step",
       "GB Read/Written (Cluster Disk) per Step",
       "% of Node and Rack Locality per Step",
       "Cascading Total R/W Durations (all Tasks) per Step",
@@ -160,6 +161,30 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     return arr;
   }
 
+    function gsReadsMapFunc(step_map) {
+        var arr = [];
+        for (key in step_map) {
+            var step = step_map[key];
+            arr.push({
+                x: key,
+                y: Math.round(step.gs_bytes_read / GIGABYTES)
+            });
+        }
+        return arr;
+    }
+
+    function gsWritesReduceFunc(step_map) {
+        var arr = [];
+        for (key in step_map) {
+            var step = step_map[key];
+            arr.push({
+                x: key,
+                y: Math.round(step.gs_bytes_written / GIGABYTES)
+            });
+        }
+        return arr;
+    }
+
   function hdfsTipFunc(step_map) {
     var arr = [];
     for (key in step_map) {
@@ -172,12 +197,34 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     return arr;
   }
 
-  function hdfsMaxValueFunc(step_map) {
+  function hdfsTipFunc(step_map) {
+      var arr = [];
+      for (key in step_map) {
+          var step = step_map[key];
+          arr.push('<span style="color:Pink">' + ViewUtil.prettyPrintBytes(step.gs_bytes_read) + '</span> Read<br>' +
+              '<span style="color:LightBlue">' + ViewUtil.prettyPrintBytes(step.gs_bytes_written) + '</span> Written<p>' +
+              ' in Job Step ' + key
+          );
+      }
+      return arr;
+  }
+
+    function hdfsMaxValueFunc(step_map) {
     var max = 0;
     for (key in step_map) {
       var step = step_map[key];
       if (step.hdfs_bytes_read > max) { max = step.hdfs_bytes_read; }
       if (step.hdfs_bytes_written > max) { max = step.hdfs_bytes_written; }
+    }
+    return parseInt(max / GIGABYTES);
+  }
+
+  function hdfsMaxValueFunc(step_map) {
+    var max = 0;
+    for (key in step_map) {
+      var step = step_map[key];
+      if (step.gs_bytes_read > max) { max = step.gs_bytes_read; }
+      if (step.gs_bytes_written > max) { max = step.gs_bytes_written; }
     }
     return parseInt(max / GIGABYTES);
   }

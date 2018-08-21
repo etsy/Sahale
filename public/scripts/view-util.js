@@ -355,14 +355,22 @@ var ViewUtil = (function($, DataUtil) {
     }
 
     function renderIo(step) {
-	return '<div style="font-size:10px">' +
+	var io_html = '<div style="font-size:10px">' +
 	    '<table class="table table-centered table-striped">' +
 	    '<tr> <th>I/O Type</th> <th>Read</th> <th>Written</th> </tr>' +
 	    '<tr> <td>HDFS</td> ' +
 	    '<td>' + view.prettyPrintBytes(step.hdfs_bytes_read) + '</td>' +
 	    '<td>' + view.prettyPrintBytes(step.hdfs_bytes_written) + '</td>' +
-	    '</tr>' +
-	    '<tr> <td>Tuples</td> ' +
+	    '</tr>';
+
+	if (step.gs_bytes_read >= 0 || step.gs_bytes_written >= 0) {
+		io_html += '<tr> <td>HDFS</td> ' +
+            '<td>' + view.prettyPrintBytes(step.gs_bytes_read) + '</td>' +
+            '<td>' + view.prettyPrintBytes(step.gs_bytes_written) + '</td>' +
+            '</tr>';
+	}
+
+	io_html += '<tr> <td>Tuples</td> ' +
 	    '<td>' + step.tuples_read + '</td>' +
 	    '<td>' + step.tuples_written + '</td>' +
 	    '</tr>' +
@@ -372,6 +380,8 @@ var ViewUtil = (function($, DataUtil) {
 	    '</tr>' +
 	    '</table>' +
 	    '</div>';
+
+	return io_html;
     }
 
     function renderTapsAndFields(style, title, data) {

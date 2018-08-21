@@ -141,6 +141,24 @@ var ChartUtil = (function($, d3, ViewUtil) {
     return list;
   }
 
+  chartutil.getGsWriteData = function(flows) {
+      var list = [];
+      for (key in flows) {
+          var flow = flows[key];
+          var raw = flow.aggregated.flow_gs_bytes_written;
+          var val = Math.round(raw / (1024 * 1024 * 1024), 3);
+          if (val < 1) { val = 1; }
+          list.push({
+              name: formatEpochMs(flow['create_date'] * 1000),
+              value: val,
+              tip: "Total GS Writes: " + ViewUtil.prettyPrintBytes(raw),
+              barcolor: this.getColorForNumBytes(raw),
+              flowid: flow['flow_id']
+          })
+      }
+      return list;
+  }
+
   chartutil.getDiskWriteData = function(flows) {
     var list = [];
     for (key in flows) {
@@ -175,6 +193,24 @@ var ChartUtil = (function($, d3, ViewUtil) {
       })
     }
     return list;
+  }
+
+  chartutil.getGsReadData = function(flows) {
+      var list = [];
+      for (key in flows) {
+          var flow = flows[key];
+          var raw = flow.aggregated.flow_gs_bytes_read;
+          var val = Math.round(raw / (1024 * 1024 * 1024), 3);
+          if (val < 1) { val = 1; }
+          list.push({
+              name: formatEpochMs(flow['create_date'] * 1000),
+              value: val,
+              tip: "Total HDFS Reads: " + ViewUtil.prettyPrintBytes(raw),
+              barcolor: this.getColorForNumBytes(raw),
+              flowid: flow['flow_id']
+          })
+      }
+      return list;
   }
 
   chartutil.getDiskReadData = function(flows) {

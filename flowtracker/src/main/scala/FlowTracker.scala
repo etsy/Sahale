@@ -53,8 +53,10 @@ object FlowTracker {
   private val StepCounterAggregators = Map[String, (String, String)](
     "flow_hdfs_bytes_read"      -> ("org.apache.hadoop.mapreduce.FileSystemCounter", "HDFS_BYTES_READ"),
     "flow_file_bytes_read"      -> ("org.apache.hadoop.mapreduce.FileSystemCounter", "FILE_BYTES_READ"),
+    "flow_gs_bytes_read"        -> ("org.apache.hadoop.mapreduce.FileSystemCounter", "GS_BYTES_READ"),
     "flow_hdfs_bytes_written"   -> ("org.apache.hadoop.mapreduce.FileSystemCounter", "HDFS_BYTES_WRITTEN"),
     "flow_file_bytes_written"   -> ("org.apache.hadoop.mapreduce.FileSystemCounter", "FILE_BYTES_WRITTEN"),
+    "flow_gs_bytes_written"     -> ("org.apache.hadoop.mapreduce.FileSystemCounter", "GS_BYTES_WRITTEN"),
 
     "flow_total_map_tasks"      -> ("org.apache.hadoop.mapreduce.JobCounter", "TOTAL_LAUNCHED_MAPS"),
     "flow_total_reduce_tasks"   -> ("org.apache.hadoop.mapreduce.JobCounter", "TOTAL_LAUNCHED_REDUCES"),
