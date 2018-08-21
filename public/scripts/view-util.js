@@ -363,7 +363,7 @@ var ViewUtil = (function($, DataUtil) {
 	    '<td>' + view.prettyPrintBytes(step.hdfs_bytes_written) + '</td>' +
 	    '</tr>';
 
-	if (step.gs_bytes_read >= 0 || step.gs_bytes_written >= 0) {
+	if (step.gs_bytes_read !== null || step.gs_bytes_written !== null) {
 		io_html += '<tr> <td>GCS</td> ' +
             '<td>' + view.prettyPrintBytes(step.gs_bytes_read) + '</td>' +
             '<td>' + view.prettyPrintBytes(step.gs_bytes_written) + '</td>' +
