@@ -22,7 +22,7 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     );
 
     assignData(
-      [numTasksReduceFunc, gsWritesMapFunc, hdfsWritesReduceFunc, clusterWritesReduceFunc, localityReduceFunc, ioSecsReduceFunc, vcoreSecsReduceFunc, gcSecsFunc],
+      [numTasksReduceFunc, gsWritesReduceFunc, hdfsWritesReduceFunc, clusterWritesReduceFunc, localityReduceFunc, ioSecsReduceFunc, vcoreSecsReduceFunc, gcSecsFunc],
       "blueData"
     );
 
