@@ -197,7 +197,7 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     return arr;
   }
 
-  function hdfsTipFunc(step_map) {
+  function gsTipFunc(step_map) {
       var arr = [];
       for (key in step_map) {
           var step = step_map[key];
@@ -219,7 +219,7 @@ var ToggleUtil = (function($, ViewUtil, StateUtil) {
     return parseInt(max / GIGABYTES);
   }
 
-  function hdfsMaxValueFunc(step_map) {
+  function gsMaxValueFunc(step_map) {
     var max = 0;
     for (key in step_map) {
       var step = step_map[key];
