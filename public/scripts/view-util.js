@@ -364,7 +364,7 @@ var ViewUtil = (function($, DataUtil) {
 	    '</tr>';
 
 	if (step.gs_bytes_read >= 0 || step.gs_bytes_written >= 0) {
-		io_html += '<tr> <td>HDFS</td> ' +
+		io_html += '<tr> <td>GCS</td> ' +
             '<td>' + view.prettyPrintBytes(step.gs_bytes_read) + '</td>' +
             '<td>' + view.prettyPrintBytes(step.gs_bytes_written) + '</td>' +
             '</tr>';
