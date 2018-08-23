@@ -52,7 +52,7 @@ var GraphUtil = (function($, d3, dagreD3, ViewUtil, ChartUtil, StateUtil) {
 		item.dest_stage.toString(),
 		{
 		    label: '<span style="font-size:14px;color:' + ChartUtil.getColorForNumBytes(step.hdfs_bytes_written) + '">' +
-			ViewUtil.prettyPrintBytes(step.hdfs_bytes_written) + '</span>'
+			ViewUtil.prettyPrintBytes(step.hdfs_bytes_written + step.gs_bytes_written) + '</span>'
 		}
 	    );
 	});
