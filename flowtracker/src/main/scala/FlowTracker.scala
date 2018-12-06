@@ -134,6 +134,7 @@ class FlowTracker(val flow: Flow[_],
   def this(flow: Flow[_], runCompleted: AtomicBoolean) = this(flow, runCompleted, "", false)
 
   override def run(): Unit = {
+    var isTrackable: Boolean = true
     Try {
       initializeTrackedJobState
       registerShutdownHook
@@ -144,11 +145,12 @@ class FlowTracker(val flow: Flow[_],
           The job will run as normal, but it will not be tracked by Sahale.
           """.stripMargin.trim, t)
         runCompleted.set(true)
+        isTrackable = false
     }
 
     val maxFailures = 10
     var numFailures = 0
-    while(!runCompleted.get) {
+    while(!runCompleted.get && isTrackable) {
       Try {
           updateSteps
           updateFlow
@@ -179,7 +181,7 @@ class FlowTracker(val flow: Flow[_],
     }
 
     // Push the final updates, but only if we have not hit our failure limit
-    if(numFailures < maxFailures) {
+    if(numFailures < maxFailures && isTrackable) {
       Try {
         updateSteps
         updateFlow
