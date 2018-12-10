@@ -305,7 +305,7 @@ class FlowTracker(val flow: Flow[_],
           code
         } catch {
           case e: IOException =>
-            logRequestResponse(url, request, json) // for debugging
+            logRequestResponse(url, request, json)
             throw e
         } finally {
           if (null != request) {
