@@ -1,20 +1,14 @@
 package com.etsy.sahale
 
-import org.apache.commons.httpclient.{HttpClient, MultiThreadedHttpConnectionManager, Header}
+import org.apache.commons.httpclient.{HttpClient, MultiThreadedHttpConnectionManager}
 import org.apache.commons.httpclient.cookie.CookiePolicy
 import org.apache.commons.httpclient.methods.{StringRequestEntity, PostMethod}
-import org.apache.hadoop.mapred.{JobConf, JobClient}
 import org.apache.http.client.params.ClientPNames
 import org.apache.log4j.Logger
 
-import cascading.flow.{Flow, FlowStep, FlowStepStrategy}
-import cascading.flow.hadoop.HadoopFlowStep
-import cascading.stats.{CascadingStats, FlowStepStats}
-import cascading.stats.hadoop.HadoopStepStats
-import cascading.tuple.Fields
+import cascading.flow.Flow
 
 import java.io.IOException
-import java.net.SocketException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.Properties
 
@@ -308,8 +302,11 @@ class FlowTracker(val flow: Flow[_],
             request.addRequestHeader(headerName, headerValue)
           }
           val code = getHttpClient.executeMethod(request)
-          //logRequestResponse(url, request, json) // for debugging
           code
+        } catch {
+          case e: IOException =>
+            logRequestResponse(url, request, json) // for debugging
+            throw e
         } finally {
           if (null != request) {
             try {
