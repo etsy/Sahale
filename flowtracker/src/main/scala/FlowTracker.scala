@@ -329,9 +329,13 @@ class FlowTracker(val flow: Flow[_],
 
   def logRequestResponse(url: String, response: PostMethod, json: String): Unit = {
     LOG.info(s"Sent JSON to $url:\n${json}")
-    LOG.info(s"Response status code: ${response.getStatusCode}")
-    LOG.info(s"Response status line: ${response.getStatusLine}")
-    LOG.info(s"Repsonse status text: ${response.getStatusText}")
+    if (response.getStatusLine != null) {
+      LOG.info(s"Response status code: ${response.getStatusCode}")
+      LOG.info(s"Response status line: ${response.getStatusLine}")
+      LOG.info(s"Repsonse status text: ${response.getStatusText}")
+    } else {
+      LOG.info("No response status to debug")
+    }
     LOG.info(s"Response x-error-detail: ${response.getResponseHeader("x-error-detail")}")
   }
 
