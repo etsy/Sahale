@@ -131,7 +131,6 @@ class FlowTracker(val flow: Flow[_],
     var isTrackable: Boolean = true
     Try {
       initializeTrackedJobState
-      registerShutdownHook
     }.recover {
       case t: Throwable =>
         LOG.warn("""
@@ -210,14 +209,6 @@ class FlowTracker(val flow: Flow[_],
     val json = com.etsy.sahale.JsonUtil.toJsonMap(agg).toJson.compactPrint
 
     pushReport(sahaleUrl(INSERT_AGG), json)
-  }
-
-  /**
-   * Register a shutdown hook to perform the final update
-   */
-  def registerShutdownHook: Unit = {
-    val shutdownHookWorker = new Thread(new FlowTrackerShutdownHookWorker)
-    Runtime.getRuntime.addShutdownHook(shutdownHookWorker)
   }
 
   /**
@@ -362,25 +353,5 @@ class FlowTracker(val flow: Flow[_],
       case _ => Console.WHITE
     }
     statusColor + flow.getFlowStats.getStatus.toString + Console.WHITE
-  }
-
-  /**
-   * There is an edge case in the tracking that occurs sometimes when the client JVM is terminated with a SIGTERM
-   * Normally this would interrupt the tracking and prevent sending a final update
-   * This could cause jobs to appear to stick around in a running state even though they have been killed
-   * Registering a shutdown hook lets us perform a final update during the process of shutting down the JVM
-   */
-  private class FlowTrackerShutdownHookWorker extends Runnable {
-    val tracker = FlowTracker.this
-
-    override def run(): Unit = {
-      if (!tracker.runCompleted.get && FlowTracker.client != null) {
-        LOG.info("Performing final update from shutdown hook")
-        tracker.updateSteps
-        tracker.updateFlow
-        FlowTracker.client.getHttpConnectionManager.asInstanceOf[MultiThreadedHttpConnectionManager].shutdown
-        FlowTracker.client = null
-      }
-    }
   }
 }
