@@ -131,7 +131,6 @@ class FlowTracker(val flow: Flow[_],
     var isTrackable: Boolean = true
     Try {
       initializeTrackedJobState
-      registerShutdownHook
     }.recover {
       case t: Throwable =>
         LOG.warn("""
