@@ -5,7 +5,7 @@
   <groupId>com.etsy.sahale</groupId>
   <artifactId>flowtracker-pom_2.11</artifactId>
   <packaging>pom</packaging>
-  <version>2.0.6</version>
+  <version>2.1.0</version>
 
   <name>flowtracker-pom</name>
   <description>A Cascading Workflow Visualizer</description>
