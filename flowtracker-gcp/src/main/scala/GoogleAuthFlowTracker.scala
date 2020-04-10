@@ -196,19 +196,35 @@ class GoogleAuthFlowTracker(
   runCompleted: AtomicBoolean,
   hostPort: String,
   disableProgressBar: Boolean,
-  serviceAccountJsonFilename: String) extends FlowTracker(flow, runCompleted, hostPort, disableProgressBar) {
+  serviceAccountJsonFilename: String,
+  httpConnectionTimeout: Int = FlowTracker.HTTP_CONNECTION_TIMEOUT,
+  httpSocketTimeout: Int = FlowTracker.HTTP_SOCKET_TIMEOUT) extends FlowTracker(
+    flow, runCompleted, hostPort, disableProgressBar, httpConnectionTimeout, httpSocketTimeout) {
 
   // More java-compatibility constructors
+  def this(
+            flow: Flow[_],
+            runCompleted: AtomicBoolean,
+            hostPort: String,
+            disableProgressBar: java.lang.Boolean,
+            httpConnectionTimeout: Int,
+            httpSocketTimeout: Int) = {
+    this(flow, runCompleted, hostPort, disableProgressBar, null, httpConnectionTimeout, httpSocketTimeout)
+  }
+
   def this(flow: Flow[_], runCompleted: AtomicBoolean, hostPort: String, disableProgressBar: java.lang.Boolean) = {
-    this(flow, runCompleted, hostPort, disableProgressBar, null)
+    this(flow, runCompleted, hostPort, disableProgressBar, null,
+      FlowTracker.HTTP_CONNECTION_TIMEOUT, FlowTracker.HTTP_SOCKET_TIMEOUT)
   }
 
   def this(flow: Flow[_], runCompleted: AtomicBoolean, hostPort: String) = {
-    this(flow, runCompleted, hostPort, false, null)
+    this(flow, runCompleted, hostPort, false, null,
+      FlowTracker.HTTP_CONNECTION_TIMEOUT, FlowTracker.HTTP_SOCKET_TIMEOUT)
   }
 
   def this(flow: Flow[_], runCompleted: AtomicBoolean) = {
-    this(flow, runCompleted, "", false, null)
+    this(flow, runCompleted, "", false, null,
+      FlowTracker.HTTP_CONNECTION_TIMEOUT, FlowTracker.HTTP_SOCKET_TIMEOUT)
   }
 
   // Refuse to run if the server host is not using HTTPS
@@ -221,7 +237,7 @@ class GoogleAuthFlowTracker(
   @transient // should not generally happen, but do not allow credentials to be serialized
   private val idToken: IdToken = IdToken(
     audience = IdToken.getAudience(this.serverHostPort),
-    transport = FlowTracker.getHttpClient,
+    transport = FlowTracker.getHttpClient(httpConnectionTimeout, httpSocketTimeout),
     serviceAccountJsonFile = Option(serviceAccountJsonFilename))
 
   override def setAdditionalHeaders = Map( "Authorization" -> s"Bearer ${idToken.token}" )
