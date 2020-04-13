@@ -135,8 +135,11 @@ class FlowTracker(val flow: Flow[_],
   def this(flow: Flow[_], runCompleted: AtomicBoolean, hostPort: String, httpConnectionTimeout: Int, httpSocketTimeout: Int) =
     this(flow, runCompleted, hostPort, false, httpConnectionTimeout, httpSocketTimeout)
 
+  def this(flow: Flow[_], runCompleted: AtomicBoolean, hostPort: String, disableProgressBar: Boolean) =
+    this(flow, runCompleted, hostPort, disableProgressBar, FlowTracker.HTTP_CONNECTION_TIMEOUT, FlowTracker.HTTP_SOCKET_TIMEOUT)
+
   def this(flow: Flow[_], runCompleted: AtomicBoolean, hostPort: String) =
-    this(flow, runCompleted, hostPort, FlowTracker.HTTP_CONNECTION_TIMEOUT, FlowTracker.HTTP_SOCKET_TIMEOUT)
+    this(flow, runCompleted, hostPort, false, FlowTracker.HTTP_CONNECTION_TIMEOUT, FlowTracker.HTTP_SOCKET_TIMEOUT)
 
   def this(flow: Flow[_], runCompleted: AtomicBoolean) =
     this(flow, runCompleted, "", false, FlowTracker.HTTP_CONNECTION_TIMEOUT, FlowTracker.HTTP_SOCKET_TIMEOUT)
