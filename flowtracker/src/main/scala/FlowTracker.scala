@@ -37,11 +37,14 @@ object FlowTracker {
 
   val CheckIsCascadingFlowId = """([A-Fa-f0-9]+)""".r
 
+  val HTTP_CONNECTION_TIMEOUT = 5 * 60 * 1000;
+  val HTTP_SOCKET_TIMEOUT = 5 * 60 * 1000;
+
   val LOG: Logger = Logger.getLogger(classOf[FlowTracker])
 
   val props = getTrackerProperties
 
-  private var client: HttpClient = getHttpClient
+  private var client: HttpClient = getHttpClient()
 
   // master map of steps' hadoop counters to be aggregated and added to the flow data
   private val StepCounterAggregators = Map[String, (String, String)](
@@ -84,11 +87,15 @@ object FlowTracker {
     props
   }
 
-  def getHttpClient = client match {
+  def getHttpClient(
+                     httpConnectionTimeout: Int = HTTP_CONNECTION_TIMEOUT,
+                     httpSocketTimeout: Int = HTTP_SOCKET_TIMEOUT) = client match {
     case hc: HttpClient if (null != hc) => hc
     case _                                    =>
       client = new HttpClient(new MultiThreadedHttpConnectionManager)
       client.getParams().setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.BROWSER_COMPATIBILITY);
+      client.getHttpConnectionManager().getParams().setConnectionTimeout(httpConnectionTimeout);
+      client.getHttpConnectionManager().getParams().setSoTimeout(httpSocketTimeout);
       client
   }
 }
@@ -103,7 +110,9 @@ object FlowTracker {
 class FlowTracker(val flow: Flow[_],
                   val runCompleted: AtomicBoolean,
                   val hostPort: String,
-                  val disableProgressBar: Boolean) extends java.lang.Runnable {
+                  val disableProgressBar: Boolean,
+                  val httpConnectionTimeout: Int = FlowTracker.HTTP_CONNECTION_TIMEOUT,
+                  val httpSocketTimeout: Int = FlowTracker.HTTP_SOCKET_TIMEOUT) extends java.lang.Runnable {
   import com.etsy.sahale.FlowTracker._
 
   // mutable because we have to build this mapping as we go after run() is called
@@ -123,9 +132,14 @@ class FlowTracker(val flow: Flow[_],
   val serverHostPort = if(hostPort.trim.isEmpty) getDefaultHostPort else hostPort.trim
 
   // Constructors below are for easy Java interop with FlowTracker
-  def this(flow: Flow[_], runCompleted: AtomicBoolean, hostPort: String) = this(flow, runCompleted, hostPort, false)
+  def this(flow: Flow[_], runCompleted: AtomicBoolean, hostPort: String, httpConnectionTimeout: Int, httpSocketTimeout: Int) =
+    this(flow, runCompleted, hostPort, false, httpConnectionTimeout, httpSocketTimeout)
 
-  def this(flow: Flow[_], runCompleted: AtomicBoolean) = this(flow, runCompleted, "", false)
+  def this(flow: Flow[_], runCompleted: AtomicBoolean, hostPort: String) =
+    this(flow, runCompleted, hostPort, FlowTracker.HTTP_CONNECTION_TIMEOUT, FlowTracker.HTTP_SOCKET_TIMEOUT)
+
+  def this(flow: Flow[_], runCompleted: AtomicBoolean) =
+    this(flow, runCompleted, "", false, FlowTracker.HTTP_CONNECTION_TIMEOUT, FlowTracker.HTTP_SOCKET_TIMEOUT)
 
   override def run(): Unit = {
     var isTrackable: Boolean = true
@@ -292,7 +306,7 @@ class FlowTracker(val flow: Flow[_],
           setAdditionalHeaders.foreach { case (headerName, headerValue) =>
             request.addRequestHeader(headerName, headerValue)
           }
-          val code = getHttpClient.executeMethod(request)
+          val code = getHttpClient(httpConnectionTimeout, httpSocketTimeout).executeMethod(request)
           code
         } catch {
           case e: IOException =>
@@ -323,7 +337,7 @@ class FlowTracker(val flow: Flow[_],
     if (response.getStatusLine != null) {
       LOG.info(s"Response status code: ${response.getStatusCode}")
       LOG.info(s"Response status line: ${response.getStatusLine}")
-      LOG.info(s"Repsonse status text: ${response.getStatusText}")
+      LOG.info(s"Response status text: ${response.getStatusText}")
     } else {
       LOG.info("No response status to debug")
     }
