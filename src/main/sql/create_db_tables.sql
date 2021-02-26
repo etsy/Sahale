@@ -25,6 +25,8 @@ CREATE TABLE `cascading_job_flows_new` (
 );
 
 CREATE INDEX idx_create_date_cascading_job_flows_new ON cascading_job_flows_new (create_date);
+CREATE INDEX idx_update_date_flow_status_cascading_job_flows_new ON cascading_job_flows_new (update_date, flow_status);
+CREATE INDEX idx_flow_status_cascading_job_flows_new ON cascading_job_flows_new (flow_status);
 
 CREATE TABLE `cascading_job_steps_new` (
   `step_id` char(32) NOT NULL,
