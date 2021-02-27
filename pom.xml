@@ -217,7 +217,7 @@
     <dependency>
       <groupId>io.spray</groupId>
       <artifactId>spray-json_2.11</artifactId>
-      <version>1.3.2</version>
+      <version>1.3.5</version>
       <exclusions>
         <exclusion>
           <groupId>org.scala-lang</groupId>
